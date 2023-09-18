@@ -11,7 +11,3 @@
 
 https://docs.ros.org/en/humble/Installation.html
 
-
-rosdep install --from-paths src --ignore-src -i -y
-
---
