@@ -4,17 +4,10 @@ project(mjbot_neck_control)
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 
-install(
-  DIRECTORY
-    src
-  DESTINATION
-    lib/${PROJECT_NAME}/
-)
-
 
 install(
   PROGRAMS
-  src/Neck_control.py
+  mjbot_neck_control/person_tracking_launcher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
