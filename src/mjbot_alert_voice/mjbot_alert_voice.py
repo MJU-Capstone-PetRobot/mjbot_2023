@@ -1,11 +1,11 @@
 import os
 from Chat.voiceChat import *
-from Alert.messageSending import *
+# from Alert.messageSending import *
 
-# 화재 감지 후, 메세지 송신
-fire = fire_check()
-if fire == 2:
-    send_message(fire)
+# # 화재 감지 후, 메세지 송신
+# fire = fire_check()
+# if fire == 2:
+#     send_message(fire)
 
 # 명자 객체 형성
 mj = MYOUNGJA()
@@ -19,9 +19,9 @@ if response == "로봇":
     while response != "":
         response = mj.mic()
 
-        if mj.findNegative(response) > 0: # 부정적 발화
-            voicePublish = 3
-        elif response == "왼손": # 왼손
+        # if mj.findNegative(response) > 0: # 부정적 발화
+        #     voicePublish = 3
+        if response == "왼손": # 왼손
             voicePublish = 1
         elif response == "오른손": # 오른손
             voicePublish = 2

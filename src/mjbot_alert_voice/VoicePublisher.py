@@ -1,7 +1,7 @@
 import rclpy
 from std_msgs.msg import Int16
 from rclpy.node import Node
-from mjbot_alert_voice.mjbot_alert_voice import voicePublish
+from mjbot_alert_voice import voicePublish
 from Chat.voiceChat import *
 from Alert.messageSending import *
 
@@ -35,7 +35,7 @@ class IntSubscriber(Node):
 
         if msg.data == 1: # 낙상
             speaking("할머니 괜찮으세요??")
-            send_message(1) # 낙상 사고 발생 문자 발송
+            # send_message(1) # 낙상 사고 발생 문자 발송
         elif msg.data == 2: # 배터리 잔량 부족
             speaking("할머니 배고파요.")
         elif msg.data == 3: # 쓰담쓰담

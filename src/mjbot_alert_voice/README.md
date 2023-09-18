@@ -9,7 +9,7 @@
 ## 체크리스트
 ### 포팅
 - 모듈 설치 requirements.txt 작성 => (O) [requirements.txt 설치하러 가기](requirements.txt)    
-- API KEY 교체 => (작업중) Googlemap api 교체 완료 / Twilio api 교체 필요   
+- API KEY 교체 => (작업중) Googlemap api 교체 완료 / Twilio api 교체 필요 (우선 주석 처리함)  
 - 파일 경로 교체 => (작업중) 음성 부정 발화 정보 파일 경로 교체 / 위험 감지 gps 와 mq-7 경로 확인 필요   
 - json 파일 통일 => (작업중)
 - 음성 기능 오렌지 보드 위에서 작동 완료, 포팅 성공 => (O)
