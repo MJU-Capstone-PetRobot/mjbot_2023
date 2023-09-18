@@ -11,16 +11,10 @@
 
 https://docs.ros.org/en/humble/Installation.html
 
-<<<<<<< HEAD
-=======
 
-rosdep install --from-paths src --ignore-src -i -y
-
---
 # TODO
 
 Team Commit message Rule?
 
 
 Don't upload build files
->>>>>>> 821afbb (make package alert_voice)
