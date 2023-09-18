@@ -1,6 +1,9 @@
 # Installation
 
-This guide is meant for an Ubuntu 22.04
+- ROS2: Humble Hawksbill
+- OS:
+    - Ubuntu 22.04 Jammy Jellyfish(Orange Pi Plus)
+
 
 ## Environment
 
@@ -8,3 +11,7 @@ This guide is meant for an Ubuntu 22.04
 
 https://docs.ros.org/en/humble/Installation.html
 
+
+rosdep install --from-paths src --ignore-src -i -y
+
+--
