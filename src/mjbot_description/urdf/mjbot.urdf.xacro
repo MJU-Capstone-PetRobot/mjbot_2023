@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!-- Basic differential drive mobile base -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mjbot">
+  <xacro:arg name="prefix" default="" />
+
+  <xacro:include filename="$(find mjbot_description)/urdf/mjbot_description.urdf.xacro" />
+
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find mjbot_description)/urdf/mjbot.materials.xacro" />
+
+  <!-- ros2_control -->
+  <xacro:include filename="$(find mjbot_description)/urdf/include/mjbot_control.urdf.xacro" />
+
+
+  <xacro:mjbot prefix="$(arg prefix)" />
+  <xacro:mjbot_ros2_control
+    name="mjbot" />
+
+
+  
+
+</robot>
+
+
+

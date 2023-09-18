@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<robot name="mjbot_arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+
+  <xacro:include filename="$(find mjbot_arm_description)/urdf/mjbot_arm.urdf" />
+  <xacro:include filename="$(find mjbot_arm_description)/ros2_control/mjbot_arm.ros2_control.xacro" />
+
+  <xacro:mjbot_arm_ros2_control name="mjbot_arm_ros2_control" />
+</robot>
