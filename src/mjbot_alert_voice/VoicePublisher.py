@@ -1,7 +1,7 @@
 import rclpy
 from std_msgs.msg import Int16
 from rclpy.node import Node
-from main import voicePublish
+from mjbot_alert_voice.mjbot_alert_voice import voicePublish
 from Chat.voiceChat import *
 from Alert.messageSending import *
 
