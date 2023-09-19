@@ -14,13 +14,13 @@
       <joint name="left_wheel_joint">
         <param name="serial_number">${serial_number}</param>
         <param name="axis">0</param>
-        <param name="enable_watchdog">1</param>
+        <param name="enable_watchdog">0</param>
         <param name="watchdog_timeout">0.1</param>
       </joint>
       <joint name="right_wheel_joint">
         <param name="serial_number">${serial_number}</param>
         <param name="axis">1</param>
-        <param name="enable_watchdog">1</param>
+        <param name="enable_watchdog">0</param>
         <param name="watchdog_timeout">0.1</param>
       </joint>
 
