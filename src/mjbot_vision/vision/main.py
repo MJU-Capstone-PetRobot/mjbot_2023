@@ -30,6 +30,8 @@ class VisionNode(Node):
     def __init__(self):
         super().__init__("vision_process")
 
+        self.fps = 0
+        self.duration_sec = 0
         self.runtime_sec = 0
 
         self.owner_size = [0 ,0] # [w, h]
@@ -40,15 +42,15 @@ class VisionNode(Node):
         self.owner_fall = False
 
         self.publisher_fps_ = self.create_publisher(Int32, "fps", 10)
-        self.publisher_owner_exists_ = self.create_publisher(Bool, "owner_exists", 10)
-        self.publisher_owner_size_ = self.create_publisher(Int16MultiArray, "owner_size", 10)
-        self.publisher_owner_center_ = self.create_publisher(Int16MultiArray, "owner_center", 10)
-        self.publisher_owner_fall_ = self.create_publisher(Bool, "owner_fall", 10)
+        self.publisher_owner_exists_ = self.create_publisher(Bool, "exist", 10)
+        self.publisher_owner_size_ = self.create_publisher(Int16MultiArray, "size", 10)
+        self.publisher_owner_center_ = self.create_publisher(Int16MultiArray, "center", 10)
+        self.publisher_owner_fall_ = self.create_publisher(Bool, "fall", 10)
         self.get_logger().info("Node has been started")
 
-    def publish_fps(self, fps):
+    def publish_fps(self):
         msg = Int32()
-        msg.data = fps
+        msg.data = self.fps
         self.publisher_fps_.publish(msg)
         self.get_logger().info("PUB: /fps: {}".format(msg.data))
 
@@ -157,25 +159,8 @@ class VisionNode(Node):
                 cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
                 cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
             
-    def init_csv_log(self):
-        self.fieldnames = ["Duration", "Runtime", "FPS", 
-                           "Width", "Height", 
-                           "Width Diff", "Height Diff", 
-                           "Owner Exists", "Fall Detection"]
-
-        with open('/home/drcl/ros2_ws/src/vision/vision/log.csv', 'w') as csv_file:
-            csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
-            csv_writer.writeheader()
-
-    def run_csv_log(self, duration, fps):
-        with open('/home/drcl/ros2_ws/src/vision/vision/log.csv', 'a') as csv_file:
-            csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
-
-            self.duration_sec = (duration.microseconds / 1000000)
-            self.runtime_sec += self.duration_sec
-            self.runtime_sec = round(self.runtime_sec, 3)
-
-            # if object detection is failed
+    def detect_fall(self):
+           # if object detection is failed
             if self.owner_size[0] == 0 and self.owner_size[1] == 0:
                 self.owner_size[0] = self.owner_size_prev[0]
                 self.owner_size[1] = self.owner_size_prev[1]
@@ -191,10 +176,27 @@ class VisionNode(Node):
             else:
                 self.owner_fall = False
 
+            self.owner_size_prev[0] = self.owner_size[0]
+            self.owner_size_prev[1] = self.owner_size[1] 
+
+    def init_csv_log(self):
+        self.fieldnames = ["Duration", "Runtime", "FPS", 
+                           "Width", "Height", 
+                           "Width Diff", "Height Diff", 
+                           "Owner Exists", "Fall Detection"]
+
+        with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'w') as csv_file:
+            csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
+            csv_writer.writeheader()
+
+    def run_csv_log(self):
+        with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'a') as csv_file:
+            csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
+
             info = {
                 "Duration": self.duration_sec,
                 "Runtime": self.runtime_sec,
-                "FPS": fps,
+                "FPS": self.fps,
 
                 "Width": self.owner_size[0],
                 "Height": self.owner_size[1],
@@ -207,10 +209,6 @@ class VisionNode(Node):
             }
 
             csv_writer.writerow(info)
-
-            self.owner_size_prev[0] = self.owner_size[0]
-            self.owner_size_prev[1] = self.owner_size[1] 
-
 
 def main(args=None):
     rclpy.init(args=args)
@@ -230,10 +228,16 @@ def main(args=None):
         node.run_sort() # object tracking
 
         duration = dt.datetime.utcnow() - start
-        fps = int(round(1000000 / duration.microseconds))
-        node.run_csv_log(duration, fps)
+        node.fps = int(round(1000000 / duration.microseconds))
+
+        node.duration_sec = (duration.microseconds / 1000000)
+        node.runtime_sec += node.duration_sec
+        node.runtime_sec = round(node.runtime_sec, 3)
+
+        node.run_csv_log()
+        node.detect_fall()
     
-        node.publish_fps(fps)
+        node.publish_fps()
         node.publish_owner_exists()
         node.publish_owner_size()
         node.publish_owner_center()
@@ -242,7 +246,7 @@ def main(args=None):
         # publish emotion
         # publish depth
 
-        cv2.putText(node.img, f'fps: {fps}', (25, 50), 1, 2, (0, 255, 0), 2)
+        cv2.putText(node.img, f'fps: {node.fps}', (25, 50), 1, 2, (0, 255, 0), 2)
         cv2.imshow("result", node.img)
 
         # If the `q` key was pressed, break from the loop
