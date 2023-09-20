@@ -26,3 +26,9 @@
 - 노드 생성 후, Publisher 와 Subscriber 개발 => (작업중)
 
 
+==>
+
+pip install ffmpeg-python
+sudo apt-get install libportaudio2
+pip install ffprobe-python
+apt-get install ffmpeg

@@ -10,17 +10,22 @@ setup(
         ('share/ament_index/resource_index/packages',
             [package_name + '.py']),
         ('share/' + package_name, ['package.xml']),
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='drcl',
     maintainer_email='example@naver.com',  # Updated email address
+    keywords=['ROS'],
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "mjbot_alert_voice_comm = mjbot_alert_voice.main:main"
+            "mjbot_alert_voice_comm = mjbot_alert_voice.main:main",
+            'pub = node.Pub:main',
+            'sub = node.Sub:main',
         ],
     },
 )

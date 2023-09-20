@@ -1,7 +1,9 @@
+# VoicePublisher.py
+#! /usr/bin/env python
 import rclpy
 from std_msgs.msg import Int16
 from rclpy.node import Node
-from mjbot_alert_voice import voicePublish
+from mjbot_alert_voice import *
 from Chat.voiceChat import *
 from Alert.messageSending import *
 

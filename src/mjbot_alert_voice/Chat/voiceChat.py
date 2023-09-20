@@ -144,7 +144,6 @@ class MYOUNGJA():
 
             # 제작된 음성 파일 삭제
             os.remove("ResultMP3.mp3")
-            os.remove("sampleWav.wav")
             os.remove("test.wav")
 
     def speak_first(self):
