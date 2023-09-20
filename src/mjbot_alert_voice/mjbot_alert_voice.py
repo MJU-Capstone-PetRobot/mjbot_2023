@@ -8,7 +8,7 @@ from Chat.voiceChat import *
 #     send_message(fire)
 
 # 명자 객체 형성
-mj = MYOUNGJA()
+mj = MYOUNGJA("순자","she")
 
 # 대화 시작
 response = mj.mic()

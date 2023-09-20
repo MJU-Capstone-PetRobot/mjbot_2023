@@ -20,9 +20,17 @@
 - 이전에 했던 대화를 저장해서, 대화가 이어지게 하는 기능 (개발 완료)
 - 부정적 발화 검출 기능을 좀 더 빠르게 작동되게 코드 리팩토링 => (개발 완료)
 - 문답 속도가 느려서 고민중, 부정적 발화 기능을 주석처리하고 실행했음에도 느림 
-  - (학교 와이파이 - 7초) (집 와이파이 - 2초) => 녹음 시간을 실험을 위해 5초에서 3초로 줄임 
+- (학교 와이파이 - 7초) (집 와이파이 - 2초) => 녹음 시간을 실험을 위해 5초에서 3초로 줄임 
+- 성별이랑 이름 넣는 기능 추가 => (개발 완료)
+- 부정적 발화 기능 확대 =>(개발중) 
 
 ### ROS
-- 노드 생성 후, Publisher 와 Subscriber 개발 => (작업중)
+- 노드 생성 후, Publisher 와 Subscriber 개발 => (성공한듯..?)
 
 
+==> 모듈 설치할 커맨드 추가
+
+pip install ffmpeg-python
+sudo apt-get install libportaudio2
+pip install ffprobe-python
+apt-get install ffmpeg

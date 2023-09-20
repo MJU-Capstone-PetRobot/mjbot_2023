@@ -6,8 +6,12 @@ openai.api_key = "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"
 
 class MYOUNGJA():
     memory_size = 5
-    gpt_standard_messages = [{"role": "system",
-                              "content": "You're a assistant robot for senior in South Korea. Your patient's name is 순자 and she is an old korean woman. Your being purpose is support for her. So Please answer shortly, under 5 seconds , politely."}]
+    nameValue = ""
+    manWomanValue = ""
+
+    def __init__(self, name, manWoman) -> None:
+        MYOUNGJA.nameValue = name
+        MYOUNGJA.manWomanValue = manWoman
 
     def set_memory_size(self, memory_size):
         '''
@@ -17,12 +21,16 @@ class MYOUNGJA():
         '''
         self.memory_size = memory_size
 
+    
+
     def gpt_send_anw(self, question: str):
         '''
         질문을 ChatGPT에 넣어서 답변 출력
         :param question: 질문
         :return: 답변
         '''
+        self.gpt_standard_messages = [{"role": "system",
+                              "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean. Your being purpose is support. So Please answer shortly, under 5 seconds , politely in korean."}]
         self.gpt_standard_messages.append({"role": "user", "content": question})
 
         response = openai.ChatCompletion.create(
@@ -144,7 +152,6 @@ class MYOUNGJA():
 
             # 제작된 음성 파일 삭제
             os.remove("ResultMP3.mp3")
-            os.remove("sampleWav.wav")
             os.remove("test.wav")
 
     def speak_first(self):
