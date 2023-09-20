@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "opi_esp_comm = opi_esp.main:main"
+            "opi_esp_comm = opi_esp.main:main",
+            "fake_cmd = opi_esp.fake_cmd_pub:main"
         ],
     },
 )
