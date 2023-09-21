@@ -185,47 +185,26 @@ class MYOUNGJA():
         elif tm.tm_hour == 15 and tm.tm_min == 00:
             self.speaker("할머니 우리 산책 나가요!")
 
-    def findNegative(self, saySentence):
-        '''
-        문장 중 부정적 발화를 파악하는 함수. 어절 별로 나눠서 비교하는 방식
-        :param saySentence:
-        :return: X
-        '''
-        import json
+        def findNegative(self, saySentence):
+            '''
+            문장 중 부정적 발화를 파악하는 함수. 어절 별로 나눠서 비교하는 방식
+            :param saySentence:
+            :return: X
+            '''
+            openai.api_key = "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"
 
-        file_path = "negativeResult.json"
+            gpt_standard_messages = [{"role": "system",
+                                    f"content": f"analyze feeling of {saySentence} in one word. please answer korean. You can use 기쁨, 슬픔, 평범, 당황, 분노, 사랑, 위험 word when you answer."}]
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=gpt_standard_messages,
+                temperature=0.8,
+            )
 
-        # 부정적인 단어 모음
-        negativeWords = ["죽음", "사망", "사망자", "우울한", "우울", "우울하다", "외롭다", "외로운", "슬픔", "괴롭다", "슬프다", "괴로운"]
+            gpt_standard_messages.append({"role": "user", "content": saySentence})
+            answer = response['choices'][0]['message']['content']
 
-        # 발화 문장 수
-        sentences = 1
-
-        # 부정적인 단어 개수
-        negNum = 0
-
-        # 부정적인 단어 찾기
-        sayWords = saySentence.split()
-
-        for i in range(0, len(sayWords)):
-            newWords = sayWords[i]
-
-            for j in range(0, len(negativeWords)):
-                if newWords == negativeWords[j]:
-                    negNum += 1
-
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-
-        data["negativeNum"] += negNum
-        data["sentences"] += sentences
-        neg_result = round((data["negativeNum"] / data["sentences"]) * 100)
-        data["negativeRatio"] = f"{neg_result}%"
-
-        with open(file_path, 'w', encoding='utf-8') as file:
-            json.dump(data, file, indent="\t")
-
-        return negNum
+            return answer
 
 
 def speaking(anw_text):
