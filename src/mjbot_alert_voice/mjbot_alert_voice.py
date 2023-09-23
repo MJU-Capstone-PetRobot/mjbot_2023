@@ -20,7 +20,7 @@ if response == "로봇":
     while response != "":
         response = mj.mic()
 
-        emotion = mj.findNegative(response)
+        emotion = mj.gpt_send_anw[0]
 
         # 기쁨, 슬픔, 평범, 당황, 분노, 사랑, 위험
         if emotion == "기쁨":
@@ -44,7 +44,7 @@ if response == "로봇":
 
         os.remove("sampleWav.wav")
 
-        ans = mj.gpt_send_anw(response)
+        ans = mj.gpt_send_anw(response)[1]
 
         mj.speaker(ans)
 
