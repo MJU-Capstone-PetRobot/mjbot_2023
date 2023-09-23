@@ -22,12 +22,13 @@ install(
     Alert
     Chat
   DESTINATION
-    share/${PROJECT_NAME}/
+    lib/${PROJECT_NAME}/
 )
 
 install(
   PROGRAMS
     mjbot_alert_voice.py
+    VoicePublisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
