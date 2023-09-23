@@ -51,8 +51,8 @@
 
 #     # Twilio
 #     # 계정 token 입력
-#     account_sid =
-#     auth_token =
+#     account_sid = "AC1284d2af3f21aea53a0c14979072d54e"
+#     auth_token = "b21584709bd00e56cb0738fbe814d99c"
 #     client = Client(account_sid, auth_token)
 
 #     if problem == 1:
@@ -63,8 +63,8 @@
 #     message = client.messages \
 #         .create(
 #         body=f"위험 위험!!, 할머니가 위험해요. 종류 : {problem_thing}. 위치는 {gps}",
-#         from_=""
-#         to =""
+#         from_="+16562186034"
+#         to ="+821085930557"
 #     )
 
 #     time.sleep(1000000)

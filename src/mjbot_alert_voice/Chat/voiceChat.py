@@ -21,8 +21,6 @@ class MYOUNGJA():
         '''
         self.memory_size = memory_size
 
-    
-
     def gpt_send_anw(self, question: str):
         '''
         질문을 ChatGPT에 넣어서 답변 출력
@@ -30,7 +28,7 @@ class MYOUNGJA():
         :return: 답변
         '''
         self.gpt_standard_messages = [{"role": "system",
-                              "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean. Your being purpose is support. So Please answer shortly, under 5 seconds , politely in korean."}]
+                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean. Your being purpose is support. So Please answer shortly, under 5 seconds , politely in korean. And if user say nothing then please do not say anything."}]
         self.gpt_standard_messages.append({"role": "user", "content": question})
 
         response = openai.ChatCompletion.create(
@@ -165,7 +163,7 @@ class MYOUNGJA():
         tmt = time()
         tm = localtime(tmt)
 
-        question_list = ["할머니 오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 할머니는 어때요??","","","","","","","",""]
+        question_list = ["할머니 오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 할머니는 어때요??", "", "", "", "", "", "", "", ""]
 
         if tm.tm_hour == 7 and tm.tm_min == 00:
             self.speaker("좋은 아침이에요. 할머니!! 오늘도 좋은 하루 되세요!!")
@@ -185,68 +183,64 @@ class MYOUNGJA():
         elif tm.tm_hour == 15 and tm.tm_min == 00:
             self.speaker("할머니 우리 산책 나가요!")
 
-        def findNegative(self, saySentence):
-            '''
-            문장 중 부정적 발화를 파악하는 함수. 어절 별로 나눠서 비교하는 방식
-            :param saySentence:
-            :return: X
-            '''
-            openai.api_key = "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"
+    def findNegative(self, saySentence):
+        '''
+        문장 중 부정적 발화를 파악하는 함수. 어절 별로 나눠서 비교하는 방식
+        :param saySentence:
+        :return: X
+        '''
+        openai.api_key = "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"
 
-            gpt_standard_messages = [{"role": "system",
+        gpt_standard_messages = [{"role": "system",
                                     f"content": f"analyze feeling of {saySentence} in one word. please answer korean. You can use 기쁨, 슬픔, 평범, 당황, 분노, 사랑, 위험 word when you answer."}]
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=gpt_standard_messages,
-                temperature=0.8,
-            )
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=gpt_standard_messages,
+            temperature=0.8,
+        )
 
-            gpt_standard_messages.append({"role": "user", "content": saySentence})
-            answer = response['choices'][0]['message']['content']
+        gpt_standard_messages.append({"role": "user", "content": saySentence})
+        answer = response['choices'][0]['message']['content']
 
-            return answer
+        return answer
 
+    def speaking(anw_text):
+        '''
+        주어진 말을 스피커를 통해 음성 변환 시켜 출력
+        :param anw_text:
+        :return: X
+        '''
+        import os
+        import urllib.request
+        from pydub import AudioSegment
+        from playsound import playsound as pl
 
-def speaking(anw_text):
-    '''
-    주어진 말을 스피커를 통해 음성 변환 시켜 출력
-    :param anw_text:
-    :return: X
-    '''
-    import os
-    import urllib.request
-    from pydub import AudioSegment
-    from playsound import playsound as pl
+        # NAVER CLOVA
+        client_id = "rlmmwycb6e"
+        client_secret = "Vsprb6BSk7LP2IuWpSxdvvV5tGVriniDiHMXtodQ"
+        encText = urllib.parse.quote(anw_text)
+        data = "speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
+        urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
+        requests = urllib.request.Request(urls)
+        requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
+        requests.add_header("X-NCP-APIGW-API-KEY", client_secret)
+        response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
+        rescodes = response.getcode()
+        if (rescodes == 200):
+            print("mp3 저장 완료")
+            response_body = response.read()
+            with open('./ResultMP3.mp3', 'wb') as f:
+                f.write(response_body)
 
-    # NAVER CLOVA
-    client_id = "rlmmwycb6e"
-    client_secret = "Vsprb6BSk7LP2IuWpSxdvvV5tGVriniDiHMXtodQ"
+            # 스피커 출력
+            filename = "ResultMP3.mp3"
+            dst = "test.wav"
+            sound = AudioSegment.from_mp3(filename)
+            sound.export(dst, format="wav")
 
-    encText = urllib.parse.quote(anw_text)
-    data = "speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
-    urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
-    requests = urllib.request.Request(urls)
-    requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
-    requests.add_header("X-NCP-APIGW-API-KEY", client_secret)
-    response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
-    rescodes = response.getcode()
+            # data, fs = sf.read(filename, dtype='')
+            pl("test.wav")
 
-    if (rescodes == 200):
-        print("mp3 저장 완료")
-        response_body = response.read()
-        with open('./ResultMP3.mp3', 'wb') as f:
-            f.write(response_body)
-
-        # 스피커 출력
-        filename = "ResultMP3.mp3"
-        dst = "test.wav"
-        sound = AudioSegment.from_mp3(filename)
-        sound.export(dst, format="wav")
-
-        # data, fs = sf.read(filename, dtype='')
-        pl("test.wav")
-
-        # 제작된 음성 파일 삭제
-        os.remove("ResultMP3.mp3")
-        os.remove("sampleWav.wav")
-        os.remove("test.wav")
+            # 제작된 음성 파일 삭제
+            os.remove("ResultMP3.mp3")
+            os.remove("test.wav")
