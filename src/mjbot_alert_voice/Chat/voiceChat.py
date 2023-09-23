@@ -28,7 +28,7 @@ class MYOUNGJA():
         :return: 답변
         '''
         self.gpt_standard_messages = [{"role": "system",
-                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean. Your being purpose is support. So Please answer shortly, under 5 seconds , politely in korean. And if user say nothing then please do not say anything."}]
+                                    "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer shortly, under 5 seconds , politely in korean. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 기쁨, 슬픔, 평범, 당황, 분노, 사랑, 위험 word when you analyze the emotion of answer."}]
         self.gpt_standard_messages.append({"role": "user", "content": question})
 
         response = openai.ChatCompletion.create(
@@ -38,6 +38,25 @@ class MYOUNGJA():
         )
 
         answer = response['choices'][0]['message']['content']
+
+        temp = 0
+        ans_list = list(answer)
+
+        for i in range(0, len(ans_list)):
+            if ans_list[i] == '(':
+                temp = i
+
+        ans_emo = []
+        ans_re = []
+
+        for k in range(temp+1, temp+3):
+            ans_emo.append(ans_list[k])
+        ans_emotion = "".join(ans_emo)
+
+        for m in range(0, temp):
+            ans_re.append(ans_list[m])
+        ans_real = "".join(ans_re)
+
         self.gpt_standard_messages.append({"role": "assistant", "content": answer})
         if self.memory_size * 2 < len(self.gpt_standard_messages):
             self.gpt_standard_messages.pop(1)
@@ -45,7 +64,7 @@ class MYOUNGJA():
 
         self.memory_size += 1
 
-        return answer
+        return [ans_emotion, ans_real]
 
     def mic(self):
         '''
@@ -182,27 +201,6 @@ class MYOUNGJA():
                     self.speaker(question_list[1])
         elif tm.tm_hour == 15 and tm.tm_min == 00:
             self.speaker("할머니 우리 산책 나가요!")
-
-    def findNegative(self, saySentence):
-        '''
-        문장 중 부정적 발화를 파악하는 함수. 어절 별로 나눠서 비교하는 방식
-        :param saySentence:
-        :return: X
-        '''
-        openai.api_key = "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"
-
-        gpt_standard_messages = [{"role": "system",
-                                    f"content": f"analyze feeling of {saySentence} in one word. please answer korean. You can use 기쁨, 슬픔, 평범, 당황, 분노, 사랑, 위험 word when you answer."}]
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=gpt_standard_messages,
-            temperature=0.8,
-        )
-
-        gpt_standard_messages.append({"role": "user", "content": saySentence})
-        answer = response['choices'][0]['message']['content']
-
-        return answer
 
     def speaking(anw_text):
         '''
