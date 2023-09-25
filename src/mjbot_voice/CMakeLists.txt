@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(mjbot_alert_voice)
+project(mjbot_voice)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -19,7 +19,6 @@ find_package(ament_cmake REQUIRED)
 
 install(
   DIRECTORY
-    Alert
     Chat
   DESTINATION
     lib/${PROJECT_NAME}/
@@ -27,8 +26,7 @@ install(
 
 install(
   PROGRAMS
-    mjbot_alert_voice.py
-    VoicePublisher.py
+    mjbot_voice.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

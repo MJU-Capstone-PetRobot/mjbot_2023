@@ -48,11 +48,11 @@ def generate_launch_description():
             remappings=[('/cmd_vel_out','/diff_controller/cmd_vel_unstamped')]
         )
 
-    andino_control_timer = TimerAction(period=5.0, actions=[include_mjbot_control])
+    mjbot_control_timer = TimerAction(period=5.0, actions=[include_mjbot_control])
 
     nodes = [
         include_mjbot_description,
-        andino_control_timer,
+        mjbot_control_timer,
         twist_mux
     ]
 
