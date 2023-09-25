@@ -44,13 +44,14 @@ install(
   DIRECTORY
     scripts
     launch
+    config
   DESTINATION
     share/${PROJECT_NAME}/
 )
 
 install(
   PROGRAMS
-    scripts/mjbot_arm_control.py
+    scripts/arm_control_node.py
   DESTINATION
     lib/${PROJECT_NAME}
 )

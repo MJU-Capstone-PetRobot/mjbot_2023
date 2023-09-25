@@ -15,6 +15,7 @@ def generate_launch_description():
     package_share_directory = get_package_share_directory("mjbot_control")
     arm_controller_params_file = os.path.join(package_share_directory, 'config', 'arm_controllers.yaml')
     diff_drive_controller_params_file = os.path.join(package_share_directory, 'config', 'diff_drive_controller.yaml')
+    arm_control_node = Node(package='mjbot_control',executable='arm_control_node.py',output='screen')
 
     # Node to run the controller manager
     control_node = Node(
