@@ -1,0 +1,45 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    forward_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - r_shoulder_pitch
+      - r_shoulder_roll
+      - r_elbow_pitch
+      - l_shoulder_pitch
+      - l_shoulder_roll
+      - l_elbow_pitch
+      
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+      #- velocity
+
+forward_position_controller:
+  ros__parameters:
+    joints:
+      - r_shoulder_pitch
+      - r_shoulder_roll
+      - r_elbow_pitch
+      - l_shoulder_pitch
+      - l_shoulder_roll
+      - l_elbow_pitch
+
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
