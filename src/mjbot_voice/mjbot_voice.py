@@ -4,6 +4,7 @@ from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int16 , Int32, Bool, String
+import threading
 
 """
 Publisher : 산책(Int16) , 감정(Int16) , 모터 제어(Int16)
@@ -88,8 +89,13 @@ def main(args=None):
     talking_node = TalkingNode()
     hear_node = VoiceSuscriber()
 
-    rclpy.spin(talking_node)
-    rclpy.spin(hear_node)
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(talking_node)
+    executor.add_node(hear_node)
+
+    executor_thread = threading.Thread(target=executor.spin)
+    executor_thread.start()
+
     # 명자 객체 형성
     mj = MYOUNGJA("순자", "she")
 
@@ -142,6 +148,7 @@ def main(args=None):
 
     # 먼저 말 거는 기능
     mj.speak_first()
+    executor_thread.join()
     talking_node.destroy_node()
     rclpy.shutdown()
 
