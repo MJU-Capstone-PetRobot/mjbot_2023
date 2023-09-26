@@ -8,7 +8,7 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
-
+from launch.actions import ExecuteProcess
 
 pkg_mjbot_bringup = get_package_share_directory('mjbot_bringup')
 pkg_mjbot_control = get_package_share_directory('mjbot_control')
@@ -18,6 +18,13 @@ pkg_mjbot_description = get_package_share_directory('mjbot_description')
 
 
 def generate_launch_description():
+
+
+
+    node_mjbot_voice = ExecuteProcess(
+        cmd=['ros2', 'run', 'mjbot_voice', 'mjbot_voice.py'],
+        output='screen'
+    )
 
     include_mjbot_control =  IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -51,6 +58,7 @@ def generate_launch_description():
     mjbot_control_timer = TimerAction(period=5.0, actions=[include_mjbot_control])
 
     nodes = [
+        #node_mjbot_voice,
         include_mjbot_description,
         mjbot_control_timer,
         twist_mux
