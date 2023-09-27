@@ -42,10 +42,10 @@ class VisionNode(Node):
         self.owner_fall = False
 
         self.publisher_fps_ = self.create_publisher(Int32, "fps", 10)
-        self.publisher_owner_exists_ = self.create_publisher(Bool, "exist", 10)
-        self.publisher_owner_size_ = self.create_publisher(Int16MultiArray, "size", 10)
-        self.publisher_owner_center_ = self.create_publisher(Int16MultiArray, "center", 10)
-        self.publisher_owner_fall_ = self.create_publisher(Bool, "fall", 10)
+        self.publisher_owner_exists_ = self.create_publisher(Bool, "owner_exists", 10)
+        self.publisher_owner_center_ = self.create_publisher(Int16MultiArray, "owner_center", 10)
+        self.publisher_owner_size_ = self.create_publisher(Int16MultiArray, "owner_size", 10)
+        self.publisher_owner_fall_ = self.create_publisher(Bool, "owner_fall", 10)
         self.get_logger().info("Node has been started")
 
     def publish_fps(self):
