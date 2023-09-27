@@ -8,7 +8,7 @@ import threading
 
 """
 Publisher : 산책(Int16) , 감정(Int16) , 모터 제어(Int16)
-Subscriber : 위험 감지(Int16) , 낙상(Bool) , 잔량(String) , 쓰담쓰담(Bool) , 일산화탄소(Int32)  
+Subscriber : 낙상(Bool) , 잔량(String) , 쓰담쓰담(Bool) , 일산화탄소(Int32)  
 """
 
 class TalkingNode(Node):
@@ -22,7 +22,7 @@ class TalkingNode(Node):
 
     def publish_walk(self,walk):
         '''
-        모터 제어
+        산책
         '''
         msg = Int16()
         msg.data = walk
@@ -47,42 +47,50 @@ class TalkingNode(Node):
         self.publisher.publish(msg)
         self.get_logger().info('Published: %d' % msg.data)
 
-    def subscribe_callback(self, msg):
-        '''
-        낙상 / 배터리 잔량 / 쓰담쓰담
-        '''
-        self.get_logger().info('Received: %d' % msg.data)
-
-        if msg.data == 21:  # 낙상
-            speaking("할머니 괜찮으세요??")
-            # send_message(1) # 낙상 사고 발생 문자 발송
-        elif msg.data == 22:  # 배터리 잔량 부족
-            speaking("할머니 배고파요.")
-        elif msg.data == 23:  # 쓰담쓰담
-            speaking("할머니 감사해요.")
-
 class VoiceSuscriber(Node):
     def __init__(self):
-        super().__init__('Sub_node')
-        self.subscription = self.create_subscription(Int16, 'Dangers', self.subscribe_callback, 10)
-        self.subscription = self.create_subscription(Bool, 'fall_down', self.subscribe_callback, 10)
-        self.subscription = self.create_subscription(String, 'Bat_state', self.subscribe_callback, 10)
-        self.subscription = self.create_subscription(Bool, 'touch', self.subscribe_callback, 10)
-        self.subscription = self.create_subscription(Int32, 'co', self.subscribe_callback, 10)
+        super().__init__('hear_node')
+        self.subscription = self.create_subscription(Bool, 'fall_down', self.subscribe_callback_fall_down, 10)
+        self.subscription = self.create_subscription(String, 'Bat_state', self.subscribe_callback_bat_state, 10)
+        self.subscription = self.create_subscription(Bool, 'touch', self.subscribe_callback_touch, 10)
+        self.subscription = self.create_subscription(Int32, 'co', self.subscribe_callback_co, 10)
 
-    def subscribe_callback(self, msg):
+    def subscribe_callback_fall_down(self, msg):
         '''
-        낙상 / 배터리 잔량 / 쓰담쓰담
+        낙상
+        '''
+        self.get_logger().info(f'Received: {msg.dat}')
+
+        if msg.data == True:
+            speaking("할머니 괜찮으세요??")
+
+    def subscribe_callback_bat_state(self, msg):
+        '''
+        화재
+        '''
+        self.get_logger().info('Received: %s' % msg.data)
+
+        if msg.data <= 45:
+            speaking("할머니 배고파요")
+
+    def subscribe_callback_touch(self, msg):
+        '''
+        터치
+        '''
+        self.get_logger().info(f'Received: {msg.data}')
+
+        if msg.data == True:
+            speaking("깔깔깔")
+
+    def subscribe_callback_co(self, msg):
+        '''
+        화재
         '''
         self.get_logger().info('Received: %d' % msg.data)
 
-        if msg.data == 21:  # 낙상
-            speaking("할머니 괜찮으세요??")
-            # send_message(1) # 낙상 사고 발생 문자 발송
-        elif msg.data == 22:  # 배터리 잔량 부족
-            speaking("할머니 배고파요.")
-        elif msg.data == 23:  # 쓰담쓰담
-            speaking("할머니 감사해요.")
+        if msg.data >= 200:
+            speaking("할머니 불이 났어요!!")
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -104,40 +112,28 @@ def main(args=None):
     if response == "로봇":
         mj.speaker("네")
 
+        response = mj.mic()
         while response != "":
-            response = mj.mic()
-
             emotion = mj.gpt_send_anw(response)[0]
 
             # 기쁨, 슬픔, 평범, 당황, 분노, 사랑, 위험
             if emotion == "기쁨":
                 talking_node.publish_emotions(11)
-                #voicePublish = 11
-
             elif emotion == "당황":
-            
-                #voicePublish = 12
                 talking_node.publish_emotions(12)
             elif emotion == "분노":
-                #voicePublish = 13
                 talking_node.publish_emotions(13)
             elif emotion == "위험":
-                #voicePublish = 14
                 talking_node.publish_emotions(14)
             elif emotion == "슬픔":
-                #voicePublish = 15
                 talking_node.publish_emotions(15)
             elif emotion == "사랑":
-                #voicePublish = 16
                 talking_node.publish_emotions(16)
             elif emotion == "평범" and response == "왼손": # 왼손
-                #voicePublish = 1
                 talking_node.publish_arm_motions(1)
             elif emotion == "평범" and response == "오른손": # 오른손
-                #voicePublish = 2
                 talking_node.publish_arm_motions(2)
             else:
-                #voicePublish = 0
                 talking_node.publish_emotions(0)
 
             os.remove("sampleWav.wav")
@@ -145,6 +141,12 @@ def main(args=None):
             ans = mj.gpt_send_anw(response)[1]
 
             mj.speaker(ans)
+
+            response = mj.mic()
+            
+            if response == "":
+                os.remove("sampleWav.wav")
+                break
 
     # 먼저 말 거는 기능
     mj.speak_first()
