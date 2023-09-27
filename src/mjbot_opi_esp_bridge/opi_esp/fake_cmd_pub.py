@@ -41,9 +41,9 @@ class FakeCmdNode(Node):
 
     def publish_values(self, r, p, y, z):
             msg = Vector3()
-            msg.x = r # Replace with your actual values
-            msg.y = p
-            msg.z = y
+            msg.x = float(r) # Replace with your actual values
+            msg.y = float(p)
+            msg.z = float(y)
             zmsg = UInt16()
             zmsg.data = z
 
@@ -61,7 +61,7 @@ class FakeCmdNode(Node):
         self.owner_center = sub_msg.data
 
         if self.owner_exists:
-            y_cmd = self.owner_center[0] - 360
+            y_cmd = (self.owner_center[0] - 360) / 10
             self.publish_values(0, 0, y_cmd, 80)
         else:
             self.publish_values(0, 0, 0, 80)
