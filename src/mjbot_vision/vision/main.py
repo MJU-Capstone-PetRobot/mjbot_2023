@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 from rknnlite.api import RKNNLite
 
-from vision.depth import *
+#from vision.depth import *
 from vision.sort import Sort
 
 import random
@@ -22,7 +22,7 @@ from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
 from example_interfaces.msg import Int16MultiArray
 
-RKNN_MODEL = 'src/mjbot_vision/vision/yolov8n_ZQ.rknn' # 절대경로
+RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn' # 절대경로
 
 
 class VisionNode(Node):
@@ -79,7 +79,7 @@ class VisionNode(Node):
         self.get_logger().info("PUB: /owner_fall: {}".format(msg.data))
 
     def init_video(self):
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
         # self.cap = cv2.VideoCapture('/home/drcl/ros2_ws/src/vision/vision/video/fall-01.mp4')
         if not self.cap.isOpened():
             self.get_logger().info("VIDEO: Cannot open video")
@@ -217,7 +217,7 @@ def main(args=None):
     node.init_video()
     node.init_rknn()
     node.init_sort()
-    node.init_csv_log()
+    #node.init_csv_log()
 
     while True:
         start = dt.datetime.utcnow()
@@ -234,7 +234,7 @@ def main(args=None):
         node.runtime_sec += node.duration_sec
         node.runtime_sec = round(node.runtime_sec, 3)
 
-        node.run_csv_log()
+        #node.run_csv_log()
         node.detect_fall()
     
         node.publish_fps()
