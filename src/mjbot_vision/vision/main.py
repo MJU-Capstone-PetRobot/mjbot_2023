@@ -22,7 +22,7 @@ from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
 from example_interfaces.msg import Int16MultiArray
 
-RKNN_MODEL = '/home/drcl/ros2_ws/src/vision/vision/yolov5s-640-640-rk3588.rknn' # 절대경로
+RKNN_MODEL = 'src/mjbot_vision/vision/yolov8n_ZQ.rknn' # 절대경로
 
 
 class VisionNode(Node):
