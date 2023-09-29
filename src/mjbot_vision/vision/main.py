@@ -34,14 +34,13 @@ import sys
 import cv2
 from math import exp
 
-RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov8pos_relu_zq.rknn'  # 절대경로
+RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7-tiny_tk2_RK3588_i8.rknn'  # 절대경로
 
 
 class VisionNode(Node):
 
     def __init__(self):
         super().__init__("vision_process")
-        GenerateMeshgrid()
 
         self.fps = 0
         self.duration_sec = 0
@@ -148,58 +147,6 @@ class VisionNode(Node):
 
         return outputs
 
-    def drawing_box(self, outputs, img_h, img_w, orig_img):
-
-        out = []
-        for i in range(len(outputs)):
-            out.append(outputs[i])
-        predbox = postprocess(out, img_h, img_w)
-
-        print('obj num is :', len(predbox))
-
-        for i in range(len(predbox)):
-            xmin = int(predbox[i].xmin)
-            ymin = int(predbox[i].ymin)
-            xmax = int(predbox[i].xmax)
-            ymax = int(predbox[i].ymax)
-            classId = predbox[i].classId
-            score = predbox[i].score
-
-            cv2.rectangle(orig_img, (xmin, ymin),
-                          (xmax, ymax), (128, 72, 0), 2)
-            ptext = (xmin, ymin)
-            title = CLASSES[classId] + "%.2f" % score
-            cv2.putText(orig_img, title, ptext, cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6, (0, 0, 255), 2, cv2.LINE_AA)
-
-            pose = predbox[i].pose
-            for i in range(0, keypoint_num):
-                if pose[i * 3] > 0.5:
-                    if i < 5:
-                        color = color_list[0]
-                    elif 5 <= i < 12:
-                        color = color_list[1]
-                    else:
-                        color = color_list[2]
-                    cv2.circle(
-                        orig_img, (int(pose[i * 3 + 1]), int(pose[i * 3 + 2])), 2, color, 5)
-
-            for i, sk in enumerate(skeleton):
-                if pose[(sk[0] - 1) * 3] > 0.5:
-                    pos1 = (int(pose[(sk[0] - 1) * 3 + 1]),
-                            int(pose[(sk[0] - 1) * 3 + 2]))
-                    pos2 = (int(pose[(sk[1] - 1) * 3 + 1]),
-                            int(pose[(sk[1] - 1) * 3 + 2]))
-                    if (sk[0] - 1) < 5:
-                        color = color_list[0]
-                    elif 5 <= sk[0] - 1 < 12:
-                        color = color_list[1]
-                    else:
-                        color = color_list[2]
-                    cv2.line(orig_img, pos1, pos2, color,
-                             thickness=2, lineType=cv2.LINE_AA)
-
-        return orig_img
         # # Post process
         # input0_data = outputs[0]
         # input1_data = outputs[1]
@@ -298,6 +245,8 @@ def main(args=None):
     rclpy.init(args=args)
     node = VisionNode()
 
+    anchors = np.array(values).reshape(3, -1, 2).tolist()
+
     node.init_video()
     node.init_rknn()
 
@@ -313,23 +262,24 @@ def main(args=None):
 
         input_img = node.read_video()  # read and resize image
         output_img = node.run_rknn(input_img)  # yolo inference
-        result_img = node.drawing_box(output_img, 640, 360, input_img)
+        boxes, classes, scores = post_process(output_img, anchors)
+        result_img = draw(input_img, boxes, scores, classes)
         # node.run_sort() # object tracking
 
         duration = dt.datetime.utcnow() - start
         node.fps = int(round(1000000 / duration.microseconds))
 
-        node.duration_sec = (duration.microseconds / 1000000)
-        node.runtime_sec += node.duration_sec
-        node.runtime_sec = round(node.runtime_sec, 3)
+        # node.duration_sec = (duration.microseconds / 1000000)
+        # node.runtime_sec += node.duration_sec
+        # node.runtime_sec = round(node.runtime_sec, 3)
 
         # node.run_csv_log()
         # node.detect_fall()
 
-        node.publish_fps()
-        node.publish_owner_exists()
-        node.publish_owner_size()
-        node.publish_owner_center()
+        # node.publish_fps()
+        # node.publish_owner_exists()
+        # node.publish_owner_size()
+        # node.publish_owner_center()
         # if node.owner_fall:
         #     node.publish_owner_fall()
         # publish emotion
