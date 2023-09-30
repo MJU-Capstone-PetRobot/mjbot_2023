@@ -9,6 +9,7 @@ from rclpy.duration import Duration
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from control_msgs.action import FollowJointTrajectory
 from rclpy.action import ActionClient
+from std_msgs.msg import Int16
 
 mode_selection = 0  # 1: opposite phase, 2: in-phase, 3: pivot turn, 4: none
 action_state = 0  # 0: none, 1: in progress, 2: succeeded, 3: aborted, 4: rejected
@@ -49,11 +50,10 @@ class ActionClientNode(Node):
 class Commander(Node):
     def __init__(self):
         super().__init__('commander')
-        timer_period = 0.02
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.subscriptions = self.create_subscription(Int16, 'arm_mode', self.mode_callback, 10)
         self.actionclinetnode = ActionClientNode()
 
-    def timer_callback(self):
+    def mode_callback(self):
         global mode_selection
         global action_state
 
@@ -89,39 +89,18 @@ class Commander(Node):
 
         return trajectory_msg
 
-class JoySubscriber(Node):
-    def __init__(self):
-        super().__init__('joy_subscriber')
-        self.subscription = self.create_subscription(
-            Joy,
-            'joy',
-            self.listener_callback,
-            10)
-        self.subscription
 
-    def listener_callback(self, data):
-        global mode_selection
-
-        if data.buttons[0] == 1:  # in-phase # A button of Xbox 360 controller
-            mode_selection = 2
-            self.get_logger().info('in-phase')
-        elif data.buttons[4] == 1:  # opposite phase # LB button of Xbox 360 controller
-            mode_selection = 1
-        elif data.buttons[5] == 1:  # pivot turn # RB button of Xbox 360 controller
-            mode_selection = 3
-        else:
-            mode_selection = 4
 
 if __name__ == '__main__':
     rclpy.init(args=None)
 
     actionclinetnode = ActionClientNode()
     commander = Commander()
-    joy_subscriber = JoySubscriber()
+
 
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(commander)
-    executor.add_node(joy_subscriber)
+
     executor.add_node(actionclinetnode)
     trajectory_msg = commander.timer_callback()
     if action_state == 0:

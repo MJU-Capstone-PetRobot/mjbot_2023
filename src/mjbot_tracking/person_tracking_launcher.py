@@ -2,7 +2,7 @@ import rclpy
 from std_msgs.msg import Int16MultiArray
 import numpy as np
 from rclpy.node import Node
-from .neck_controller import NeckControllerPublisher
+from ..mjbot_control.neck_controller import NeckControllerPublisher
 
 class PersonTracking(Node):
     def __init__(self):
