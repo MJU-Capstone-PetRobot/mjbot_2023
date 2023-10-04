@@ -9,8 +9,11 @@ from rclpy.duration import Duration
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from control_msgs.action import FollowJointTrajectory
 from rclpy.action import ActionClient
+from std_msgs.msg import Int16
+from std_msgs.msg import String  # Import String message type
 
-mode_selection = 0  # 1: opposite phase, 2: in-phase, 3: pivot turn, 4: none
+
+mode_selection = "default"  # Change to a string
 action_state = 0  # 0: none, 1: in progress, 2: succeeded, 3: aborted, 4: rejected
 
 class ActionClientNode(Node):
@@ -49,11 +52,10 @@ class ActionClientNode(Node):
 class Commander(Node):
     def __init__(self):
         super().__init__('commander')
-        timer_period = 0.02
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.subscriptions = self.create_subscription(Int16, 'arm_mode', self.mode_callback, 10)
         self.actionclinetnode = ActionClientNode()
 
-    def timer_callback(self):
+    def mode_callback(self):
         global mode_selection
         global action_state
 
@@ -70,17 +72,17 @@ class Commander(Node):
         trajectory_msg.trajectory.joint_names = joint_names
         point = JointTrajectoryPoint()
 
-        if mode_selection == 1:  # Go to the walk position
+        if mode_selection == 1:  # Go to the take walk position
             positions = [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
-            self.get_logger().info('opposite phase')
+            self.get_logger().info('walk position')
         elif mode_selection == 2:  # give right hand
             positions = [0.0, -1.5, 0.0, -1.5, 1.5, 0.3]
-            self.get_logger().info('in-phase')
+            self.get_logger().info('give right hand')
         elif mode_selection == 3:  # hugging position
             positions = [1.5, -1.5, -0.5, -1.5, 1.5, 0.5]
-            self.get_logger().info('pivot turn')
+            self.get_logger().info('hugging position')
         else:
-            positions = [0.0, -1.5, 0.0, 0.0, 1.5, 0.0]
+            positions = [0.0, -1.5, 0.0, 0.0, 1.5, 0.0]  # default position
 
         point.positions = positions
         point.time_from_start = Duration(seconds=2).to_msg()
@@ -89,59 +91,72 @@ class Commander(Node):
 
         return trajectory_msg
 
-class JoySubscriber(Node):
+
+class Commander(Node):
     def __init__(self):
-        super().__init__('joy_subscriber')
-        self.subscription = self.create_subscription(
-            Joy,
-            'joy',
-            self.listener_callback,
-            10)
-        self.subscription
+        super().__init__('commander')
+        self.subscriptions = self.create_subscription(String, 'arm_mode', self.mode_callback, 10)  # Change message type to String
+        self.actionclinetnode = ActionClientNode()
 
-    def listener_callback(self, data):
+    def mode_callback(self, msg):
         global mode_selection
+        global action_state
 
-        if data.buttons[0] == 1:  # in-phase # A button of Xbox 360 controller
-            mode_selection = 2
-            self.get_logger().info('in-phase')
-        elif data.buttons[4] == 1:  # opposite phase # LB button of Xbox 360 controller
-            mode_selection = 1
-        elif data.buttons[5] == 1:  # pivot turn # RB button of Xbox 360 controller
-            mode_selection = 3
+        joint_names = [
+            'r_shoulder_pitch',
+            'r_shoulder_roll',
+            'r_elbow_pitch',
+            'l_shoulder_pitch',
+            'l_shoulder_roll',
+            'l_elbow_pitch'
+        ]
+
+        trajectory_msg = FollowJointTrajectory.Goal()
+        trajectory_msg.trajectory.joint_names = joint_names
+        point = JointTrajectoryPoint()
+
+        # Use string values to set the positions
+        if msg.data == "walk":
+            positions = [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
+            self.get_logger().info('walk position')
+        elif msg.data == "give_right_hand":
+            positions = [0.0, -1.5, 0.0, -1.5, 1.5, 0.3]
+            self.get_logger().info('give right hand')
+        elif msg.data == "hug":
+            positions = [1.5, -1.5, -0.5, -1.5, 1.5, 0.5]
+            self.get_logger().info('hugging position')
         else:
-            mode_selection = 4
+            positions = [0.0, -1.5, 0.0, 0.0, 1.5, 0.0]  # Default position
+
+        point.positions = positions
+        point.time_from_start = Duration(seconds=2).to_msg()
+
+        trajectory_msg.trajectory.points = [point]
+
+        # Publish the trajectory message to the action client
+        if action_state == 0:
+            actionclinetnode.send_goal(trajectory_msg)
+            action_state = 1
 
 if __name__ == '__main__':
     rclpy.init(args=None)
 
     actionclinetnode = ActionClientNode()
     commander = Commander()
-    joy_subscriber = JoySubscriber()
 
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(commander)
-    executor.add_node(joy_subscriber)
     executor.add_node(actionclinetnode)
-    trajectory_msg = commander.timer_callback()
-    if action_state == 0:
-        actionclinetnode.send_goal(trajectory_msg)
-        action_state = 1
 
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
     rate = commander.create_rate(2)
-
-    while True:
-        if action_state == 2:
-            trajectory_msg = commander.timer_callback()
-            action_state = 0
-            actionclinetnode.send_goal(trajectory_msg)
 
     try:
         while rclpy.ok():
             rate.sleep()
     except KeyboardInterrupt:
         pass
+
     rclpy.shutdown()
     executor_thread.join()
