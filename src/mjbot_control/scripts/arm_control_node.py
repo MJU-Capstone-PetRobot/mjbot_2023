@@ -16,10 +16,12 @@ from std_msgs.msg import String  # Import String message type
 mode_selection = "default"  # Change to a string
 action_state = 0  # 0: none, 1: in progress, 2: succeeded, 3: aborted, 4: rejected
 
+
 class ActionClientNode(Node):
     def __init__(self):
         super().__init__('action_client_node')
-        self._action_client = ActionClient(self, FollowJointTrajectory, '/joint_trajectory_controller/follow_joint_trajectory')
+        self._action_client = ActionClient(
+            self, FollowJointTrajectory, '/joint_trajectory_controller/follow_joint_trajectory')
 
     def send_goal(self, trajectory_msg):
         global action_state
@@ -49,10 +51,12 @@ class ActionClientNode(Node):
         self.get_logger().info('result received: {0}'.format(result))
         action_state = 2
 
+
 class Commander(Node):
     def __init__(self):
         super().__init__('commander')
-        self.subscriptions = self.create_subscription(Int16, 'arm_mode', self.mode_callback, 10)
+        self.subscriptions = self.create_subscription(
+            String, 'arm_mode', self.mode_callback, 10)
         self.actionclinetnode = ActionClientNode()
 
     def mode_callback(self):
@@ -95,7 +99,8 @@ class Commander(Node):
 class Commander(Node):
     def __init__(self):
         super().__init__('commander')
-        self.subscriptions = self.create_subscription(String, 'arm_mode', self.mode_callback, 10)  # Change message type to String
+        self.subscriptions = self.create_subscription(
+            String, 'arm_mode', self.mode_callback, 10)  # Change message type to String
         self.actionclinetnode = ActionClientNode()
 
     def mode_callback(self, msg):
@@ -137,6 +142,7 @@ class Commander(Node):
         if action_state == 0:
             actionclinetnode.send_goal(trajectory_msg)
             action_state = 1
+
 
 if __name__ == '__main__':
     rclpy.init(args=None)
