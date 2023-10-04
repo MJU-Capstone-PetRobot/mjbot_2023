@@ -165,13 +165,19 @@ def draw(image, boxes, scores, classes):
     """Draw the boxes on the image.
     # Argument:
         image: original image.
-        boxes: ndarray, boxes of objects.
-        classes: ndarray, classes of objects.
+        boxes: ndarray, boxes of objects. 2D
+        classes: ndarray, classes of objects. 1D
         scores: ndarray, scores of objects.
         all_classes: all classes name.
     """
     p_size = [0, 0] # w, h
     p_center = [0, 0] # cx, cy
+
+    p_boxes = np.array([])
+    p_scores = np.array([])
+
+    # print("boxes ndim {}".format(boxes.ndim))
+    # print("sroces ndim {}".format(scores.ndim))
 
     for box, score, cl in zip(boxes, scores, classes):
         left, top, right, bottom = box
@@ -186,6 +192,9 @@ def draw(image, boxes, scores, classes):
         else_color = (255, 0, 0)
 
         if CLASSES[cl] == 'person':
+            p_boxes = np.append(p_boxes, box)
+            p_scores = np.append(p_scores, score)
+
             box_color = p_color
 
             p_size[0] = (int)(right - left) # w
@@ -202,4 +211,4 @@ def draw(image, boxes, scores, classes):
         cv2.rectangle(image, (left, top), (right, bottom), box_color, 2)
         cv2.putText(image, '{0} {1:.2f}'.format(CLASSES[cl], score), (left, top - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-    return p_size, p_center
+    return p_size, p_center, p_boxes, p_scores
