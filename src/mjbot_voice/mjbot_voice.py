@@ -18,8 +18,8 @@ class TalkingNode(Node):
         self.get_logger().info("Talking Node")
         self.publisher_emotions = self.create_publisher(
             String, 'emo', 10)  # Updated topic name and message type
-        self.publisher_arm_motions = self.create_publisher(
-            Int16, 'Arm_motions', 10)
+        self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
+
         self.publisher_walk = self.create_publisher(Int16, 'walk', 10)
 
     def publish_walk(self, walk):
@@ -138,10 +138,12 @@ def main(args=None):
                 talking_node.publish_emotions("5")
             elif emotion == "daily":
                 talking_node.publish_emotions("6")
-            elif emotion == "NULL" and response == "왼손":  # 왼손
-                talking_node.publish_arm_motions(1)
+            elif emotion == "NULL" and response == "sancheckgaja":  # 왼손
+                talking_node.publish_arm_motions("walk")
             elif emotion == "NULL" and response == "오른손":  # 오른손
-                talking_node.publish_arm_motions(2)
+                talking_node.publish_arm_motions("give_right_hand")
+            elif emotion == "NULL" and response == "hug":  # 오른손
+                talking_node.publish_arm_motions("hug")
             else:
                 talking_node.publish_emotions("0")
 
