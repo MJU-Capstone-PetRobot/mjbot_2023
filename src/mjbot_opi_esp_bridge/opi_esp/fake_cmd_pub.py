@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from example_interfaces.msg import String
+from std_msgs.msg import String
 from example_interfaces.msg import Bool
 from example_interfaces.msg import Int16MultiArray
 from geometry_msgs.msg import Vector3
