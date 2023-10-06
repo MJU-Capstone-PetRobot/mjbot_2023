@@ -37,7 +37,7 @@ class TalkingNode(Node):
         표정
         '''
         msg = String()  # Updated message type to String
-        msg.data = emotion
+        msg.data = str(emotion)
         self.publisher_emotions.publish(msg)
         self.get_logger().info('Published: %s' % msg.data)  # Updated log message format
 
@@ -125,20 +125,14 @@ def main(args=None):
             emotion = mj.gpt_send_anw(response)[0]
 
             # NULL, close, moving, wink, angry, sad, daily
-            if emotion == "NULL":
-                talking_node.publish_emotions("0")
-            elif emotion == "close":
-                talking_node.publish_emotions("1")
-            elif emotion == "moving":
-                talking_node.publish_emotions("2")
-            elif emotion == "wink":
-                talking_node.publish_emotions("3")
-            elif emotion == "angry":
-                talking_node.publish_emotions("4")
-            elif emotion == "sad":
-                talking_node.publish_emotions("5")
-            elif emotion == "daily":
+            if emotion == "평범":
                 talking_node.publish_emotions("6")
+            elif emotion == "당황":
+                talking_node.publish_emotions("2")
+            elif emotion == "분노":
+                talking_node.publish_emotions("4")
+            elif emotion == "슬픔":
+                talking_node.publish_emotions("5")
             elif emotion == "NULL" and response == "sancheckgaja":  # 왼손
                 talking_node.publish_arm_motions("walk")
             elif emotion == "NULL" and response == "오른손":  # 오른손
