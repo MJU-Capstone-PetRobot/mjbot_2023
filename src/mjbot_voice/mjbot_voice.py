@@ -3,12 +3,13 @@ import os
 from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int16, Int32, Bool, String
+from std_msgs.msg import String
+from example_interfaces.msg import Int32, String, Bool
 import threading
 
 """
-Publisher : 산책(Int16) , 감정(Int16) , 모터 제어(Int16)
-Subscriber : 낙상(Bool) , 잔량(String) , 쓰담쓰담(Bool) , 일산화탄소(Int32)  
+Publisher : 감정(example_interfaces.msg/String) , 팔 제어(std_msgs.msg/String)
+Subscriber : 낙상(example_interfaces.msg/Bool) , 잔량(example_interfaces.msg/String) , 쓰담쓰담(example_interfaces.msg/Bool) , 일산화탄소(exmaple_interfaces.msg/Int32)  
 """
 
 
@@ -16,20 +17,19 @@ class TalkingNode(Node):
     def __init__(self):
         super().__init__('talking_node')
         self.get_logger().info("Talking Node")
-        self.publisher_emotions = self.create_publisher(
-            String, 'emo', 10)  # Updated topic name and message type
+        self.publisher_emotions = self.create_publisher(String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
 
-        self.publisher_walk = self.create_publisher(Int16, 'walk', 10)
+        # self.publisher_walk = self.create_publisher(Int16, 'walk', 10)
 
-    def publish_walk(self, walk):
-        '''
-        산책
-        '''
-        msg = Int16()
-        msg.data = walk
-        self.publisher_walk.publish(msg)
-        self.get_logger().info('Published: %d' % msg.data)
+    # def publish_walk(self, walk):
+    #     '''
+    #     산책
+    #     '''
+    #     msg = Int16()
+    #     msg.data = walk
+    #     self.publisher_walk.publish(msg)
+    #     self.get_logger().info('Published: %d' % msg.data)
 
     def publish_emotions(self, emotion):
         '''
@@ -44,10 +44,10 @@ class TalkingNode(Node):
         '''
         모터 제어
         '''
-        msg = Int16()
+        msg = String()
         msg.data = Arm_motions
         self.publisher_arm_motions.publish(msg)
-        self.get_logger().info('Published: %d' % msg.data)
+        self.get_logger().info('Published: %s' % msg.data)
 
 
 class VoiceSuscriber(Node):
