@@ -4,8 +4,9 @@ from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from example_interfaces.msg import Int32, String, Bool
+from example_interfaces.msg import Int32, Bool
 import threading
+
 
 """
 Publisher : 감정(example_interfaces.msg/String) , 팔 제어(std_msgs.msg/String)
