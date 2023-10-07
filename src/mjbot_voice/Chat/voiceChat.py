@@ -81,8 +81,8 @@ class MYOUNGJA():
         from scipy.io.wavfile import write
 
         ## NAVER CLOVA API
-        client_id = "rlmmwycb6e"
-        client_secret = "Vsprb6BSk7LP2IuWpSxdvvV5tGVriniDiHMXtodQ"
+        client_id = "ud0o0y1iat"
+        client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
 
         # 음성 녹음
         fs = 44100
@@ -145,8 +145,8 @@ class MYOUNGJA():
         from playsound import playsound as pl
 
         # NAVER CLOVA
-        client_id = "rlmmwycb6e"
-        client_secret = "Vsprb6BSk7LP2IuWpSxdvvV5tGVriniDiHMXtodQ"
+        client_id = "ud0o0y1iat"
+        client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
 
         encText = urllib.parse.quote(anw_text)
         data = "speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
@@ -220,8 +220,8 @@ def speaking(anw_text):
     from playsound import playsound as pl
 
     # NAVER CLOVA
-    client_id = "rlmmwycb6e"
-    client_secret = "Vsprb6BSk7LP2IuWpSxdvvV5tGVriniDiHMXtodQ"
+    client_id = "ud0o0y1iat"
+    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
     encText = urllib.parse.quote(anw_text)
     data = "speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
     urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
