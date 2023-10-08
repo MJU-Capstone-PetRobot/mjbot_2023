@@ -1,8 +1,8 @@
 import datetime as dt
 import numpy as np
 import cv2
-f000rom rknnlite.api import RKNNLite
-1
+from rknnlite.api import RKNNLite
+
 from depth import *
 from sort import Sort
 
