@@ -15,7 +15,7 @@ from matplotlib.animation import FuncAnimation
 from random import randrange
 
 import csv
-from yolo import *
+from vision.yolo import *
 
 import rclpy
 from rclpy.node import Node
@@ -35,7 +35,11 @@ import sys
 import cv2
 from math import exp
 
-RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7-tiny_tk2_RK3588_i8.rknn'  # 절대경로
+values = [12.0, 16.0, 19.0, 36.0, 40.0, 28.0, 36.0, 75.0, 76.0,
+          55.0, 72.0, 146.0, 142.0, 110.0, 192.0, 243.0, 459.0, 401.0]
+
+
+RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision2/resource/yolov7-tiny_tk2_RK3588_i8.rknn'  # 절대경로
 
 
 class VisionNode(Node):
@@ -215,6 +219,25 @@ class VisionNode(Node):
             }
 
             csv_writer.writerow(info)
+    # publish persion coordinates
+
+    def publish_person_coordinates(self, boxes, classes):
+        # Check if a person is detected
+        if classes == 1 and len(boxes) > 0:
+            # Get the coordinates of the person
+            x1, y1, x2, y2 = [int(coord) for coord in boxes[0]]
+
+            # Calculate the center of the person
+            x_center = (x1 + x2) / 2
+            y_center = (y1 + y2) / 2
+
+            # Publish the coordinates
+            msg = Int16MultiArray()
+            msg.data = [x_center, y_center]
+
+            # Publish owner_center
+            self.publisher_owner_center_.publish(msg)
+            self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
 
 
 def main(args=None):
@@ -240,6 +263,7 @@ def main(args=None):
         output_img = node.run_rknn(input_img)  # yolo inference
         boxes, classes, scores = post_process(output_img, anchors)
         result_img = draw(input_img, boxes, scores, classes)
+        node.publish_person_coordinates(boxes, classes)
         # node.run_sort() # object tracking
 
         duration = dt.datetime.utcnow() - start

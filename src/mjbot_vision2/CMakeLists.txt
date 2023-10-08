@@ -40,6 +40,12 @@ if(BUILD_TESTING)
 endif()
 
 
+install(
+  DIRECTORY
+    vision
+  DESTINATION
+    lib/${PROJECT_NAME}
+)
 
 
 install(

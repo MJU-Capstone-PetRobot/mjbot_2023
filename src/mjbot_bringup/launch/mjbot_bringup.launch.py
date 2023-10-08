@@ -72,8 +72,8 @@ def generate_launch_description():
         include_mjbot_description,
         mjbot_control_timer,
         twist_mux,
-        node_mjbot_vision2,
-        node_mjbot_tracking
+        # node_mjbot_vision2,
+        # node_mjbot_tracking
     ]
 
     return LaunchDescription(nodes

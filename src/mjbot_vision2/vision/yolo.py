@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import cv2
 import sys
@@ -5,6 +7,8 @@ import argparse
 
 # from utils.coco_utils import COCO_test_helper
 import numpy as np
+
+
 values = [12.0, 16.0, 19.0, 36.0, 40.0, 28.0, 36.0, 75.0, 76.0,
           55.0, 72.0, 146.0, 142.0, 110.0, 192.0, 243.0, 459.0, 401.0]
 
@@ -183,9 +187,9 @@ def post_process(input_data, anchors):
 def draw(image, boxes, scores, classes):
     for box, score, cl in zip(boxes, scores, classes):
         top, left, right, bottom = [int(_b) for _b in box]
-        print('class: {}, score: {}'.format(CLASSES[cl], score))
-        print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(
-            top, left, right, bottom))
+        # print('class: {}, score: {}'.format(CLASSES[cl], score))
+        # print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(
+        #    top, left, right, bottom))
 
         cv2.rectangle(image, (top, left), (right, bottom), (255, 0, 0), 2)
         cv2.putText(image, '{0} {1:.2f}'.format(CLASSES[cl], score),
