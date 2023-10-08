@@ -72,7 +72,6 @@ def generate_launch_description():
     nodes = [
         control_node,
         joint_state_broadcaster_spawner,
-        diff_drive_controller_spawner,
         delay_controller_spawner_after_joint_state_broadcaster_spawner,
 
         # load_trajectory_controller,
