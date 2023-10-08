@@ -24,8 +24,8 @@ def generate_launch_description():
     )
 
     node_mjbot_vision2 = Node(
-        package="vision",
-        executable="vision_process",
+        package="mjbot_vision2",
+        executable="main.py",
         output="screen"
     )
 
