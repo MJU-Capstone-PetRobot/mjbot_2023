@@ -5,11 +5,24 @@ import cv2
 import sys
 import argparse
 
-# from utils.coco_utils import COCO_test_helper
+import rclpy
+from utils.coco_utils import COCO_test_helper
 import numpy as np
+from PIL import Image, ImageDraw
+import numpy as np
+import cv2
+import random
+
+from rknnlite.api import RKNNLite
 
 
-values = [12.0, 16.0, 19.0, 36.0, 40.0, 28.0, 36.0, 75.0, 76.0,
+vision_package_directory = get_package_share_directory("mjbot_vision2")
+
+model = RKNNLite()
+model.load_rknn(os.path.join(vision_package_directory, 'model', 'yolov7.rknn'))
+model.init_runtime()
+
+ANCHORS = [12.0, 16.0, 19.0, 36.0, 40.0, 28.0, 36.0, 75.0, 76.0,
           55.0, 72.0, 146.0, 142.0, 110.0, 192.0, 243.0, 459.0, 401.0]
 
 
@@ -24,11 +37,13 @@ CLASSES = ("person", "bicycle", "car", "motorbike ", "aeroplane ", "bus ", "trai
            "pottedplant", "bed", "diningtable", "toilet ", "tvmonitor", "laptop	", "mouse	", "remote ", "keyboard ", "cell phone", "microwave ",
            "oven ", "toaster", "sink", "refrigerator ", "book", "clock", "vase", "scissors ", "teddy bear ", "hair drier", "toothbrush ")
 
-coco_id_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 31, 32, 33, 34,
-                35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
-                64, 65, 67, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88, 89, 90]
 
+colors = tuple(tuple(random.randint(0, 255) for _ in range(3)) for _ in range(len(CLASSES)))
 
+cutout_mask = None
+highlight_pts = None
+highlight_mask = None
+co_helper = COCO_test_helper(enable_letter_box=True)
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -42,8 +57,13 @@ def filter_boxes(boxes, box_confidences, box_class_probs):
     class_max_score = np.max(box_class_probs, axis=-1)
     classes = np.argmax(box_class_probs, axis=-1)
 
-    _class_pos = np.where(box_confidences >= OBJ_THRESH)
-    scores = (box_confidences)[_class_pos]
+    if class_num==1:
+        _class_pos = np.where(box_confidences >= OBJ_THRESH)
+        scores = (box_confidences)[_class_pos]
+    else:
+        _class_pos = np.where(class_max_score* box_confidences >= OBJ_THRESH)
+        scores = (class_max_score* box_confidences)[_class_pos]
+
 
     boxes = boxes[_class_pos]
     classes = classes[_class_pos]
@@ -84,19 +104,6 @@ def nms_boxes(boxes, scores):
     keep = np.array(keep)
     return keep
 
-
-def dfl(position):
-    # Distribution Focal Loss (DFL)
-    import torch
-    x = torch.tensor(position)
-    n, c, h, w = x.shape
-    p_num = 4
-    mc = c//p_num
-    y = x.reshape(n, p_num, mc, h, w)
-    y = y.softmax(2)
-    acc_metrix = torch.tensor(range(mc)).float().reshape(1, 1, mc, 1, 1)
-    y = (y*acc_metrix).sum(2)
-    return y.numpy()
 
 
 def box_process(position, anchors):
@@ -184,17 +191,57 @@ def post_process(input_data, anchors):
     return boxes, classes, scores
 
 
-def draw(image, boxes, scores, classes):
-    for box, score, cl in zip(boxes, scores, classes):
-        top, left, right, bottom = [int(_b) for _b in box]
-        # print('class: {}, score: {}'.format(CLASSES[cl], score))
-        # print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(
-        #    top, left, right, bottom))
 
-        cv2.rectangle(image, (top, left), (right, bottom), (255, 0, 0), 2)
-        cv2.putText(image, '{0} {1:.2f}'.format(CLASSES[cl], score),
-                    (top, left - 6),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6, (0, 0, 255), 2)
-    return image
-#     return p_size, p_center
+# Pillow를 사용하여 이미지에 경계 상자 및 레이블을 그리는 함수입니다.
+# 이미지를 수정하지 않고 새 이미지를 반환합니다.
+def draw_results(image, results):
+    image = Image.fromarray(image)
+    draw = ImageDraw.Draw(image)
+    for box, cl, score in results:
+        text = CLASSES[cl]  # 클래스 이름을 가져옵니다.
+        draw.rectangle(box, outline=colors[cl], width=2)  # 경계 상자 그리기
+        label_box = draw.textbbox((0,0), text)  # 레이블의 위치 계산
+        y = box[1] - label_box[3]
+        if y < 0:
+            y = box[3] + 1
+        draw.text((box[0], y), text, colors[cl])  # 레이블 그리기
+    return np.asarray(image)
+
+
+# 원본 이미지를 수정하지 않고 마스크를 적용한 이미지를 반환합니다.
+def make_mask(image):
+    return cv2.add(image, 0, mask=cutout_mask) if cutout_mask is not None else image
+
+# 이미지 위에 마스크를 그리는 함수입니다.
+def draw_mask(image):
+    if highlight_mask is not None:
+        cv2.addWeighted(image, 1, highlight_mask, 0.2, 0, image)
+        cv2.polylines(image, highlight_pts, True, (255, 255, 0), 1)
+
+# 이미지에서 객체를 검출하는 함수입니다.
+def detect(image):
+    img, ratio, (dw, dh) = co_helper.letter_box(im=image, new_shape=(IMG_SIZE[1], IMG_SIZE[0]), pad_color=(0,0,0), info_need=True)
+
+    outputs = model.inference([cv2.cvtColor(make_mask(img), cv2.COLOR_BGR2RGB)])
+    boxes, classes, scores = post_process(outputs, ANCHORS)
+
+    if boxes is not None:
+        for i in range(len(boxes)):
+            bbox = boxes[i]
+            bbox[0] -= dw
+            bbox[1] -= dh
+            bbox[2] -= dw
+            bbox[3] -= dh
+            boxes[i] = [value/ratio for value in bbox]
+        
+    return [(
+        tuple(map(int, item[0])),  # box
+        item[1],  # name
+        item[2]  # score
+     ) for item in zip(boxes, classes, scores)] if boxes is not None else []
+
+# 객체 검출 임계값을 설정하는 함수입니다.
+def set_obj_thresh(thresh):
+    global OBJ_THRESH
+    OBJ_THRESH = thresh
+

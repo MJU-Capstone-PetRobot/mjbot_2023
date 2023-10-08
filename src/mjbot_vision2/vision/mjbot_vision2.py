@@ -2,7 +2,6 @@
 import datetime as dt
 import numpy as np
 import cv2
-from rknnlite.api import RKNNLite
 
 # from vision.depth import *
 # from .sort import Sort
@@ -15,7 +14,7 @@ from matplotlib.animation import FuncAnimation
 from random import randrange
 
 import csv
-from vision.yolo import *
+from scripts.yolo import *
 
 import rclpy
 from rclpy.node import Node
@@ -23,7 +22,6 @@ from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
 from example_interfaces.msg import Int16MultiArray
 import threading
-import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
 import os
@@ -35,12 +33,7 @@ import sys
 import cv2
 from math import exp
 
-values = [12.0, 16.0, 19.0, 36.0, 40.0, 28.0, 36.0, 75.0, 76.0,
-          55.0, 72.0, 146.0, 142.0, 110.0, 192.0, 243.0, 459.0, 401.0]
-
-
-RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision2/resource/yolov7-tiny_tk2_RK3588_i8.rknn'  # 절대경로
-
+w, h = 640, 360
 
 class VisionNode(Node):
 
@@ -124,34 +117,6 @@ class VisionNode(Node):
         # self.img = cv2.resize(src, dsize=(0, 0), fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
         # self.img = cv2.copyMakeBorder(self.img, 80, 80, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
 
-    def init_rknn(self):
-        # Using verbose option saves lots of state
-        self.rknn_lite = RKNNLite(verbose=False)
-
-        # Load RKNN model
-        self.get_logger().info('RKNN: Load RKNN model')
-        ret = self.rknn_lite.load_rknn(RKNN_MODEL)
-        if ret != 0:
-            self.get_logger().info('RKNN: Fail to load RKNN model')
-            exit(ret)
-        self.get_logger().info('RKNN: done')
-
-        # Init runtime environment
-        self.get_logger().info('RKNN: Init runtime environment')
-        ret = self.rknn_lite.init_runtime(core_mask=RKNNLite.NPU_CORE_0)
-        if ret != 0:
-            self.get_logger().info('RKNN: Fail to init runtime environment')
-            exit(ret)
-        self.get_logger().info('RKNN: Done')
-
-    def run_rknn(self, img):
-        # Inference
-        self.get_logger().info('RKNN: Inference')
-        outputs = self.rknn_lite.inference(inputs=[img])
-        self.get_logger().info('RKNN: Done')
-
-        return outputs
-
     def init_sort(self):
         self.sort = Sort(max_age=2, min_hits=3, iou_threshold=0.3, )
 
@@ -219,11 +184,24 @@ class VisionNode(Node):
             }
 
             csv_writer.writerow(info)
+
+ 
+
     # publish persion coordinates
 
-    def publish_person_coordinates(self, boxes, classes):
+    def publish_person_coordinates(self, results):
         # Check if a person is detected
-        if classes == 1 and len(boxes) > 0:
+
+        for box, label_idx, _ in results:
+            # 해당 클래스를 찾음
+            label = CLASSES[label_idx]
+            obj_set = self._tracing_obj_dict.get(label)
+            if obj_set is None:
+                continue
+
+
+
+
             # Get the coordinates of the person
             x1, y1, x2, y2 = [int(coord) for coord in boxes[0]]
 
@@ -243,12 +221,7 @@ class VisionNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = VisionNode()
-
-    anchors = np.array(values).reshape(3, -1, 2).tolist()
-
     node.init_video()
-    node.init_rknn()
-
     executor = MultiThreadedExecutor()
     executor.add_node(node)
     executor_thread = threading.Thread(target=executor.spin)
@@ -260,9 +233,8 @@ def main(args=None):
         start = dt.datetime.utcnow()
 
         input_img = node.read_video()  # read and resize image
-        output_img = node.run_rknn(input_img)  # yolo inference
-        boxes, classes, scores = post_process(output_img, anchors)
-        result_img = draw(input_img, boxes, scores, classes)
+        result_img = draw_results(input_img)  # yolo inference
+
         node.publish_person_coordinates(boxes, classes)
         # node.run_sort() # object tracking
 
@@ -295,7 +267,6 @@ def main(args=None):
             break
 
     rclpy.shutdown()
-    node.rknn_lite.release()
     node.cap.release()
     cv2.destroyAllWindows()
 

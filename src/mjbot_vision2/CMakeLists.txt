@@ -50,7 +50,7 @@ install(
 
 install(
   PROGRAMS
-    vision/main.py
+    vision/mjbot_vision2.py
   DESTINATION
     lib/${PROJECT_NAME}
 )
