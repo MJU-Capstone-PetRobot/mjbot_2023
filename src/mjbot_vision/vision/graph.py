@@ -12,24 +12,24 @@ y_vals = []
 index = count()
 
 def animate(i):
-    data = pd.read_csv('./log.csv')
-    x = data['Runtime']
-    dx = data['Width']
-    dy = data['Height']
-    # width_diff = data['Width Diff']
-    # height_diff = data['Height Diff']
-    fall = data['Fall Detection']
+    data = pd.read_csv('log.csv')
+    x = data['run_time']
+    dx = data['width']
+    dy = data['height']
+    width_diff = data['width_diff']
+    height_diff = data['height_diff']
+    fall = data['fall_detection']
 
     plt.cla()
 
-    plt.ylim([0, 1])
+    plt.ylim([-7000, 7000])
     plt.xlabel('time (sec)')
     plt.ylabel('size')
     
     # plt.plot(x, dx, label='width')
     # plt.plot(x, dy, label='height')
-    # plt.plot(x, width_diff, label='width_diff')
-    # plt.plot(x, height_diff, label='height_diff')
+    plt.plot(x, width_diff, label='width_diff')
+    plt.plot(x, height_diff, label='height_diff')
     plt.plot(x, fall, label='fall')
 
     plt.legend(loc='upper left')

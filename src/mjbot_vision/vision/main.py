@@ -3,8 +3,8 @@ import numpy as np
 import cv2
 from rknnlite.api import RKNNLite
 
-from depth import *
-from sort import Sort
+from vision.depth import *
+from vision.sort import Sort
 
 import random
 from itertools import count
@@ -14,13 +14,12 @@ from matplotlib.animation import FuncAnimation
 from random import randrange
 
 import csv
-import yolo
+import vision.yolo
 
 import rclpy
 from rclpy.node import Node
 from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
-from example_interfaces.msg import Int16
 from example_interfaces.msg import Int16MultiArray
 
 RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'  # 절대경로
@@ -31,8 +30,6 @@ class VisionNode(Node):
     def __init__(self):
         super().__init__("vision_process")
 
-        self.fps = 0
-        self.duration_sec = 0
         self.runtime_sec = 0
 
         self.owner_size = [0, 0]  # [w, h]
@@ -44,6 +41,7 @@ class VisionNode(Node):
         self.owner_fall = False
 
         self.publisher_fps_ = self.create_publisher(Int32, "fps", 10)
+
         self.publisher_owner_exists_ = self.create_publisher(
             Bool, "owner_exists", 10)
         self.publisher_owner_center_ = self.create_publisher(
@@ -52,11 +50,12 @@ class VisionNode(Node):
             Int16MultiArray, "owner_size", 10)
         self.publisher_owner_fall_ = self.create_publisher(
             Bool, "owner_fall", 10)
+
         self.get_logger().info("Node has been started")
 
-    def publish_fps(self):
+    def publish_fps(self, fps):
         msg = Int32()
-        msg.data = self.fps
+        msg.data = fps
         self.publisher_fps_.publish(msg)
         self.get_logger().info("PUB: /fps: {}".format(msg.data))
 
@@ -92,6 +91,7 @@ class VisionNode(Node):
         self.publisher_owner_fall_.publish(msg)
         self.get_logger().info("PUB: /owner_fall: {}".format(msg.data))
 
+
     def init_video(self, source):
         if source == "webcam":
             self.cap = cv2.VideoCapture(0)
@@ -99,10 +99,12 @@ class VisionNode(Node):
             self.cap = cv2.VideoCapture(
                 '/home/drcl/ros2_ws/src/vision/vision/video/fall-01.mp4')
 
+
         if not self.cap.isOpened():
             self.get_logger().info("VIDEO: Cannot open video")
         else:
             self.get_logger().info("VIDEO: Open video")
+
 
     def init_depth(self):
         self.dc = DepthCamera()
@@ -130,6 +132,7 @@ class VisionNode(Node):
 
         self.img = cv2.copyMakeBorder(
             src, 80, 80, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
+
 
     def init_rknn(self):
         # Using verbose option saves lots of state
@@ -172,6 +175,7 @@ class VisionNode(Node):
         input_data.append(np.transpose(input2_data, (2, 3, 0, 1)))
 
         # Yolov5 post process
+
         self.boxes, self.classes, self.scores = yolo.yolov5_post_process(
             input_data)
 
@@ -181,6 +185,7 @@ class VisionNode(Node):
                 self.img, self.boxes, self.scores, self.classes)
             self.get_logger().info("Owner info (w: {}, h: {}, cx: {}, cy: {})".format(
                 self.owner_size[0], self.owner_size[1], self.owner_center[0], self.owner_center[1]))
+
         else:
             self.owner_size = [0, 0]
             self.owner_center = [0, 0]
@@ -195,6 +200,7 @@ class VisionNode(Node):
             tracker = self.sort.update(dets)
             for trk in tracker:
                 trk = trk.astype(int)
+
                 cv2.rectangle(
                     self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
                 cv2.putText(
@@ -208,6 +214,7 @@ class VisionNode(Node):
             self.owner_exists = False
         else:
             self.owner_exists = True
+
 
         self.owner_size_diff[0] = (
             self.owner_size[0] - self.owner_size_prev[0]) / self.duration_sec  # w_diff
@@ -236,10 +243,11 @@ class VisionNode(Node):
         with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'a') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
 
+
             info = {
                 "Duration": self.duration_sec,
                 "Runtime": self.runtime_sec,
-                "FPS": self.fps,
+                "FPS": fps,
 
                 "Width": self.owner_size[0],
                 "Height": self.owner_size[1],
@@ -254,12 +262,12 @@ class VisionNode(Node):
             csv_writer.writerow(info)
 
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = VisionNode()
 
-    # node.init_video("video")
-    node.init_depth()
+    node.init_video()
     node.init_rknn()
     node.init_sort()
     # node.init_csv_log()
@@ -289,8 +297,11 @@ def main(args=None):
         if node.owner_exists:
             node.publish_owner_size()
             node.publish_owner_center()
+
         if node.owner_fall:
             node.publish_owner_fall()
+        # publish emotion
+        # publish depth
 
         cv2.putText(node.img, 'x: {}'.format(node.owner_center[0]),
                     (node.owner_center[0], node.owner_center[1]), 1, 1.5, (0, 255, 0), 2)
@@ -301,6 +312,7 @@ def main(args=None):
 
         cv2.putText(node.img, f'fps: {node.fps}',
                     (25, 50), 1, 2, (0, 255, 0), 2)
+
         cv2.imshow("result", node.img)
 
         # If the `q` key was pressed, break from the loop

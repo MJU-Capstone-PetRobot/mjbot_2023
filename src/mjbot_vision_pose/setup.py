@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'vision2'
+package_name = 'visionp'
 
 setup(
     name=package_name,
