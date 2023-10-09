@@ -8,7 +8,7 @@ from cv_bridge import CvBridge
 from example_interfaces.msg import Int16MultiArray    # for owner center
 import cv2
 import numpy as np
-
+import math
 
 # from rclpy.qos import qos_profile_default
 
@@ -43,10 +43,10 @@ class Driver(Node):
         self.base_cmd = Twist()
 
         # ideal distance from target
-        self.target_distance = 1
+        self.target_distance = 500
 
         # distance controller PID
-        self.z_pid = PIDController(5, 1, 1)
+        self.z_pid = PIDController(0.5, 0.1, 0.1)
 
         # image description
         self.imgW = 640
@@ -69,14 +69,15 @@ class Driver(Node):
         print(angular_z)
         print("\n")
         self.publisher_.publish(self.base_cmd)
+        self.get_logger().info("PUB: /cmd_vel_tracker: {}".format(self.base_cmd))
+
 
     def callback(self, msg):
         # Kalman filtering done here?
 
-        x_c = msg.data[0]
-        y_c = msg.data[1]
-        # z = msg.z
-        z = 1.0
+        x_c = msg.data[0]*1.0
+        y_c = msg.data[1]*1.0
+        z = msg.data[2]*1.0
 
         self.get_logger().info("x_c: {}".format(x_c))
 
@@ -86,19 +87,16 @@ class Driver(Node):
         z_error = self.target_distance - z
 
         angular = -0.1 * theta
-        # linear = self.z_pid.update(z_error)
+        #linear = -self.z_pid.update(z_error)
 
-        # if (z <= 0.5):
-        #     linear = 0.0
-        #     angular = 180.0
-        # else:
-        #     linear = z - self.target_distance
+        if (z <= 300):
+            linear = 0.0
+            angular = 180.0
+        else:
+            linear = z - self.target_distance
 
-        # self.update(linear, angular)
-        # self.base_cmd.linear.z = linear
-        self.base_cmd.angular.z = angular
-        self.publisher_.publish(self.base_cmd)
-        self.get_logger().info("PUB: /cmd_vel_tracker: {}".format(self.base_cmd))
+        self.update(linear, angular)
+      
 
 
 def main(args=None):
