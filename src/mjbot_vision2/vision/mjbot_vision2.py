@@ -34,6 +34,8 @@ import cv2
 from math import exp
 
 w, h = 640, 360
+CONFIDENCE_THRESHOLD = 0.25
+
 
 class VisionNode(Node):
 
@@ -185,37 +187,30 @@ class VisionNode(Node):
 
             csv_writer.writerow(info)
 
- 
-
     # publish persion coordinates
 
     def publish_person_coordinates(self, results):
         # Check if a person is detected
-
-        for box, label_idx, _ in results:
-            # 해당 클래스를 찾음
+        for box, label_idx, score in results:
+            # Get the class label
             label = CLASSES[label_idx]
-            obj_set = self._tracing_obj_dict.get(label)
-            if obj_set is None:
-                continue
 
+            # Check if the detected object is a "person" with a certain confidence threshold
+            if label == "person" and score >= CONFIDENCE_THRESHOLD:
+                # Get the coordinates of the person
+                x1, y1, x2, y2 = [int(coord) for coord in box]
 
+                # Calculate the center of the person
+                x_center = (x1 + x2) / 2
+                y_center = (y1 + y2) / 2
 
+                # Publish the coordinates
+                msg = Int16MultiArray()
+                msg.data = [x_center, y_center]
 
-            # Get the coordinates of the person
-            x1, y1, x2, y2 = [int(coord) for coord in boxes[0]]
-
-            # Calculate the center of the person
-            x_center = (x1 + x2) / 2
-            y_center = (y1 + y2) / 2
-
-            # Publish the coordinates
-            msg = Int16MultiArray()
-            msg.data = [x_center, y_center]
-
-            # Publish owner_center
-            self.publisher_owner_center_.publish(msg)
-            self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
+                # Publish owner_center
+                self.publisher_owner_center_.publish(msg)
+                self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
 
 
 def main(args=None):
@@ -234,8 +229,9 @@ def main(args=None):
 
         input_img = node.read_video()  # read and resize image
         result_img = draw_results(input_img)  # yolo inference
+        detections = detect(input_img)  # yolo inference
+        node.publish_person_coordinates(detections)
 
-        node.publish_person_coordinates(boxes, classes)
         # node.run_sort() # object tracking
 
         duration = dt.datetime.utcnow() - start
