@@ -22,7 +22,7 @@ from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
 from example_interfaces.msg import Int16MultiArray
 
-RKNN_MODEL = '/home/drcl/ros2_ws/src/vision/vision/yolov5s-640-640-rk3588.rknn' # 절대경로
+RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'  # 절대경로
 
 
 class VisionNode(Node):
@@ -32,18 +32,25 @@ class VisionNode(Node):
 
         self.runtime_sec = 0
 
-        self.owner_size = [0 ,0] # [w, h]
-        self.owner_center = [0 ,0] # [cx, cy]
-        self.owner_size_prev = [0, 0] # for fall detection
-        self.owner_size_diff = [0, 0] # [w_diff, h_diff]
+        self.owner_size = [0, 0]  # [w, h]
+        self.owner_center = [0, 0]  # [x, y]
+        self.owner_z = 0
+        self.owner_size_prev = [0, 0]  # for fall detection
+        self.owner_size_diff = [0, 0]  # [w_diff, h_diff]
         self.owner_exists = False
         self.owner_fall = False
 
         self.publisher_fps_ = self.create_publisher(Int32, "fps", 10)
-        self.publisher_owner_exists_ = self.create_publisher(Bool, "owner_exists", 10)
-        self.publisher_owner_size_ = self.create_publisher(Int16MultiArray, "owner_size", 10)
-        self.publisher_owner_center_ = self.create_publisher(Int16MultiArray, "owner_center", 10)
-        self.publisher_owner_fall_ = self.create_publisher(Bool, "owner_fall", 10)
+
+        self.publisher_owner_exists_ = self.create_publisher(
+            Bool, "owner_exists", 10)
+        self.publisher_owner_center_ = self.create_publisher(
+            Int16MultiArray, "owner_center", 10)
+        self.publisher_owner_size_ = self.create_publisher(
+            Int16MultiArray, "owner_size", 10)
+        self.publisher_owner_fall_ = self.create_publisher(
+            Bool, "owner_fall", 10)
+
         self.get_logger().info("Node has been started")
 
     def publish_fps(self, fps):
@@ -66,7 +73,15 @@ class VisionNode(Node):
 
     def publish_owner_center(self):
         msg = Int16MultiArray()
-        msg.data = [self.owner_center[0], self.owner_center[1]]
+
+        # Get depth distance
+        depth_x = self.owner_center[0]
+        depth_y = self.owner_center[1] - 80
+        self.owner_z = self.dep[depth_y, depth_x]  # ordered y, x
+
+        msg.data = [self.owner_center[0],
+                    self.owner_center[1],
+                    (int)(self.owner_z)]
         self.publisher_owner_center_.publish(msg)
         self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
 
@@ -76,22 +91,48 @@ class VisionNode(Node):
         self.publisher_owner_fall_.publish(msg)
         self.get_logger().info("PUB: /owner_fall: {}".format(msg.data))
 
-    def init_video(self):
-        self.cap = cv2.VideoCapture(0)
-        # self.cap = cv2.VideoCapture('/home/drcl/ros2_ws/src/vision/vision/video/fall-01.mp4')
+
+    def init_video(self, source):
+        if source == "webcam":
+            self.cap = cv2.VideoCapture(0)
+        elif source == "video":
+            self.cap = cv2.VideoCapture(
+                '/home/drcl/ros2_ws/src/vision/vision/video/fall-01.mp4')
+
+
         if not self.cap.isOpened():
             self.get_logger().info("VIDEO: Cannot open video")
         else:
             self.get_logger().info("VIDEO: Open video")
 
-    def read_video(self):
-        ret, src = self.cap.read()
-        self.img = cv2.resize(src, dsize=(640, 360), interpolation=cv2.INTER_LINEAR)
-        self.img = cv2.copyMakeBorder(self.img, 140, 140, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
 
-        # ret, src = self.cap.read()
-        # self.img = cv2.resize(src, dsize=(0, 0), fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
-        # self.img = cv2.copyMakeBorder(self.img, 80, 80, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
+    def init_depth(self):
+        self.dc = DepthCamera()
+
+    def read_video(self, source):
+        if source == "webcam":
+            ret, src = self.cap.read()
+            self.img = cv2.resize(src, dsize=(640, 360),
+                                  interpolation=cv2.INTER_LINEAR)
+            self.img = cv2.copyMakeBorder(
+                self.img, 140, 140, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
+
+        elif source == "video":
+            ret, src = self.cap.read()
+            self.img = cv2.resize(src, dsize=(0, 0), fx=2,
+                                  fy=2, interpolation=cv2.INTER_LINEAR)
+            self.img = cv2.copyMakeBorder(
+                self.img, 80, 80, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
+
+    def read_depth(self, aligned):
+        if aligned:
+            ret, self.dep, src = self.dc.get_frame_aligned()
+        else:
+            ret, self.dep, src = self.dc.get_frame()
+
+        self.img = cv2.copyMakeBorder(
+            src, 80, 80, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
+
 
     def init_rknn(self):
         # Using verbose option saves lots of state
@@ -134,12 +175,17 @@ class VisionNode(Node):
         input_data.append(np.transpose(input2_data, (2, 3, 0, 1)))
 
         # Yolov5 post process
-        self.boxes, self.classes, self.scores = vision.yolo.yolov5_post_process(input_data)
+
+        self.boxes, self.classes, self.scores = yolo.yolov5_post_process(
+            input_data)
 
         # Draw detection box
         if self.boxes is not None:
-            self.owner_size, self.owner_center = vision.yolo.draw(self.img, self.boxes, self.scores, self.classes)
-            self.get_logger().info("Owner info (w: {}, h: {}, cx: {}, cy: {})".format(self.owner_size[0], self.owner_size[1], self.owner_center[0], self.owner_center[1]))
+            self.owner_size, self.owner_center = yolo.draw(
+                self.img, self.boxes, self.scores, self.classes)
+            self.get_logger().info("Owner info (w: {}, h: {}, cx: {}, cy: {})".format(
+                self.owner_size[0], self.owner_size[1], self.owner_center[0], self.owner_center[1]))
+
         else:
             self.owner_size = [0, 0]
             self.owner_center = [0, 0]
@@ -154,42 +200,49 @@ class VisionNode(Node):
             tracker = self.sort.update(dets)
             for trk in tracker:
                 trk = trk.astype(int)
-                cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
-                cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
-            
+
+                cv2.rectangle(
+                    self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
+                cv2.putText(
+                    self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+
+    def detect_fall(self):
+        # if object detection is failed
+        if self.owner_size[0] == 0 and self.owner_size[1] == 0:
+            self.owner_size[0] = self.owner_size_prev[0]
+            self.owner_size[1] = self.owner_size_prev[1]
+            self.owner_exists = False
+        else:
+            self.owner_exists = True
+
+
+        self.owner_size_diff[0] = (
+            self.owner_size[0] - self.owner_size_prev[0]) / self.duration_sec  # w_diff
+        self.owner_size_diff[1] = (
+            self.owner_size[1] - self.owner_size_prev[1]) / self.duration_sec  # h_diff
+
+        if self.owner_size_diff[1] <= -500:
+            self.owner_fall = True
+        else:
+            self.owner_fall = False
+
+        self.owner_size_prev[0] = self.owner_size[0]
+        self.owner_size_prev[1] = self.owner_size[1]
+
     def init_csv_log(self):
-        self.fieldnames = ["Duration", "Runtime", "FPS", 
-                           "Width", "Height", 
-                           "Width Diff", "Height Diff", 
+        self.fieldnames = ["Duration", "Runtime", "FPS",
+                           "Width", "Height",
+                           "Width Diff", "Height Diff",
                            "Owner Exists", "Fall Detection"]
 
-        with open('/home/drcl/ros2_ws/src/vision/vision/log.csv', 'w') as csv_file:
+        with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'w') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
             csv_writer.writeheader()
 
-    def run_csv_log(self, duration, fps):
-        with open('/home/drcl/ros2_ws/src/vision/vision/log.csv', 'a') as csv_file:
+    def run_csv_log(self):
+        with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'a') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
 
-            self.duration_sec = (duration.microseconds / 1000000)
-            self.runtime_sec += self.duration_sec
-            self.runtime_sec = round(self.runtime_sec, 3)
-
-            # if object detection is failed
-            if self.owner_size[0] == 0 and self.owner_size[1] == 0:
-                self.owner_size[0] = self.owner_size_prev[0]
-                self.owner_size[1] = self.owner_size_prev[1]
-                self.owner_exists = False
-            else:
-                self.owner_exists = True
-
-            self.owner_size_diff[0] =  (self.owner_size[0] - self.owner_size_prev[0]) / self.duration_sec # w_diff
-            self.owner_size_diff[1] = (self.owner_size[1] - self.owner_size_prev[1]) / self.duration_sec # h_diff
-
-            if self.owner_size_diff[1] <= -500:
-                self.owner_fall = True
-            else:
-                self.owner_fall = False
 
             info = {
                 "Duration": self.duration_sec,
@@ -208,8 +261,6 @@ class VisionNode(Node):
 
             csv_writer.writerow(info)
 
-            self.owner_size_prev[0] = self.owner_size[0]
-            self.owner_size_prev[1] = self.owner_size[1] 
 
 
 def main(args=None):
@@ -219,30 +270,49 @@ def main(args=None):
     node.init_video()
     node.init_rknn()
     node.init_sort()
-    node.init_csv_log()
+    # node.init_csv_log()
 
     while True:
         start = dt.datetime.utcnow()
         rclpy.spin_once(node, timeout_sec=0)
 
-        node.read_video() # read and resize image
-        node.run_rknn() # yolo inference
-        node.run_sort() # object tracking
+        # node.read_video("video") # read and resize image
+        node.read_depth(False)
+        node.run_rknn()  # yolo inference
+        node.run_sort()  # object tracking
 
         duration = dt.datetime.utcnow() - start
-        fps = int(round(1000000 / duration.microseconds))
-        node.run_csv_log(duration, fps)
-    
-        node.publish_fps(fps)
+        node.fps = int(round(1000000 / duration.microseconds))
+
+        node.duration_sec = (duration.microseconds / 1000000)
+        node.runtime_sec += node.duration_sec
+        node.runtime_sec = round(node.runtime_sec, 3)
+
+        # node.run_csv_log()
+        node.detect_fall()
+
+        node.publish_fps()
         node.publish_owner_exists()
-        node.publish_owner_size()
-        node.publish_owner_center()
+
+        if node.owner_exists:
+            node.publish_owner_size()
+            node.publish_owner_center()
+
         if node.owner_fall:
             node.publish_owner_fall()
         # publish emotion
         # publish depth
 
-        cv2.putText(node.img, f'fps: {fps}', (25, 50), 1, 2, (0, 255, 0), 2)
+        cv2.putText(node.img, 'x: {}'.format(node.owner_center[0]),
+                    (node.owner_center[0], node.owner_center[1]), 1, 1.5, (0, 255, 0), 2)
+        cv2.putText(node.img, 'y: {}'.format(node.owner_center[1]),
+                    (node.owner_center[0], node.owner_center[1]+20), 1, 1.5, (0, 255, 0), 2)
+        cv2.putText(node.img, 'z: {}'.format(node.owner_z),
+                    (node.owner_center[0], node.owner_center[1]+40), 1, 1.5, (0, 255, 0), 2)
+
+        cv2.putText(node.img, f'fps: {node.fps}',
+                    (25, 50), 1, 2, (0, 255, 0), 2)
+
         cv2.imshow("result", node.img)
 
         # If the `q` key was pressed, break from the loop
