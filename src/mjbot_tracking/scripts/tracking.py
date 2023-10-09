@@ -71,7 +71,6 @@ class Driver(Node):
         self.publisher_.publish(self.base_cmd)
         self.get_logger().info("PUB: /cmd_vel_tracker: {}".format(self.base_cmd))
 
-
     def callback(self, msg):
         # Kalman filtering done here?
 
@@ -86,8 +85,8 @@ class Driver(Node):
 
         z_error = self.target_distance - z
 
-        angular = -0.1 * theta
-        #linear = -self.z_pid.update(z_error)
+        angular = -0.5 * theta
+        # linear = -self.z_pid.update(z_error)
 
         if (z <= 300):
             linear = 0.0
@@ -95,8 +94,10 @@ class Driver(Node):
         else:
             linear = z - self.target_distance
 
-        self.update(linear, angular)
-      
+        if linear < 0:
+            linear = 0.0
+
+        self.update(linear*0.001, angular)
 
 
 def main(args=None):
