@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 # from vision.depth import *
-# from .sort import Sort
+from vision.scripts.sort import Sort
 
 import random
 from itertools import count
@@ -53,7 +53,6 @@ class VisionNode(Node):
         self.owner_exists = False
         self.owner_fall = False
 
-        self.publisher_fps_ = self.create_publisher(Int32, "fps", 10)
         self.publisher_owner_exists_ = self.create_publisher(
             Bool, "owner_exists", 10)
         self.publisher_owner_center_ = self.create_publisher(
@@ -63,12 +62,6 @@ class VisionNode(Node):
         self.publisher_owner_fall_ = self.create_publisher(
             Bool, "owner_fall", 10)
         self.get_logger().info("Node has been started")
-
-    def publish_fps(self):
-        msg = Int32()
-        msg.data = self.fps
-        self.publisher_fps_.publish(msg)
-        self.get_logger().info("PUB: /fps: {}".format(msg.data))
 
     def publish_owner_exists(self):
         msg = Bool()
@@ -122,10 +115,10 @@ class VisionNode(Node):
     def init_sort(self):
         self.sort = Sort(max_age=2, min_hits=3, iou_threshold=0.3, )
 
-    def run_sort(self):
-        if self.boxes is not None:
-            self.scores = self.scores.reshape((-1, 1))
-            dets = np.concatenate((self.boxes, self.scores), 1)
+    def run_sort(self, boxes, scores):
+        if boxes is not None:
+            scores = scores.reshape((-1, 1))
+            dets = np.concatenate((boxes, scores), 1)
             tracker = self.sort.update(dets)
             for trk in tracker:
                 trk = trk.astype(int)
@@ -188,7 +181,6 @@ class VisionNode(Node):
             csv_writer.writerow(info)
 
     # publish persion coordinates
-
     def publish_person_coordinates(self, results):
         # Check if a person is detected
         for box, label_idx, score in results:
@@ -211,6 +203,30 @@ class VisionNode(Node):
                 # Publish owner_center
                 self.publisher_owner_center_.publish(msg)
                 self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
+            else:
+                # publish previous coordinates
+                msg = Int16MultiArray()
+                msg.data = [x_center, y_center]
+                # Publish owner_center
+                self.publisher_owner_center_.publish(msg)
+                self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
+        # return peson coordinates in boxes, scores
+
+        return
+
+    def peson_checker(self, results):
+        # Check if a person is detected
+        for box, label_idx, score in results:
+            # Get the class label
+            label = CLASSES[label_idx]
+
+            # Check if the detected object is a "person" with a certain confidence threshold
+            if label == "person" and score >= CONFIDENCE_THRESHOLD:
+                # Get the coordinates of the person
+                return box, label_idx, score
+            else:
+                # return previous coordinates
+                return box, label_idx, score
 
 
 def main(args=None):
@@ -231,27 +247,26 @@ def main(args=None):
         result_img = draw_results(input_img)  # yolo inference
         detections = detect(input_img)  # yolo inference
         node.publish_person_coordinates(detections)
+        boxes, classes, scores = node.peson_checker(detections)
 
-        # node.run_sort() # object tracking
+        node.run_sort(boxes, scores)  # object tracking
 
         duration = dt.datetime.utcnow() - start
         node.fps = int(round(1000000 / duration.microseconds))
 
-        # node.duration_sec = (duration.microseconds / 1000000)
-        # node.runtime_sec += node.duration_sec
-        # node.runtime_sec = round(node.runtime_sec, 3)
+        node.duration_sec = (duration.microseconds / 1000000)
+        node.runtime_sec += node.duration_sec
+        node.runtime_sec = round(node.runtime_sec, 3)
 
-        # node.run_csv_log()
-        # node.detect_fall()
+        node.run_csv_log()
+        node.detect_fall()
 
-        # node.publish_fps()
-        # node.publish_owner_exists()
-        # node.publish_owner_size()
-        # node.publish_owner_center()
-        # if node.owner_fall:
-        #     node.publish_owner_fall()
-        # publish emotion
-        # publish depth
+        node.publish_fps()
+        node.publish_owner_exists()
+        node.publish_owner_size()
+        node.publish_owner_center()
+        if node.owner_fall:
+            node.publish_owner_fall()
 
         cv2.putText(result_img, f'fps: {node.fps}',
                     (25, 50), 1, 2, (0, 255, 0), 2)
