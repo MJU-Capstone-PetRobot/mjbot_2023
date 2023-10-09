@@ -5,7 +5,7 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Point
 from std_msgs.msg import String
 from cv_bridge import CvBridge
-from std_msgs.msg import Int16MultiArray    # for owner center
+from example_interfaces.msg import Int16MultiArray    # for owner center
 import cv2
 import numpy as np
 
@@ -73,29 +73,32 @@ class Driver(Node):
     def callback(self, msg):
         # Kalman filtering done here?
 
-        x_c = msg.x
-        y_c = msg.y
+        x_c = msg.data[0]
+        y_c = msg.data[1]
         # z = msg.z
         z = 1.0
+
+        self.get_logger().info("x_c: {}".format(x_c))
 
         offset_x = x_c - self.imgW / 2
         theta = offset_x / self.imgW
 
         z_error = self.target_distance - z
 
-        angular = -2.0 * theta
-        linear = self.z_pid.update(z_error)
+        angular = -0.1 * theta
+        # linear = self.z_pid.update(z_error)
 
-        if (z <= 0.5):
-            linear = 0.0
-            angular = 180.0
-        else:
-            linear = z - self.target_distance
+        # if (z <= 0.5):
+        #     linear = 0.0
+        #     angular = 180.0
+        # else:
+        #     linear = z - self.target_distance
 
-        self.update(linear, angular)
-        self.base_cmd.linear.z = linear
+        # self.update(linear, angular)
+        # self.base_cmd.linear.z = linear
         self.base_cmd.angular.z = angular
         self.publisher_.publish(self.base_cmd)
+        self.get_logger().info("PUB: /cmd_vel_tracker: {}".format(self.base_cmd))
 
 
 def main(args=None):
