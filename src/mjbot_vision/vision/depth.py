@@ -1,6 +1,7 @@
 import pyrealsense2.pyrealsense2 as rs
 import numpy as np
 
+
 class DepthCamera:
     def __init__(self):
         # Configure depth and color streams
@@ -24,7 +25,7 @@ class DepthCamera:
         if not depth_frame or not color_frame:
             print("Error, impossible to get the frame")
             return False, None, None
-   
+
         # Convert images to numpy arrays
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
@@ -40,7 +41,7 @@ class DepthCamera:
         if not depth_frame or not color_frame:
             print("Error, impossible to get the frame")
             return False, None, None
-   
+
         # Convert images to numpy arrays
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
