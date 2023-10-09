@@ -42,10 +42,22 @@ endif()
 
 install(
   DIRECTORY
-    vision
+    vision/scripts
+    
   DESTINATION
     lib/${PROJECT_NAME}
 )
+
+
+install(
+  DIRECTORY
+    model
+    
+  DESTINATION
+    share/${PROJECT_NAME}
+)
+
+
 
 
 install(

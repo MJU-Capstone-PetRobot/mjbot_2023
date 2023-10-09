@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+from ament_index_python.packages import get_package_share_directory
 
 import os
 import cv2
@@ -6,7 +6,7 @@ import sys
 import argparse
 
 import rclpy
-from utils.coco_utils import COCO_test_helper
+from .utils.coco_utils import COCO_test_helper
 import numpy as np
 from PIL import Image, ImageDraw
 import numpy as np
@@ -23,7 +23,7 @@ model.load_rknn(os.path.join(vision_package_directory, 'model', 'yolov7.rknn'))
 model.init_runtime()
 
 ANCHORS = [12.0, 16.0, 19.0, 36.0, 40.0, 28.0, 36.0, 75.0, 76.0,
-          55.0, 72.0, 146.0, 142.0, 110.0, 192.0, 243.0, 459.0, 401.0]
+           55.0, 72.0, 146.0, 142.0, 110.0, 192.0, 243.0, 459.0, 401.0]
 
 
 IMG_SIZE = (640, 640)
@@ -38,12 +38,15 @@ CLASSES = ("person", "bicycle", "car", "motorbike ", "aeroplane ", "bus ", "trai
            "oven ", "toaster", "sink", "refrigerator ", "book", "clock", "vase", "scissors ", "teddy bear ", "hair drier", "toothbrush ")
 
 
-colors = tuple(tuple(random.randint(0, 255) for _ in range(3)) for _ in range(len(CLASSES)))
+colors = tuple(tuple(random.randint(0, 255) for _ in range(3))
+               for _ in range(len(CLASSES)))
 
 cutout_mask = None
 highlight_pts = None
 highlight_mask = None
 co_helper = COCO_test_helper(enable_letter_box=True)
+
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -57,13 +60,12 @@ def filter_boxes(boxes, box_confidences, box_class_probs):
     class_max_score = np.max(box_class_probs, axis=-1)
     classes = np.argmax(box_class_probs, axis=-1)
 
-    if class_num==1:
+    if class_num == 1:
         _class_pos = np.where(box_confidences >= OBJ_THRESH)
         scores = (box_confidences)[_class_pos]
     else:
-        _class_pos = np.where(class_max_score* box_confidences >= OBJ_THRESH)
-        scores = (class_max_score* box_confidences)[_class_pos]
-
+        _class_pos = np.where(class_max_score * box_confidences >= OBJ_THRESH)
+        scores = (class_max_score * box_confidences)[_class_pos]
 
     boxes = boxes[_class_pos]
     classes = classes[_class_pos]
@@ -103,7 +105,6 @@ def nms_boxes(boxes, scores):
         order = order[inds + 1]
     keep = np.array(keep)
     return keep
-
 
 
 def box_process(position, anchors):
@@ -191,7 +192,6 @@ def post_process(input_data, anchors):
     return boxes, classes, scores
 
 
-
 # Pillow를 사용하여 이미지에 경계 상자 및 레이블을 그리는 함수입니다.
 # 이미지를 수정하지 않고 새 이미지를 반환합니다.
 def draw_results(image, results):
@@ -200,7 +200,7 @@ def draw_results(image, results):
     for box, cl, score in results:
         text = CLASSES[cl]  # 클래스 이름을 가져옵니다.
         draw.rectangle(box, outline=colors[cl], width=2)  # 경계 상자 그리기
-        label_box = draw.textbbox((0,0), text)  # 레이블의 위치 계산
+        label_box = draw.textbbox((0, 0), text)  # 레이블의 위치 계산
         y = box[1] - label_box[3]
         if y < 0:
             y = box[3] + 1
@@ -213,16 +213,22 @@ def make_mask(image):
     return cv2.add(image, 0, mask=cutout_mask) if cutout_mask is not None else image
 
 # 이미지 위에 마스크를 그리는 함수입니다.
+
+
 def draw_mask(image):
     if highlight_mask is not None:
         cv2.addWeighted(image, 1, highlight_mask, 0.2, 0, image)
         cv2.polylines(image, highlight_pts, True, (255, 255, 0), 1)
 
 # 이미지에서 객체를 검출하는 함수입니다.
-def detect(image):
-    img, ratio, (dw, dh) = co_helper.letter_box(im=image, new_shape=(IMG_SIZE[1], IMG_SIZE[0]), pad_color=(0,0,0), info_need=True)
 
-    outputs = model.inference([cv2.cvtColor(make_mask(img), cv2.COLOR_BGR2RGB)])
+
+def detect(image):
+    img, ratio, (dw, dh) = co_helper.letter_box(im=image, new_shape=(
+        IMG_SIZE[1], IMG_SIZE[0]), pad_color=(0, 0, 0), info_need=True)
+
+    outputs = model.inference(
+        [cv2.cvtColor(make_mask(img), cv2.COLOR_BGR2RGB)])
     boxes, classes, scores = post_process(outputs, ANCHORS)
 
     if boxes is not None:
@@ -233,15 +239,16 @@ def detect(image):
             bbox[2] -= dw
             bbox[3] -= dh
             boxes[i] = [value/ratio for value in bbox]
-        
+
     return [(
         tuple(map(int, item[0])),  # box
         item[1],  # name
         item[2]  # score
-     ) for item in zip(boxes, classes, scores)] if boxes is not None else []
+    ) for item in zip(boxes, classes, scores)] if boxes is not None else []
 
 # 객체 검출 임계값을 설정하는 함수입니다.
+
+
 def set_obj_thresh(thresh):
     global OBJ_THRESH
     OBJ_THRESH = thresh
-

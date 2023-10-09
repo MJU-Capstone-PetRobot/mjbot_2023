@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 # from vision.depth import *
-from vision.scripts.sort import Sort
+from scripts.sort import Sort
 
 import random
 from itertools import count
@@ -244,9 +244,10 @@ def main(args=None):
         start = dt.datetime.utcnow()
 
         input_img = node.read_video()  # read and resize image
-        result_img = draw_results(input_img)  # yolo inference
+
         detections = detect(input_img)  # yolo inference
         node.publish_person_coordinates(detections)
+        result_img = draw_results(input_img, detections)  # yolo inference
         boxes, classes, scores = node.peson_checker(detections)
 
         node.run_sort(boxes, scores)  # object tracking
