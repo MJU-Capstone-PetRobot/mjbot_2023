@@ -115,6 +115,8 @@ def main(args=None):
     # 명자 객체 형성
     mj = MYOUNGJA("순자", "she")
 
+    # 먼저 말 거는 기능
+    mj.speak_first()
     # 대화 시작
     response = mj.mic()
     if response == "로봇":
@@ -154,8 +156,6 @@ def main(args=None):
                 os.remove("sampleWav.wav")
                 break
 
-    # 먼저 말 거는 기능
-    mj.speak_first()
     executor_thread.join()
     talking_node.destroy_node()
     rclpy.shutdown()
