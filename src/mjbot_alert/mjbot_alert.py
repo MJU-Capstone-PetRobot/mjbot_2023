@@ -3,8 +3,7 @@ import os
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, Int32
-from Alert.messageSending import send_message, fire_check
-import threading
+from Alert.messageSending import *
 
 
 # class TalkingNode(Node):
@@ -23,7 +22,7 @@ class ListeningNode(Node):
 
         self.get_logger().info('Received: %d' % msg.data)
 
-        if msg.data == 1:
+        if msg.data == True:
             send_message(1)  # 낙상 사고 발생 문자 발송
 
     def subscribe_callback_fire(self, msg):
