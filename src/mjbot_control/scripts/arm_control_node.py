@@ -55,51 +55,7 @@ class ActionClientNode(Node):
 class Commander(Node):
     def __init__(self):
         super().__init__('commander')
-        self.subscriptions = self.create_subscription(
-            String, 'arm_mode', self.mode_callback, 10)
-        self.actionclinetnode = ActionClientNode()
-
-    def mode_callback(self):
-        global mode_selection
-        global action_state
-
-        joint_names = [
-            'r_shoulder_pitch',
-            'r_shoulder_roll',
-            'r_elbow_pitch',
-            'l_shoulder_pitch',
-            'l_shoulder_roll',
-            'l_elbow_pitch'
-        ]
-
-        trajectory_msg = FollowJointTrajectory.Goal()
-        trajectory_msg.trajectory.joint_names = joint_names
-        point = JointTrajectoryPoint()
-
-        if mode_selection == 1:  # Go to the take walk position
-            positions = [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
-            self.get_logger().info('walk position')
-        elif mode_selection == 2:  # give right hand
-            positions = [0.0, -1.5, 0.0, -1.5, 1.5, 0.3]
-            self.get_logger().info('give right hand')
-        elif mode_selection == 3:  # hugging position
-            positions = [1.5, -1.5, -0.5, -1.5, 1.5, 0.5]
-            self.get_logger().info('hugging position')
-        else:
-            positions = [0.0, -1.5, 0.0, 0.0, 1.5, 0.0]  # default position
-
-        point.positions = positions
-        point.time_from_start = Duration(seconds=2).to_msg()
-
-        trajectory_msg.trajectory.points = [point]
-
-        return trajectory_msg
-
-
-class Commander(Node):
-    def __init__(self):
-        super().__init__('commander')
-        self.subscriptions = self.create_subscription(
+        self.subscription = self.create_subscription(
             String, 'arm_mode', self.mode_callback, 10)  # Change message type to String
         self.actionclinetnode = ActionClientNode()
 

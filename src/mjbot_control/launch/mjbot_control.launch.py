@@ -29,7 +29,7 @@ def generate_launch_description():
         parameters=[
             {'robot_description': ParameterValue(
                 robot_description, value_type=str)},
-            # arm_controller_params_file,
+            arm_controller_params_file,
             diff_drive_controller_params_file
         ],
         output="both",
@@ -63,8 +63,8 @@ def generate_launch_description():
     delay_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[diff_drive_controller_spawner],
-            #  load_trajectory_controller
+            on_exit=[diff_drive_controller_spawner,
+            load_trajectory_controller]
         )
     )
 
@@ -73,8 +73,6 @@ def generate_launch_description():
         control_node,
         joint_state_broadcaster_spawner,
         delay_controller_spawner_after_joint_state_broadcaster_spawner,
-
-        # load_trajectory_controller,
     ]
 
     # Return the merged launch description
