@@ -19,20 +19,19 @@ class ListeningNode(Node):
         self.subscription = self.create_subscription(Bool, 'fall_down', self.subscribe_callback, 10)
         self.subscription = self.create_subscription(Int32, 'co_ppm', self.subscribe_callback_fire, 10)
 
-
     def subscribe_callback(self, msg):
 
         self.get_logger().info('Received: %d' % msg.data)
 
         if msg.data == 1:
-            send_message(1) # 낙상 사고 발생 문자 발송
+            send_message(1)  # 낙상 사고 발생 문자 발송
 
     def subscribe_callback_fire(self, msg):
 
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data >= 200:
-            send_message(2) # 화재 사고 발생 문자 발송
+            send_message(2)  # 화재 사고 발생 문자 발송
 
 
 def main(args=None):

@@ -70,7 +70,7 @@ class VoiceSuscriber(Node):
         self.get_logger().info(f'Received: {msg.dat}')
 
         if msg.data == True:
-            speaking("할머니 괜찮으세요??")
+            speaking("할머니 괜찮으세요??",1,0)
 
     def subscribe_callback_bat_state(self, msg):
         '''
@@ -79,7 +79,7 @@ class VoiceSuscriber(Node):
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data <= 45:
-            speaking("할머니 배고파요")
+            speaking("할머니 배고파요",1,0)
 
     def subscribe_callback_touch(self, msg):
         '''
@@ -88,7 +88,7 @@ class VoiceSuscriber(Node):
         self.get_logger().info(f'Received: {msg.data}')
 
         if msg.data == True:
-            speaking("깔깔깔")
+            speaking("깔깔깔",1,2)
 
     def subscribe_callback_co(self, msg):
         '''
@@ -97,7 +97,7 @@ class VoiceSuscriber(Node):
         self.get_logger().info('Received: %d' % msg.data)
 
         if msg.data >= 200:
-            speaking("할머니 불이 났어요!!")
+            speaking("할머니 불이 났어요!!",2,3)
 
 
 def main(args=None):
@@ -115,16 +115,21 @@ def main(args=None):
     # 명자 객체 형성
     mj = MYOUNGJA("순자", "she")
 
+    # 먼저 말 거는 기능 실험용
+    # mj.speak_first_ex()
+
     # 먼저 말 거는 기능
     mj.speak_first()
     # 대화 시작
     response = mj.mic()
     if response == "로봇":
-        mj.speaker("네")
+        mj.speaker("네",1,2)
 
         response = mj.mic()
         while response != "":
             emotion = mj.gpt_send_anw(response)[0]
+            ans_emotion = 0
+            emotion_strength = 1
 
             # NULL, close, moving, wink, angry, sad, daily
             if emotion == "평범":
@@ -133,8 +138,12 @@ def main(args=None):
                 talking_node.publish_emotions("2")
             elif emotion == "분노":
                 talking_node.publish_emotions("4")
+                ans_emotion = 3
+                emotion_strength = 2
             elif emotion == "슬픔":
                 talking_node.publish_emotions("5")
+                ans_emotion = 1
+                emotion_strength = 0
             elif emotion == "NULL" and response == "sancheckgaja":  # 왼손
                 talking_node.publish_arm_motions("walk")
             elif emotion == "NULL" and response == "오른손":  # 오른손
@@ -148,7 +157,7 @@ def main(args=None):
 
             ans = mj.gpt_send_anw(response)[1]
 
-            mj.speaker(ans)
+            mj.speaker(ans,emotion_strength,emotion)
 
             response = mj.mic()
 
