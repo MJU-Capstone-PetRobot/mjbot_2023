@@ -133,23 +133,31 @@ class MYOUNGJA():
 
         return anw_str
 
-    def speaker(self, anw_text):
+    def speaker(self, anw_text, emotion_strength ,emotion):
         '''
         주어진 말을 스피커를 통해 음성 변환 시켜 출력
         :param anw_text:
         :return: X
+
+        Parameters
+        ----------
+        emotion
+        emotion_strength
         '''
         import os
         import urllib.request
         from pydub import AudioSegment
         from playsound import playsound as pl
 
+        # emotion-strength 0: 약함 1: 보통 2: 강함
+        # emotion : 0: 중립 1: 슬픔 2: 기쁨 3: 분노
+
         # NAVER CLOVA
         client_id = "ud0o0y1iat"
         client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
 
         encText = urllib.parse.quote(anw_text)
-        data = "speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
+        data = f"speaker=vara&volume=0&speed=0&pitch=0&emotion-strength={emotion_strength}&emotion={emotion}&format=mp3&text=" + encText
         urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
         requests = urllib.request.Request(urls)
         requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
@@ -190,25 +198,32 @@ class MYOUNGJA():
         question_list = ["할머니 오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 할머니는 어때요??", "", "", "", "", "", "", "", ""]
 
         if tm.tm_hour == 7 and tm.tm_min == 00:
-            self.speaker("좋은 아침이에요. 할머니!! 오늘도 좋은 하루 되세요!!")
+            self.speaker("좋은 아침이에요. 할머니!! 오늘도 좋은 하루 되세요!!",1,2)
         elif tm.tm_hour == 22 and tm.tm_min == 00:
-            self.speaker("할머니 이제 잘 시간이에요!! 편안한 밤 되세요!!")
+            self.speaker("할머니 이제 잘 시간이에요!! 편안한 밤 되세요!!",1,2)
         elif tm.tm_hour == 12 and tm.tm_min == 00:
-            self.speaker("할머니 혈압약 드실 시간이에요!")
+            self.speaker("할머니 혈압약 드실 시간이에요!",1,0)
         elif 7 < tm.tm_hour < 22 and tm.tm_min == 00:
             random_ans = random.randrange(0, 9)
             if tm.tm_min == 30:
                 if random_ans == 1:
                     # 말 걸 내용들
-                    self.speaker(question_list[0])
+                    self.speaker(question_list[0],1,0)
                 elif random_ans == 2:
                     # 말 걸 내용들
-                    self.speaker(question_list[1])
+                    self.speaker(question_list[1],1,0)
         elif tm.tm_hour == 15 and tm.tm_min == 00:
-            self.speaker("할머니 우리 산책 나가요!")
+            self.speaker("할머니 우리 산책 나가요!",1,2)
+
+    def speak_first_ex(self):
+        import random
+
+        question_list = ["할머니 오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 할머니는 어때요??", "좋은 아침이에요. 할머니!! 오늘도 좋은 하루 되세요!!", "할머니 이제 잘 시간이에요!! 편안한 밤 되세요!!", "할머니 혈압약 드실 시간이에요!", "할머니 우리 산책 나가요!"]
+
+        speaking(question_list[random.randint(0,6)],1,2)
 
 
-def speaking(anw_text):
+def speaking(anw_text, emotion_strength ,emotion):
     '''
     주어진 말을 스피커를 통해 음성 변환 시켜 출력s
     :param anw_text:
@@ -223,7 +238,7 @@ def speaking(anw_text):
     client_id = "ud0o0y1iat"
     client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
     encText = urllib.parse.quote(anw_text)
-    data = "speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
+    data = f"speaker=vara&volume=0&speed=0&pitch=0&emotion-strength={emotion_strength}&emotion={emotion}&format=mp3&text=" + encText
     urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
     requests = urllib.request.Request(urls)
     requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)

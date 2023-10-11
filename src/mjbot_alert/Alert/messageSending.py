@@ -1,33 +1,41 @@
 from twilio.rest import Client
-import serial
+from gps import *
 import time
+import json
+from datetime import datetime
+import pytz, dateutil.parser
 
-def fire_check():
-    global fire
-    if __name__ == '__main__':
-        ser = serial.Serial('/dev/ttyACM1', 9600, timeout=1)
-        ser.flush()
+running = True
 
-        if ser.in_waiting > 0:
-            line = ser.readline().decode('utf-8').rstrip()
-            s_line = int(line)
-            if s_line > 200:
-                fire = 2
-            else:
-                fire = -1
+"""
+필요한 gpsd 라이브러리 설치
+sudo apt install gpsd,gpsd-clients
+pip3 install gpsd-py3
+"""
 
-    return fire
+"""
+gps 사용 시작
+sudo systemctl stop gpsd
+sudo systemctl stop gpsd.socket
+sudo systemctl disable gpsd.socket
+sudo gpsd /dev/ttyACM0 -F /var/run/gpsd.sock
+"""
+
+def getPositionData(gps):
+    nx = gpsd.next()
+
+    if nx['class'] == 'TPV':
+        # extract gps info
+        latitude = getattr(nx, 'lat', "Unknown")
+        longitude = getattr(nx, 'lon', "Unknown")
+
+        return [latitude, longitude]
 
 def googlemap_api():
-    import json
     import googlemaps
-
-    # GPS 위치 가져오기
-    file_path = "/home/pi/Desktop/GPS/gps_info.json"
-    with open(file_path, "r") as json_file:
-        json_data = json.load(json_file)
-        latitude = json_data["gps"][0]["latitude"]
-        longitude = json_data["gps"][0]["longitude"]
+    gpsd = gps(mode=WATCH_ENABLE | WATCH_NEWSTYLE)
+    latitude = getPositionData(gpsd)[0]
+    longitude = getPositionData(gpsd)[1]
 
     # 위도 경도 -> 지번 주소로 변경 // 역지오코드
 
