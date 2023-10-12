@@ -263,3 +263,66 @@ def speaking(anw_text, emotion_strength ,emotion):
         # 제작된 음성 파일 삭제
         os.remove("ResultMP3.mp3")
         os.remove("test.wav")
+
+
+def mic_first():
+    '''
+    주어진 음성을 마이크로 녹음 후 문장으로 변환
+    :return: 음성 파일 문장으로 변환시켜 넘김
+    '''
+    import requests
+    import sounddevice as sd
+    from scipy.io.wavfile import write
+
+    ## NAVER CLOVA API
+    client_id = "ud0o0y1iat"
+    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
+
+    # 음성 녹음
+    fs = 44100
+    seconds = 3
+
+    myRecording = sd.rec(int(seconds * fs), samplerate=fs, channels=4)  # channels는 마이크 장치 번호
+    print("녹음 시작")
+    # 마이크 장치 번호 찾기 => python -m sounddevice
+    sd.wait()
+    write('sampleWav.wav', fs, myRecording)
+
+    # Voice To Text => 목소리를 텍스트로 변환
+    ## 기본 설정
+    lang = "Kor"  # 언어 코드 ( Kor, Jpn, Eng, Chn )
+    url = "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=" + lang
+
+    ## 녹음된 Voice 파일
+    data_voice = open('sampleWav.wav', 'rb')
+
+    ## 사용할 header
+    headers = {
+        "X-NCP-APIGW-API-KEY-ID": client_id,
+        "X-NCP-APIGW-API-KEY": client_secret,
+        "Content-Type": "application/octet-stream"
+    }
+
+    ## VTT 출력
+    response = requests.post(url, data=data_voice, headers=headers)
+
+    result_man = str(response.text)
+    result = list(result_man)
+    count_down = 0
+    say_str = []
+
+    for i in range(0, len(result) - 2):
+        if count_down == 3:
+            say_str.append(result[i])
+
+        if response.text[i] == "\"":
+            if count_down == 3:
+                break
+            else:
+                count_down += 1
+
+    anw_str = ''.join(map(str, say_str))
+
+    print(anw_str)
+
+    return anw_str
