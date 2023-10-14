@@ -111,36 +111,24 @@ def main(args=None):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
     common = 0
-    with open('./user_value.json', 'r') as f:
-
-        data = json.load(f)
-        if data["user"]["user_name"] == "":
-            speaking("이름이 어떻게 되세요?", 1, 1)
-            name = mic_first()
-            data["user"]["user_name"] = name
-            speaking("성별은 어떻게 되세요?", 1, 1)
-            manWoman = mic_first()
-            data["user"]["user_value"] = manWoman
-            name_ = data["user"]["user_name"]
-            manWoman_ = data["user"]["user_name"]
-        else:
-            name_ = data["user"]["user_name"]
-            manWoman_ = data["user"]["user_name"]
-
-    # 명자 객체 형성
-    mj = MYOUNGJA(name_, manWoman_)
 
     # 먼저 말 거는 기능 실험용
-    # mj.speak_first_ex()
+    # speak_first_ex()
 
     # 먼저 말 거는 기능
-    mj.speak_first()
+    speak_first()
     # 대화 시작
-    response = mj.mic()
+    response = mic()
     if response == "로봇":
-        mj.speaker("네", 1, 2)
+        speaking("네", 1, 2)
 
-        response = mj.mic()
+        response = mic()
+        if response == "초기화":
+            name_ini()
+
+        name_check()
+
+        mj = MYOUNGJA("user_name","user_value")
         while response != "":
             emotion = mj.gpt_send_anw(response)[0]
             ans_emotion = 0
@@ -172,9 +160,9 @@ def main(args=None):
 
             ans = mj.gpt_send_anw(response)[1]
 
-            mj.speaker(ans, emotion_strength, emotion)
+            speaking(ans, emotion_strength, emotion)
 
-            response = mj.mic()
+            response = mic()
 
             if response == "":
                 os.remove("sampleWav.wav")
