@@ -126,11 +126,15 @@ def main(args=None):
         if response == "초기화":
             name_ini()
 
-        name_check()
+        check = name_check()
+        name_check_ = check[0]
+        value_check = check[1]
 
-        mj = MYOUNGJA("user_name","user_value")
+        mj = MYOUNGJA(name_check_,value_check)
         while response != "":
-            emotion = mj.gpt_send_anw(response)[0]
+            response_ = mj.gpt_send_anw(response)
+            emotion = response_[0]
+            # emotion = mj.gpt_send_anw(response)[0]
             ans_emotion = 0
             emotion_strength = 1
 
@@ -158,9 +162,10 @@ def main(args=None):
 
             os.remove("sampleWav.wav")
 
-            ans = mj.gpt_send_anw(response)[1]
+            ans = response_[1]
+            # ans = mj.gpt_send_anw(response)[1]
 
-            speaking(ans, emotion_strength, emotion)
+            speaking(ans, emotion_strength, ans_emotion)
 
             response = mic()
 

@@ -282,24 +282,26 @@ def mic():
 
 def name_check():
     import json
-    with open('../../../../../src/mjbot_voice/user_value.json', 'r') as f:
+    with open('./user_value.json', 'r') as f:
         data = json.load(f)
-        if data["user"]["user_name"] == "":
+        if data["user"][0]["user_name"] == "":
             speaking("이름이 어떻게 되세요?", 1, 1)
             name = mic_first()
-            data["user"]["user_name"] = name
+            data["user"][0]["user_name"] = name
             speaking("성별은 어떻게 되세요?", 1, 1)
             manWoman = mic_first()
-            data["user"]["user_value"] = manWoman
-            name_ = data["user"]["user_name"]
-            manWoman_ = data["user"]["user_name"]
+            data["user"][0]["user_value"] = manWoman
+            name_ = name
+            manWoman_ = manWoman
         else:
-            name_ = data["user"]["user_name"]
-            manWoman_ = data["user"]["user_name"]
+            name_ = data["user"][0]["user_name"]
+            manWoman_ = data["user"][0]["user_value"]
+    
+    return [name_, manWoman_]
 
 def name_ini():
     import json
-    with open('../../../../../src/mjbot_voice/user_value.json', 'r') as f:
+    with open('./user_value.json', 'r') as f:
         data = json.load(f)
-        data["user"]["user_name"] = ""
-        data["user"]["user_value"] = ""
+        data["user"][0]["user_name"] = ""
+        data["user"][0]["user_value"] = ""
