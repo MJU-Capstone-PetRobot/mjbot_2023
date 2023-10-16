@@ -11,6 +11,7 @@ controller_manager:
     forward_position_controller:
       type: position_controllers/JointGroupPositionController
 
+
 joint_trajectory_controller:
   ros__parameters:
     joints:
@@ -43,3 +44,4 @@ forward_position_controller:
 
     state_interfaces:
       - position
+
