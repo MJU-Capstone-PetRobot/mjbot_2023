@@ -56,14 +56,15 @@ class Commander(Node):
     def __init__(self):
         super().__init__('commander')
         self.subscription = self.create_subscription(
-            String, 'arm_mode', self.mode_callback, 10)  # Change message type to String
+            String, 'arm_mode', self.armmode_callback, 10)  # Change message type to String
         self.actionclinetnode = ActionClientNode()
-
-    def mode_callback(self, msg):
+        self.subscription_emotions = self.create_subscription(
+            String, 'emo', self.armmove_emotion, 10)  # Change message type to String
+        self.subscription_emotions  # prevent unused variable warning
         global mode_selection
         global action_state
 
-        joint_names = [
+        self.joint_names = [
             'r_shoulder_pitch',
             'r_shoulder_roll',
             'r_elbow_pitch',
@@ -71,15 +72,15 @@ class Commander(Node):
             'l_shoulder_roll',
             'l_elbow_pitch'
         ]
+        self.trajectory_msg = FollowJointTrajectory.Goal()
+        self.trajectory_msg.trajectory.joint_names = self.joint_names
+        self.point = JointTrajectoryPoint()
 
-        trajectory_msg = FollowJointTrajectory.Goal()
-        trajectory_msg.trajectory.joint_names = joint_names
-        point = JointTrajectoryPoint()
+    def armmode_callback(self, msg):
 
         # Use string values to set the positions
         if msg.data == "walk":
-            positions = [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
-            self.get_logger().info('walk position')
+            self.holding_hand()
         elif msg.data == "give_right_hand":
             positions = [0.0, -1.5, 0.0, -1.5, 1.5, 0.3]
             self.get_logger().info('give right hand')
@@ -89,15 +90,60 @@ class Commander(Node):
         else:
             positions = [0.0, -1.5, 0.0, 0.0, 1.5, 0.0]  # Default position
 
-        point.positions = positions
-        point.time_from_start = Duration(seconds=2).to_msg()
+        self.point.positions = positions
+        self.point.time_from_start = Duration(seconds=2).to_msg()
 
-        trajectory_msg.trajectory.points = [point]
+        self.trajectory_msg.trajectory.points = [self.point]
 
         # Publish the trajectory message to the action client
         if action_state == 0:
-            actionclinetnode.send_goal(trajectory_msg)
+            actionclinetnode.send_goal(self.trajectory_msg)
             action_state = 1
+
+    def armmove_emotion(self, msg):
+        if msg.data == "2":  # "당황"
+            positions = [0.0, 0.0, -1.5, 0.0, 0.0, -1.5]
+
+        elif msg.data == "4":  # "분노"
+            positions = [0.0, 0.0, -1.5, 0.0, 0.0, 1.5]
+
+        # alert
+        # happy
+
+        self.point.positions = positions
+        self.point.time_from_start = Duration(seconds=0.5).to_msg()
+
+        self.trajectory_msg.trajectory.points = [self.point]
+
+        # Publish the trajectory message to the action client
+        if action_state == 0:
+            actionclinetnode.send_goal(self.trajectory_msg)
+            action_state = 1
+        # back to default position
+        positions = [0.0, -1.5, 0.0, 0.0, 1.5, 0.0]  # Default position
+        self.point.positions = positions
+        self.point.time_from_start = Duration(seconds=0.5).to_msg()
+
+        self.trajectory_msg.trajectory.points = [self.point]
+        actionclinetnode.send_goal(self.trajectory_msg)
+
+    def holding_hand(self):
+        positions = [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
+        self.point.positions = positions
+        self.point.time_from_start = Duration(seconds=2).to_msg()
+        self.trajectory_msg.trajectory.points = [self.point]
+        actionclinetnode.send_goal(self.trajectory_msg)
+        self.sub_eff = self.create_subscription(
+            DynamicJointState, '/dynamic_joint_states', self.eff_callback, 10)
+        self.sub_eff
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+
+    def eff_callback(self, msg):
+
+        # Iterate over the interface values
+        for interface_value in msg.interface_values:
+
+            self.get_logger().info(f"Values: {interface_value.values[2]}")
 
 
 if __name__ == '__main__':

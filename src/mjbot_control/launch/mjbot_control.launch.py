@@ -21,6 +21,8 @@ def generate_launch_description():
         package_share_directory, 'config', 'diff_drive_controller.yaml')
     arm_control_node = Node(package='mjbot_control',
                             executable='arm_control_node.py', output='screen')
+    neck_control_node = Node(package='mjbot_control',
+                             executable='neck_controller.py', output='screen')
 
     # Node to run the controller manager
     control_node = Node(
@@ -64,13 +66,15 @@ def generate_launch_description():
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
             on_exit=[diff_drive_controller_spawner,
-            load_trajectory_controller]
+                     load_trajectory_controller]
         )
     )
 
     # List of nodes to be launched
     nodes = [
         control_node,
+        # arm_control_node,
+        # neck_control_node,
         joint_state_broadcaster_spawner,
         delay_controller_spawner_after_joint_state_broadcaster_spawner,
     ]
