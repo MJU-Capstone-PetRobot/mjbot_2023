@@ -150,9 +150,13 @@ def speaking(anw_text, emotion_strength ,emotion):
         # data, fs = sf.read(filename, dtype='')
         pl("test.wav")
 
+        time_check = mp3_time_check()
+
         # 제작된 음성 파일 삭제
         os.remove("ResultMP3.mp3")
         os.remove("test.wav")
+
+        return time_check
 
 
 def mic_first():
@@ -305,3 +309,10 @@ def name_ini():
         data = json.load(f)
         data["user"][0]["user_name"] = ""
         data["user"][0]["user_value"] = ""
+
+def mp3_time_check():
+    from mutagen.mp3 import MP3
+
+    audio = MP3("./ResultMP3.mp3")
+
+    return audio.info.length
