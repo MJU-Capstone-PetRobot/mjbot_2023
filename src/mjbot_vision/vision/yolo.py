@@ -13,8 +13,10 @@ CLASSES = ("person", "bicycle", "car", "motorbike ", "aeroplane ", "bus ", "trai
            "pottedplant", "bed", "diningtable", "toilet ", "tvmonitor", "laptop	", "mouse	", "remote ", "keyboard ", "cell phone", "microwave ",
            "oven ", "toaster", "sink", "refrigerator ", "book", "clock", "vase", "scissors ", "teddy bear ", "hair drier", "toothbrush ")
 
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
+
 
 def xywh2xyxy(x):
     # Convert [x, y, w, h] to [x1, y1, x2, y2]
@@ -24,6 +26,7 @@ def xywh2xyxy(x):
     y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
     y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
     return y
+
 
 def process(input, mask, anchors):
     anchors = [anchors[i] for i in mask]
@@ -50,6 +53,7 @@ def process(input, mask, anchors):
     box = np.concatenate((box_xy, box_wh), axis=-1)
 
     return box, box_confidence, box_class_probs
+
 
 def filter_boxes(boxes, box_confidences, box_class_probs):
     """Filter boxes with box threshold. It's a bit different with origin yolov5 post process!
@@ -79,9 +83,10 @@ def filter_boxes(boxes, box_confidences, box_class_probs):
 
     boxes = boxes[_class_pos]
     classes = classes[_class_pos]
-    scores = (class_max_score* box_confidences)[_class_pos]
+    scores = (class_max_score * box_confidences)[_class_pos]
 
-    return boxes, classes, scores    
+    return boxes, classes, scores
+
 
 def nms_boxes(boxes, scores):
     """Suppress non-maximal boxes.
@@ -119,7 +124,8 @@ def nms_boxes(boxes, scores):
         inds = np.where(ovr <= NMS_THRESH)[0]
         order = order[inds + 1]
     keep = np.array(keep)
-    return keep    
+    return keep
+
 
 def yolov5_post_process(input_data):
     masks = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
@@ -161,6 +167,7 @@ def yolov5_post_process(input_data):
 
     return boxes, classes, scores
 
+
 def draw(image, boxes, scores, classes):
     """Draw the boxes on the image.
     # Argument:
@@ -182,7 +189,8 @@ def draw(image, boxes, scores, classes):
     for box, score, cl in zip(boxes, scores, classes):
         left, top, right, bottom = box
         print('class: {}, score: {}'.format(CLASSES[cl], score))
-        print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(top, left, right, bottom))
+        print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(
+            top, left, right, bottom))
         top = int(top)
         left = int(left)
         right = int(right)
@@ -197,18 +205,21 @@ def draw(image, boxes, scores, classes):
 
             box_color = p_color
 
-            p_size[0] = (int)(right - left) # w
-            p_size[1] = (int)(bottom - top) # h
+            p_size[0] = (int)(right - left)  # w
+            p_size[1] = (int)(bottom - top)  # h
 
-            p_center[0] = (right + left) // 2 # cx
-            p_center[1] = (bottom + top) // 2 # cy
+            p_center[0] = (right + left) // 2  # cx
+            p_center[1] = (bottom + top) // 2  # cy
 
-            cv2.putText(image, 'w: {} h: {}'.format(p_size[0], p_size[1]), (p_center[0], top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, p_color, 2)
-            cv2.putText(image, 'cx: {} cy: {}'.format(p_center[0], p_center[1]), (p_center[0], p_center[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.6, p_color, 2)
+            cv2.putText(image, 'w: {} h: {}'.format(
+                p_size[0], p_size[1]), (p_center[0], top - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, p_color, 2)
+            # cv2.putText(image, 'x: {} y: {}'.format(p_center[0], p_center[1]), (
+            #     p_center[0], p_center[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.6, p_color, 2)
         else:
             box_color = else_color
 
         cv2.rectangle(image, (left, top), (right, bottom), box_color, 2)
-        cv2.putText(image, '{0} {1:.2f}'.format(CLASSES[cl], score), (left, top - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        cv2.putText(image, '{0} {1:.2f}'.format(
+            CLASSES[cl], score), (left, top - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
     return p_size, p_center, p_boxes, p_scores

@@ -6,7 +6,7 @@ twist_mux:
         timeout : 0.5
         priority: 10
       keyboard:
-        topic   : cmd_vel_keyboard
+        topic   : cmd_vel_tracker
         timeout : 0.5
         priority: 20
       joy:
