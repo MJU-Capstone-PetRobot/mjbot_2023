@@ -100,6 +100,7 @@ class VoiceSuscriber(Node):
             speaking("할머니 불이 났어요!!", 2, 3)
 
 def main(args=None):
+    import time
     rclpy.init(args=args)
     talking_node = TalkingNode()
     hear_node = VoiceSuscriber()
@@ -165,7 +166,9 @@ def main(args=None):
             ans = response_[1]
             # ans = mj.gpt_send_anw(response)[1]
 
-            speaking(ans, emotion_strength, ans_emotion)
+            time_thing = speaking(ans, emotion_strength, ans_emotion)
+            time.sleep(time_thing)
+            talking_node.publish_emotions("6")
 
             response = mic()
 
