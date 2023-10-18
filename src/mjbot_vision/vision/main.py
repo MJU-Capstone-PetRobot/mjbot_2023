@@ -5,8 +5,6 @@ from rknnlite.api import RKNNLite
 
 from vision.depth import *
 from vision.sort import Sort
-from vision.depth import *
-from vision.sort import Sort
 
 import random
 from itertools import count
@@ -16,7 +14,7 @@ from matplotlib.animation import FuncAnimation
 from random import randrange
 
 import csv
-import yolo
+import vision.yolo
 
 import rclpy
 from rclpy.node import Node
@@ -25,7 +23,8 @@ from example_interfaces.msg import Int32
 from example_interfaces.msg import Int16
 from example_interfaces.msg import Int16MultiArray
 
-RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7.rknn'  # 절대경로
+# RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7.rknn'  # 절대경로
+RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'
 
 
 class VisionNode(Node):
@@ -37,15 +36,27 @@ class VisionNode(Node):
         self.duration_sec = 0
         self.runtime_sec = 0
 
-        self.owner_size = [0, 0]  # [w, h]
-        self.owner_center = [0, 0]  # [x, y]
-        self.owner_z = 0
-        self.owner_size_prev = [0, 0]  # for fall detection
-        self.owner_size_diff = [0, 0]  # [w_diff, h_diff]
+        self.owner_x : int = 0
+        self.owner_y : int = 0
+        self.owner_z : int = 0
+
         self.owner_exists = False
         self.owner_fall = False
+
+        self.owner_w : int = 0
+        self.owner_h : int = 0
+        self.owner_w_prev = 0
+        self.owner_h_prev = 0
+        self.owner_w_diff = 0
+        self.owner_h_diff = 0
+
         self.p_boxes = np.array([])
         self.p_scores = np.array([])
+
+        self.fieldnames = ["duration", "runtime", "fps",
+                           "w", "h",
+                           "w_diff", "h_diff",
+                           "exists", "fall"]
 
         self.publisher_fps_ = self.create_publisher(Int32, "fps", 10)
         self.publisher_owner_exists_ = self.create_publisher(
@@ -72,21 +83,14 @@ class VisionNode(Node):
 
     def publish_owner_size(self):
         msg = Int16MultiArray()
-        msg.data = [self.owner_size[0], self.owner_size[1]]
+        msg.data = [self.owner_w, self.owner_h]
         self.publisher_owner_size_.publish(msg)
         self.get_logger().info("PUB: /owner_size: {}".format(msg.data))
 
     def publish_owner_center(self):
         msg = Int16MultiArray()
 
-        # Get depth distance
-        depth_x = self.owner_center[0]
-        depth_y = self.owner_center[1] - 80
-        self.owner_z = self.dep[depth_y, depth_x]  # ordered y, x
-
-        msg.data = [self.owner_center[0],
-                    self.owner_center[1],
-                    (int)(self.owner_z)]
+        msg.data = [self.owner_x, self.owner_y, self.owner_z]
         self.publisher_owner_center_.publish(msg)
         self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
 
@@ -155,7 +159,7 @@ class VisionNode(Node):
             exit(ret)
         self.get_logger().info('RKNN: Done')
 
-    def run_rknn(self, extract_class = 'All'):
+    def run_rknn(self):
         # Inference
         self.get_logger().info('RKNN: Inference')
         outputs = self.rknn_lite.inference(inputs=[self.img])
@@ -178,10 +182,13 @@ class VisionNode(Node):
         # Yolov5 post process
         self.boxes, self.classes, self.scores = vision.yolo.yolov5_post_process(input_data)
 
-        # Extract selected class
-        if extract_class != 'All':
+        # Extract person
+        self.p_boxes = np.array([])
+        self.p_scores = np.array([])
+
+        if self.boxes is not None:
             for box, score, cl in zip(self.boxes, self.scores, self.classes):
-                if vision.yolo.CLASSES[cl] == extract_class:
+                if vision.yolo.CLASSES[cl] == 'person':
                     self.p_boxes = np.append(self.p_boxes, box)
                     self.p_scores = np.append(self.p_scores, score)
 
@@ -189,49 +196,64 @@ class VisionNode(Node):
         self.sort = Sort(max_age=2, min_hits=3, iou_threshold=0.3, )
 
     def run_sort(self):
+        self.p_boxes = self.p_boxes.reshape((-1, 4))
         if self.p_boxes is not None:
             self.p_scores = self.p_scores.reshape((-1, 1))
             dets = np.concatenate((self.p_boxes, self.p_scores), 1) 
             tracker = self.sort.update(dets)
 
-            # tracker 포맷 확인
-            # 가장 낮은 ID만 추출
-            # 해당 ID x,y,z 저장
-            # 해당 ID rectangle, text 그리기
+            first_id_index = len(tracker) - 1 # sort output is id descending order
 
-            for trk in tracker:
+            for idx, trk in enumerate(tracker):
                 trk = trk.astype(int)
-                cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
-                cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+
+                if idx == first_id_index: # Get first-id coordinate
+                    cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (0, 255, 0), 2)
+                    cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+
+                    self.owner_exists = True
+
+                    self.owner_x = (int)((trk[0] + trk[2]) // 2)
+                    self.owner_y = (int)((trk[1] + trk[3]) // 2)
+
+                    self.owner_w = (int)(trk[2] - trk[0])
+                    self.owner_h = (int)(trk[3] - trk[1])
+
+                    # Get depth distance
+                    depth_x = self.owner_x
+                    depth_y = self.owner_y - 80
+                    self.owner_z = (int)(self.dep[depth_y, depth_x])  # ordered y, x
+
+                    cv2.putText(self.img, "X {}".format(self.owner_x), (570, 30), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "Y {}".format(self.owner_y), (570, 50), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "Z {}".format(self.owner_z), (570, 70), 1, 1, (0, 255, 0), 2)
+
+                    cv2.putText(self.img, "W {}".format(self.owner_w), (500, 30), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "H {}".format(self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
+                else:
+                    cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
+                    cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
             
     def detect_fall(self):
-        # if object detection is failed
-        if self.owner_size[0] == 0 and self.owner_size[1] == 0:
-            self.owner_size[0] = self.owner_size_prev[0]
-            self.owner_size[1] = self.owner_size_prev[1]
-            self.owner_exists = False
-        else:
-            self.owner_exists = True
+        if self.owner_exists:
+            self.owner_w_diff = (self.owner_w - self.owner_w_prev) / self.duration_sec
+            self.owner_h_diff = (self.owner_h - self.owner_h_prev) / self.duration_sec 
 
-        self.owner_size_diff[0] = (
-            self.owner_size[0] - self.owner_size_prev[0]) / self.duration_sec  # w_diff
-        self.owner_size_diff[1] = (
-            self.owner_size[1] - self.owner_size_prev[1]) / self.duration_sec  # h_diff
+            if self.owner_h_diff <= -500:
+                self.owner_fall = True
+            else:
+                self.owner_fall = False
 
-        if self.owner_size_diff[1] <= -500:
-            self.owner_fall = True
-        else:
-            self.owner_fall = False
+            self.owner_w_prev = self.owner_w
+            self.owner_h_prev = self.owner_h
+        # else:
+            # self.owner_w_diff = 0
+            # self.owner_h_diff = 0
+            # self.owner_w_prev = 0
+            # self.owner_h_prev = 0
 
-        self.owner_size_prev[0] = self.owner_size[0]
-        self.owner_size_prev[1] = self.owner_size[1]
 
     def init_csv_log(self):
-        self.fieldnames = ["Duration", "Runtime", "FPS",
-                           "Width", "Height",
-                           "Width Diff", "Height Diff",
-                           "Owner Exists", "Fall Detection"]
-
         with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'w') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
             csv_writer.writeheader()
@@ -241,18 +263,18 @@ class VisionNode(Node):
             csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
 
             info = {
-                "Duration": self.duration_sec,
-                "Runtime": self.runtime_sec,
-                "FPS": self.fps,
+                "duration": self.duration_sec,
+                "runtime": self.runtime_sec,
+                "fps": self.fps,
 
-                "Width": self.owner_size[0],
-                "Height": self.owner_size[1],
+                "w": self.owner_w,
+                "h": self.owner_h,
 
-                "Width Diff": self.owner_size_diff[0],
-                "Height Diff": self.owner_size_diff[1],
+                "w_diff": self.owner_w_diff,
+                "h_diff": self.owner_h_diff,
 
-                "Owner Exists": self.owner_exists,
-                "Fall Detection": self.owner_fall
+                "exists": self.owner_exists,
+                "fall": self.owner_fall
             }
 
             csv_writer.writerow(info)
@@ -266,7 +288,7 @@ def main(args=None):
     node.init_depth()
     node.init_rknn()
     node.init_sort()
-    # node.init_csv_log()
+    node.init_csv_log()
 
     while True:
         start = dt.datetime.utcnow()
@@ -274,8 +296,8 @@ def main(args=None):
 
         # node.read_video("video") # read and resize image
         node.read_depth(False)
-        node.run_rknn("person") # yolo inference
-        node.run_sort("HUMAN") # object tracking
+        node.run_rknn() # yolo inference
+        node.run_sort() # object tracking
 
         duration = dt.datetime.utcnow() - start
         node.fps = int(round(1000000 / duration.microseconds))
@@ -284,9 +306,8 @@ def main(args=None):
         node.runtime_sec += node.duration_sec
         node.runtime_sec = round(node.runtime_sec, 3)
 
-        # node.run_csv_log()
-        node.detect_fall()
-        
+        node.run_csv_log()
+        node.detect_fall()  
         node.publish_fps()
         node.publish_owner_exists()
 
@@ -296,15 +317,7 @@ def main(args=None):
         if node.owner_fall:
             node.publish_owner_fall()
 
-        cv2.putText(node.img, 'x: {}'.format(node.owner_center[0]),
-                    (node.owner_center[0], node.owner_center[1]), 1, 1.5, (0, 255, 0), 2)
-        cv2.putText(node.img, 'y: {}'.format(node.owner_center[1]),
-                    (node.owner_center[0], node.owner_center[1]+20), 1, 1.5, (0, 255, 0), 2)
-        cv2.putText(node.img, 'z: {}'.format(node.owner_z),
-                    (node.owner_center[0], node.owner_center[1]+40), 1, 1.5, (0, 255, 0), 2)
-
-        cv2.putText(node.img, f'fps: {node.fps}',
-                    (25, 50), 1, 2, (0, 255, 0), 2)
+        cv2.putText(node.img, f'fps: {node.fps}', (25, 50), 1, 2, (0, 255, 0), 2)
         cv2.imshow("result", node.img)
 
         # If the `q` key was pressed, break from the loop

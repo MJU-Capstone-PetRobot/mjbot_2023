@@ -12,23 +12,23 @@ y_vals = []
 index = count()
 
 def animate(i):
-    data = pd.read_csv('log.csv')
-    x = data['run_time']
-    dx = data['width']
-    dy = data['height']
-    width_diff = data['width_diff']
-    height_diff = data['height_diff']
-    fall = data['fall_detection']
+    data = pd.read_csv('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv')
+    x = data['runtime']
+    width = data['w']
+    height = data['h']
+    width_diff = data['w_diff']
+    height_diff = data['h_diff']
+    fall = data['fall']
 
     plt.cla()
 
-    plt.ylim([-7000, 7000])
+    plt.ylim([-1000, 1000])
     plt.xlabel('time (sec)')
     plt.ylabel('size')
     
-    # plt.plot(x, dx, label='width')
-    # plt.plot(x, dy, label='height')
-    plt.plot(x, width_diff, label='width_diff')
+    # plt.plot(x, width, label='width')
+    plt.plot(x, height, label='height')
+    # plt.plot(x, width_diff, label='width_diff')
     plt.plot(x, height_diff, label='height_diff')
     plt.plot(x, fall, label='fall')
 
