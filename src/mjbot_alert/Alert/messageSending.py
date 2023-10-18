@@ -56,8 +56,8 @@ def send_message(problem):
 
     # Twilio
     # 계정 token 입력
-    account_sid = "AC1284d2af3f21aea53a0c14979072d54e"
-    auth_token = "b21584709bd00e56cb0738fbe814d99c"
+    account_sid = "AC580149388d714abb2f99c81b120f4cea"
+    auth_token = "b5c1267bea39194607fd4169018a4877"
     client = Client(account_sid, auth_token)
 
     if problem == 1:
@@ -68,8 +68,9 @@ def send_message(problem):
     message = client.messages \
         .create(
         body=f"위험 위험!!, 할머니가 위험해요. 종류 : {problem_thing}. 위치는 ",
-        from_="+16562186034",
-        to="+821085930557",
+        from_="+12294145018",
+        to="+821025941808",
     )
 
     time.sleep(1000000)
+
