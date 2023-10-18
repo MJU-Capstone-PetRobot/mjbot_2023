@@ -169,7 +169,7 @@ def main(args=None):
             time_thing = speaking(ans, emotion_strength, ans_emotion)
             time.sleep(time_thing)
             talking_node.publish_emotions("6")
-            
+
             response = mic()
 
             if response == "":
