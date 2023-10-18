@@ -155,7 +155,7 @@ class VisionNode(Node):
             exit(ret)
         self.get_logger().info('RKNN: Done')
 
-    def run_rknn(self):
+    def run_rknn(self, extract_class = 'All'):
         # Inference
         self.get_logger().info('RKNN: Inference')
         outputs = self.rknn_lite.inference(inputs=[self.img])
@@ -178,43 +178,31 @@ class VisionNode(Node):
         # Yolov5 post process
         self.boxes, self.classes, self.scores = vision.yolo.yolov5_post_process(input_data)
 
-        # Draw detection box
-        if self.boxes is not None:
-            self.owner_size, self.owner_center, self.p_boxes, self.p_scores = vision.yolo.draw(self.img, self.boxes, self.scores, self.classes)
-            self.get_logger().info("Owner info (w: {}, h: {}, cx: {}, cy: {})".format(self.owner_size[0], self.owner_size[1], self.owner_center[0], self.owner_center[1]))
-        else:
-            self.owner_size = [0, 0]
-            self.owner_center = [0, 0]
+        # Extract selected class
+        if extract_class != 'All':
+            for box, score, cl in zip(self.boxes, self.scores, self.classes):
+                if vision.yolo.CLASSES[cl] == extract_class:
+                    self.p_boxes = np.append(self.p_boxes, box)
+                    self.p_scores = np.append(self.p_scores, score)
 
     def init_sort(self):
         self.sort = Sort(max_age=2, min_hits=3, iou_threshold=0.3, )
 
-    def run_sort(self, what_to_track):
-        if what_to_track == "ALL":
-            if self.boxes is not None:
-                self.scores = self.scores.reshape((-1, 1))
-                dets = np.concatenate((self.boxes, self.scores), 1) 
-                tracker = self.sort.update(dets)
-                for trk in tracker:
-                    trk = trk.astype(int)
-                    cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
-                    cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+    def run_sort(self):
+        if self.p_boxes is not None:
+            self.p_scores = self.p_scores.reshape((-1, 1))
+            dets = np.concatenate((self.p_boxes, self.p_scores), 1) 
+            tracker = self.sort.update(dets)
 
-                    print("ID : {}".format(str(trk[4])))
-        elif what_to_track == "HUMAN":
-            self.p_boxes = self.p_boxes.reshape((-1, 4))
-            if self.p_boxes is not None:
-                self.p_scores = self.p_scores.reshape((-1, 1))
+            # tracker 포맷 확인
+            # 가장 낮은 ID만 추출
+            # 해당 ID x,y,z 저장
+            # 해당 ID rectangle, text 그리기
 
-                print("p_boxes ndim {}".format(self.p_boxes.ndim))
-                print("p_score ndim {}".format(self.p_scores.ndim))
-
-                dets = np.concatenate((self.p_boxes, self.p_scores), 1) 
-                tracker = self.sort.update(dets)
-                for trk in tracker:
-                    trk = trk.astype(int)
-                    cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
-                    cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+            for trk in tracker:
+                trk = trk.astype(int)
+                cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
+                cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
             
     def detect_fall(self):
         # if object detection is failed
@@ -286,7 +274,7 @@ def main(args=None):
 
         # node.read_video("video") # read and resize image
         node.read_depth(False)
-        node.run_rknn() # yolo inference
+        node.run_rknn("person") # yolo inference
         node.run_sort("HUMAN") # object tracking
 
         duration = dt.datetime.utcnow() - start
