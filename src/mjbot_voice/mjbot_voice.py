@@ -6,7 +6,6 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from example_interfaces.msg import Int32, Bool
 import threading
-import json
 
 """
 Publisher : 감정(example_interfaces.msg/String) , 팔 제어(std_msgs.msg/String)
@@ -70,7 +69,7 @@ class VoiceSuscriber(Node):
         self.get_logger().info(f'Received: {msg.dat}')
 
         if msg.data == True:
-            speaking("할머니 괜찮으세요??", 1, 0)
+            speaking("할머니 괜찮으세요??")
 
     def subscribe_callback_bat_state(self, msg):
         '''
@@ -79,7 +78,7 @@ class VoiceSuscriber(Node):
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data <= 45:
-            speaking("할머니 배고파요", 1, 0)
+            speaking("할머니 배고파요")
 
     def subscribe_callback_touch(self, msg):
         '''
@@ -88,7 +87,7 @@ class VoiceSuscriber(Node):
         self.get_logger().info(f'Received: {msg.data}')
 
         if msg.data == True:
-            speaking("깔깔깔", 1, 2)
+            speaking("깔깔깔")
 
     def subscribe_callback_co(self, msg):
         '''
@@ -97,11 +96,13 @@ class VoiceSuscriber(Node):
         self.get_logger().info('Received: %d' % msg.data)
 
         if msg.data >= 200:
-            speaking("할머니 불이 났어요!!", 2, 3)
+            speaking("할머니 불이 났어요!!")
+
 
 def main(args=None):
     import time
-    import sys
+    global common
+    common = 0
     rclpy.init(args=args)
     talking_node = TalkingNode()
     hear_node = VoiceSuscriber()
@@ -113,16 +114,18 @@ def main(args=None):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
-    # 먼저 말 거는 기능 실험용
-    # speak_first_ex()
-
     while 1:
+        # 먼저 말 거는 기능 실험용
+        if common == 0:
+            speak_first_ex()
+
+        common = 1
         # 먼저 말 거는 기능
-        speak_first()
+        # speak_first()
         # 대화 시작
         response = mic()
         if response == "로봇":
-            speaking("네", 1, 2)
+            speaking("네")
 
             response = mic()
             if response == "초기화":
@@ -132,13 +135,14 @@ def main(args=None):
             name_check_ = check[0]
             value_check = check[1]
 
-            mj = MYOUNGJA(name_check_,value_check)
+            mj = MYOUNGJA(name_check_, value_check)
             while response != "":
+                # talking_node.publish_emotions("6")
                 response_ = mj.gpt_send_anw(response)
                 emotion = response_[0]
                 # emotion = mj.gpt_send_anw(response)[0]
-                ans_emotion = 0
-                emotion_strength = 1
+                # ans_emotion = 0
+                # emotion_strength = 1
 
                 # NULL, close, moving, wink, angry, sad, daily
                 if emotion == "평범":
@@ -147,12 +151,12 @@ def main(args=None):
                     talking_node.publish_emotions("2")
                 elif emotion == "분노":
                     talking_node.publish_emotions("4")
-                    ans_emotion = 3
-                    emotion_strength = 2
+                    # ans_emotion = 3
+                    # emotion_strength = 2
                 elif emotion == "슬픔":
                     talking_node.publish_emotions("5")
-                    ans_emotion = 1
-                    emotion_strength = 0
+                    # ans_emotion = 1
+                    # emotion_strength = 0
                 elif emotion == "NULL" and response == "sancheckgaja":  # 왼손
                     talking_node.publish_arm_motions("walk")
                 elif emotion == "NULL" and response == "오른손":  # 오른손
@@ -167,9 +171,7 @@ def main(args=None):
                 ans = response_[1]
                 # ans = mj.gpt_send_anw(response)[1]
 
-                time_thing = speaking(ans, emotion_strength, ans_emotion)
-                time.sleep(time_thing)
-                talking_node.publish_emotions("6")
+                # time_thing = speaking(ans)
 
                 response = mic()
 
@@ -184,3 +186,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
