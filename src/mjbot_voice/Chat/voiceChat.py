@@ -5,7 +5,7 @@ openai.api_key = "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"
 
 
 class MYOUNGJA():
-    memory_size = 5
+    memory_size = 100
     nameValue = ""
     manWomanValue = ""
 
@@ -28,8 +28,8 @@ class MYOUNGJA():
         :param question: 질문
         :return: 답변
         '''
-        self.gpt_standard_messages = [{"role": "assistant robot",
-                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer shortly, under 5 seconds , politely in korean. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer."}]
+        self.gpt_standard_messages = [{"role": "system",
+                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer politely in korean. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer."}]
         self.gpt_standard_messages.append({"role": "user", "content": question})
 
         response = openai.ChatCompletion.create(
@@ -37,7 +37,6 @@ class MYOUNGJA():
             messages=self.gpt_standard_messages,
             temperature=0.8
         )
-
 
         answer = response['choices'][0]['message']['content']
 
@@ -80,6 +79,7 @@ def speak_first():
     :return: X
     '''
     from time import time, localtime
+    import time
     import random
 
     tmt = time()
@@ -88,42 +88,36 @@ def speak_first():
     question_list = ["오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 오늘 어떠세요??", "", "", "", "", "", "", "", ""]
 
     if tm.tm_hour == 7 and tm.tm_min == 00:
-        speaking("좋은 아침이에요!! 오늘도 좋은 하루 되세요!!", 1, 2)
+        speaking("좋은 아침이에요!! 오늘도 좋은 하루 되세요!!")
     elif tm.tm_hour == 22 and tm.tm_min == 00:
-        speaking("이제 잘 시간이에요!! 편안한 밤 되세요!!", 1, 2)
+        speaking("이제 잘 시간이에요!! 편안한 밤 되세요!!")
     elif tm.tm_hour == 12 and tm.tm_min == 00:
-        speaking("혈압약 드실 시간이에요!", 1, 0)
+        speaking("혈압약 드실 시간이에요!")
     elif 7 < tm.tm_hour < 22 and tm.tm_min == 00:
         random_ans = random.randrange(0, 9)
         if tm.tm_min == 30:
             if random_ans == 1:
                 # 말 걸 내용들
-                speaking(question_list[0], 1, 2)
+                speaking(question_list[0])
             elif random_ans == 2:
                 # 말 걸 내용들
-                speaking(question_list[1], 1, 2)
+                speaking(question_list[1])
     elif tm.tm_hour == 15 and tm.tm_min == 00:
-        speaking("우리 산책 나가요!", 1, 2)
+        speaking("우리 산책 나가요!")
+
+    tmt.sleep(3)
 
 
 def speak_first_ex():
-    import random
+    import time
 
-    question_list = ["오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 오늘 어떠세요??", "좋은 아침이에요!! 오늘도 좋은 하루 되세요!!",
-                     "이제 잘 시간이에요!! 편안한 밤 되세요!!", "혈압약 드실 시간이에요!", "우리 산책 나가요!"]
+    speaking("좋은 아침이에요!! 오늘도 좋은 하루 되세요!!")
+    time.sleep(3)
 
-    speaking(question_list[random.randint(0, 6)], 1, 2)
+    speaking("안녕하세요.")
 
 
-def speaking(anw_text, emotion_strength, emotion):
-    '''
-    주어진 말을 스피커를 통해 음성 변환 시켜 출력
-    emotion_strength
-    0 중립 1 슬픔 2 기쁨 3 분노
-
-    emotion
-    0 약함 1 보통 2 강함
-    '''
+def speaking(anw_text):
     import os
     import urllib.request
     from pydub import AudioSegment
@@ -133,7 +127,7 @@ def speaking(anw_text, emotion_strength, emotion):
     client_id = "ud0o0y1iat"
     client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
     encText = urllib.parse.quote(anw_text)
-    data = f"speaker=vara&volume=0&speed=0&pitch=0&emotion-strength={emotion_strength}&emotion={emotion}&format=mp3&text=" + encText
+    data = f"speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
     urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
     requests = urllib.request.Request(urls)
     requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
@@ -292,25 +286,42 @@ def mic():
 
 def name_check():
     import json
+    global common
+    common = 0
     with open('./user_value.json', 'r') as f:
         data = json.load(f)
-        if data["user"][0]["user_name"] == "":
-            speaking("사용자 정보가 없어, 초기 설정 진행하겠습니다.", 1, 2)
-            speaking("이름이 어떻게 되세요?", 1, 2)
-            name = mic_first()
-            data["user"][0]["user_name"] = name
-            speaking("성별은 어떻게 되세요? 남자 또는 여자로 대답해주세요.", 1, 2)
+        if data["user_name"] == "":
+            speaking("사용자 정보가 없어, 초기 설정 진행하겠습니다.")
+            speaking("이름이 어떻게 되세요?")
+            name_ = mic_first()
+            speaking(f"안녕하세요! {name_}님")
+            speaking("성별은 어떻게 되세요? 남자 또는 여자로 대답해주세요.")
             manWoman = mic_first()
-            data["user"][0]["user_value"] = manWoman
             if manWoman == "남자":
                 manWoman_ = "he"
             elif manWoman == "여자":
                 manWoman_ = "she"
-            name_ = name
-
+            else:
+                while manWoman == "남자" or manWoman == "여자":
+                    speaking("잘 못 들었어요. 다시 한번 알려주세요.")
+                    manWoman = mic_first()
+                    if manWoman == "남자":
+                        manWoman_ = "he"
+                    elif manWoman == "여자":
+                        manWoman_ = "she"
+            common = 1
         else:
-            name_ = data["user"][0]["user_name"]
-            manWoman_ = data["user"][0]["user_value"]
+            name_ = data["user_name"]
+            manWoman_ = data["user_value"]
+
+        write_data = {
+            "user_name": f"{name_}",
+            "user_value": f"{manWoman_}"
+        }
+
+        if common == 1:
+            with open('./user_value.json', 'w') as d:
+                json.dump(write_data, d)
 
     return [name_, manWoman_]
 
@@ -329,3 +340,23 @@ def mp3_time_check():
     audio = MP3("./ResultMP3.mp3")
 
     return audio.info.length
+
+# def time_check(time):
+
+#     from datetime import datetime
+
+#     now = datetime.now()
+
+#     min = int(time / 60)
+#     sec = time % 60
+#     print(f"지금 {now} 분 {min}, 초 {sec}")
+
+#     new_min = now.minute + min
+#     new_sec = now.second + sec
+#     if new_sec > 60:
+#         new_sec -= 60
+#         new_min += 1
+
+#     print(f"새로운 시간은 {new_min}분 {new_sec}초")
+
+#     return [new_min, new_sec]
