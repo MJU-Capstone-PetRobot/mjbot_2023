@@ -52,6 +52,7 @@ install(
 install(
   PROGRAMS
     scripts/arm_control_node.py
+    scripts/neck_control_node.py
   DESTINATION
     lib/${PROJECT_NAME}
 )
