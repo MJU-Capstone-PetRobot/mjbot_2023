@@ -101,6 +101,7 @@ class VoiceSuscriber(Node):
 
 def main(args=None):
     import time
+    import sys
     rclpy.init(args=args)
     talking_node = TalkingNode()
     hear_node = VoiceSuscriber()
@@ -111,70 +112,70 @@ def main(args=None):
 
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
-    common = 0
 
     # 먼저 말 거는 기능 실험용
     # speak_first_ex()
 
-    # 먼저 말 거는 기능
-    speak_first()
-    # 대화 시작
-    response = mic()
-    if response == "로봇":
-        speaking("네", 1, 2)
-
+    while 1:
+        # 먼저 말 거는 기능
+        speak_first()
+        # 대화 시작
         response = mic()
-        if response == "초기화":
-            name_ini()
-
-        check = name_check()
-        name_check_ = check[0]
-        value_check = check[1]
-
-        mj = MYOUNGJA(name_check_,value_check)
-        while response != "":
-            response_ = mj.gpt_send_anw(response)
-            emotion = response_[0]
-            # emotion = mj.gpt_send_anw(response)[0]
-            ans_emotion = 0
-            emotion_strength = 1
-
-            # NULL, close, moving, wink, angry, sad, daily
-            if emotion == "평범":
-                talking_node.publish_emotions("6")
-            elif emotion == "당황":
-                talking_node.publish_emotions("2")
-            elif emotion == "분노":
-                talking_node.publish_emotions("4")
-                ans_emotion = 3
-                emotion_strength = 2
-            elif emotion == "슬픔":
-                talking_node.publish_emotions("5")
-                ans_emotion = 1
-                emotion_strength = 0
-            elif emotion == "NULL" and response == "sancheckgaja":  # 왼손
-                talking_node.publish_arm_motions("walk")
-            elif emotion == "NULL" and response == "오른손":  # 오른손
-                talking_node.publish_arm_motions("give_right_hand")
-            elif emotion == "NULL" and response == "hug":  # 오른손
-                talking_node.publish_arm_motions("hug")
-            else:
-                talking_node.publish_emotions("0")
-
-            os.remove("sampleWav.wav")
-
-            ans = response_[1]
-            # ans = mj.gpt_send_anw(response)[1]
-
-            time_thing = speaking(ans, emotion_strength, ans_emotion)
-            time.sleep(time_thing)
-            talking_node.publish_emotions("6")
+        if response == "로봇":
+            speaking("네", 1, 2)
 
             response = mic()
+            if response == "초기화":
+                name_ini()
 
-            if response == "":
+            check = name_check()
+            name_check_ = check[0]
+            value_check = check[1]
+
+            mj = MYOUNGJA(name_check_,value_check)
+            while response != "":
+                response_ = mj.gpt_send_anw(response)
+                emotion = response_[0]
+                # emotion = mj.gpt_send_anw(response)[0]
+                ans_emotion = 0
+                emotion_strength = 1
+
+                # NULL, close, moving, wink, angry, sad, daily
+                if emotion == "평범":
+                    talking_node.publish_emotions("6")
+                elif emotion == "당황":
+                    talking_node.publish_emotions("2")
+                elif emotion == "분노":
+                    talking_node.publish_emotions("4")
+                    ans_emotion = 3
+                    emotion_strength = 2
+                elif emotion == "슬픔":
+                    talking_node.publish_emotions("5")
+                    ans_emotion = 1
+                    emotion_strength = 0
+                elif emotion == "NULL" and response == "sancheckgaja":  # 왼손
+                    talking_node.publish_arm_motions("walk")
+                elif emotion == "NULL" and response == "오른손":  # 오른손
+                    talking_node.publish_arm_motions("give_right_hand")
+                elif emotion == "NULL" and response == "hug":  # 오른손
+                    talking_node.publish_arm_motions("hug")
+                else:
+                    talking_node.publish_emotions("0")
+
                 os.remove("sampleWav.wav")
-                break
+
+                ans = response_[1]
+                # ans = mj.gpt_send_anw(response)[1]
+
+                time_thing = speaking(ans, emotion_strength, ans_emotion)
+                time.sleep(time_thing)
+                talking_node.publish_emotions("6")
+
+                response = mic()
+
+                if response == "":
+                    os.remove("sampleWav.wav")
+                    break
 
     executor_thread.join()
     talking_node.destroy_node()
