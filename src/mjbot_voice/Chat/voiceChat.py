@@ -1,7 +1,7 @@
 import openai
 
 ## ChatGPT
-openai.api_key = "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"
+openai.api_key = "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"
 
 
 class MYOUNGJA():
