@@ -3,7 +3,7 @@ import os
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, Int32
-from Alert.messageSending import *
+from Alert.gps_main import *
 
 
 # class TalkingNode(Node):
