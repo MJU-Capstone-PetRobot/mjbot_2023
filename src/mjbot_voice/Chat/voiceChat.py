@@ -149,13 +149,10 @@ def speaking(anw_text):
         # data, fs = sf.read(filename, dtype='')
         pl("test.wav")
 
-        time_check = mp3_time_check()
-
         # 제작된 음성 파일 삭제
         os.remove("ResultMP3.mp3")
         os.remove("test.wav")
 
-        return time_check
 
 
 def mic_first():
