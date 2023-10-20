@@ -44,7 +44,7 @@ arm_joint_trajectory_controller:
     state_interfaces:
       - position
       - velocity
-      - effort
+
 forward_position_controller:
   ros__parameters:
     joints:

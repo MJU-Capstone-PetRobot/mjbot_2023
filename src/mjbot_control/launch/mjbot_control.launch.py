@@ -54,7 +54,7 @@ def generate_launch_description():
     load_trajectory_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_trajectory_controller",
+        arguments=["arm_joint_trajectory_controller",
                    "--controller-manager", "/controller_manager"],
         output="screen",
     )
@@ -74,6 +74,14 @@ def generate_launch_description():
         )
     )
 
+    delay_arm_control_node_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[arm_control_node]
+        )
+    )
+
+
     # List of nodes to be launched
     nodes = [
         control_node,
@@ -85,6 +93,7 @@ def generate_launch_description():
         delay_controller_spawner_after__diff_drive_controller_spawner,
 
         delay_controller_spawner_after_joint_state_broadcaster_spawner,
+        delay_arm_control_node_after_joint_state_broadcaster_spawner
     ]
 
     # Return the merged launch description
