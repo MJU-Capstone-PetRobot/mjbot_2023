@@ -157,7 +157,7 @@ def main(args=None):
                     talking_node.publish_emotions("5")
                     # ans_emotion = 1
                     # emotion_strength = 0
-                elif emotion == "NULL" and response == "sancheckgaja":  # 왼손
+                elif emotion == "NULL" and response == "산책 가자":  # 왼손
                     talking_node.publish_arm_motions("walk")
                 elif emotion == "NULL" and response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
@@ -172,6 +172,7 @@ def main(args=None):
                 # ans = mj.gpt_send_anw(response)[1]
 
                 # time_thing = speaking(ans)
+                speaking(ans)
 
                 response = mic()
 
