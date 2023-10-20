@@ -16,11 +16,14 @@
 
 
   <xacro:mjbot prefix="$(arg prefix)" />
-  <xacro:mjbot_ros2_control   name="mjbot" />
 
+  <xacro:mjbot_ros2_control   name="mjbot" />
+  <xacro:mjbot_arm_ros2_control name="mjbot" />
 
   
 
 </robot>
 
 
+
+ 
