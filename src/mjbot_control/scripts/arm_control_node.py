@@ -17,7 +17,7 @@ class ArmControllerNode(Node):
     def __init__(self):
         super().__init__('arm_controller_node')
         self._action_client = ActionClient(
-            self, FollowJointTrajectory, '/arm_joint_trajectory_controller/joint_trajectory')
+            self, FollowJointTrajectory, '/arm_joint_trajectory_controller/follow_joint_trajectory')
 
     def send_goal(self, trajectory_msg):
         global action_state
@@ -101,7 +101,7 @@ class Commander(Node):
         ##show action state
         self.get_logger().info('action state: {0}'.format(action_state))
 
-        if action_state == 0:
+        if action_state == 0 | action_state == 2:
             self.arm_controller.send_goal(self.trajectory_msg)
             
             action_state = 1

@@ -15,16 +15,7 @@ controller_manager:
       type: diff_drive_controller/DiffDriveController
 
    
-arm_joint_state_broadcaster:
-  ros__parameters:
-    publish_rate: 50
-    joints:
-      - r_shoulder_pitch
-      - r_shoulder_roll
-      - r_elbow_pitch
-      - l_shoulder_pitch
-      - l_shoulder_roll
-      - l_elbow_pitch
+
 
 
 arm_joint_trajectory_controller:
@@ -39,12 +30,10 @@ arm_joint_trajectory_controller:
       
     command_interfaces:
       - position
-      - velocity
 
     state_interfaces:
       - position
-      - velocity
-
+      
 forward_position_controller:
   ros__parameters:
     joints:
