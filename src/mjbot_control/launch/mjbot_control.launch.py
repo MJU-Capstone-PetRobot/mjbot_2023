@@ -16,7 +16,7 @@ def generate_launch_description():
     # Define paths to controller configuration files
     package_share_directory = get_package_share_directory("mjbot_control")
     controller_params_file = os.path.join(
-        package_share_directory, 'config', 'mjbot_contoller.yaml')
+        package_share_directory, 'config', 'mjbot_controller.yaml')
     arm_control_node = Node(package='mjbot_control',
                             executable='arm_control_node.py', output='screen')
     neck_control_node = Node(package='mjbot_control',
@@ -54,7 +54,8 @@ def generate_launch_description():
     load_trajectory_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_trajectory_controller", "-c", "/controller_manager"],
+        arguments=["arm_joint_trajectory_controller",
+                   "--controller-manager", "/controller_manager"],
         output="screen",
     )
 
@@ -62,18 +63,37 @@ def generate_launch_description():
     delay_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
         event_handler=OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[diff_drive_controller_spawner,
-                     load_trajectory_controller]
+            on_exit=[diff_drive_controller_spawner]
         )
     )
+
+    delay_controller_spawner_after__diff_drive_controller_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=diff_drive_controller_spawner,
+            on_exit=[load_trajectory_controller]
+        )
+    )
+
+    delay_arm_control_node_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=joint_state_broadcaster_spawner,
+            on_exit=[arm_control_node]
+        )
+    )
+
 
     # List of nodes to be launched
     nodes = [
         control_node,
         # arm_control_node,
         # neck_control_node,
+
+
         joint_state_broadcaster_spawner,
+        delay_controller_spawner_after__diff_drive_controller_spawner,
+
         delay_controller_spawner_after_joint_state_broadcaster_spawner,
+        delay_arm_control_node_after_joint_state_broadcaster_spawner
     ]
 
     # Return the merged launch description
