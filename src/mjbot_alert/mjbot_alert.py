@@ -2,7 +2,7 @@
 import os
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Bool, Int32
+from example_interfaces.msg import Bool, Int32
 from Alert.message_send import *
 
 
