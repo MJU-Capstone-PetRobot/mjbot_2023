@@ -42,6 +42,13 @@ def generate_launch_description():
                    "--controller-manager", "/controller_manager"],
     )
 
+    arm_joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["arm_joint_state_broadcaster",
+                   "--controller-manager", "/controller_manager"],
+    )
+
     # Node to spawn the diff drive controller
     diff_drive_controller_spawner = Node(
         package="controller_manager",
@@ -54,7 +61,8 @@ def generate_launch_description():
     load_trajectory_controller = Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_trajectory_controller", "-c", "/controller_manager"],
+        arguments=["arm_joint_trajectory_controller",
+                   "--controller-manager", "/controller_manager"],
         output="screen",
     )
 
@@ -70,9 +78,12 @@ def generate_launch_description():
     # List of nodes to be launched
     nodes = [
         control_node,
-        # arm_control_node,
+        arm_control_node,
         # neck_control_node,
+
+        # arm_joint_state_broadcaster_spawner,
         joint_state_broadcaster_spawner,
+
         delay_controller_spawner_after_joint_state_broadcaster_spawner,
     ]
 
