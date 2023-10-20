@@ -173,8 +173,10 @@ def main(args=None):
 
                 # time_thing = speaking(ans)
                 speaking(ans)
+                talking_node.publish_emotions("6")
 
                 response = mic()
+                
 
                 if response == "":
                     os.remove("sampleWav.wav")
