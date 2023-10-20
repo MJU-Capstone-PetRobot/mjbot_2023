@@ -93,7 +93,7 @@ def generate_launch_description():
         delay_controller_spawner_after__diff_drive_controller_spawner,
 
         delay_controller_spawner_after_joint_state_broadcaster_spawner,
-        delay_arm_control_node_after_joint_state_broadcaster_spawner
+        #delay_arm_control_node_after_joint_state_broadcaster_spawner
     ]
 
     # Return the merged launch description
