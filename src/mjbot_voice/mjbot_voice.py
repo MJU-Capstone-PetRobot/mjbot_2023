@@ -129,6 +129,7 @@ def main(args=None):
 
             response = mic()
             if response == "초기화":
+                speaking("초기화를 진행합니다!")
                 name_ini()
 
             check = name_check()

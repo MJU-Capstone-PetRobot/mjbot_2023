@@ -307,6 +307,7 @@ def name_check():
                     elif manWoman == "여자":
                         manWoman_ = "she"
             common = 1
+            speaking("사용자 초기 설정이 완료되었습니다.")
         else:
             name_ = data["user_name"]
             manWoman_ = data["user_value"]
