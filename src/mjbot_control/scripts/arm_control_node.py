@@ -2,7 +2,7 @@
 import threading
 import rclpy
 from rclpy.node import Node
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectoryPoint
 from control_msgs.action import FollowJointTrajectory
 from rclpy.action import ActionClient
 from std_msgs.msg import String
@@ -12,6 +12,7 @@ from rclpy.duration import Duration
 
 # Global variables for action state
 action_state = 0  # 0: none, 1: in progress, 2: succeeded, 3: aborted, 4: rejected
+
 
 class ArmControllerNode(Node):
     def __init__(self):
@@ -45,6 +46,7 @@ class ArmControllerNode(Node):
         self.get_logger().info('Arm result received: {0}'.format(result))
         action_state = 2
 
+
 class BaseControllerNode(Node):
     def __init__(self):
         super().__init__('base_controller_node')
@@ -55,6 +57,7 @@ class BaseControllerNode(Node):
         self.base_cmd.linear.x = linear_x
         self.base_cmd.angular.z = angular_z
         self.publisher_.publish(self.base_cmd)
+
 
 class Commander(Node):
     def __init__(self):
@@ -98,12 +101,12 @@ class Commander(Node):
         self.point.time_from_start = Duration(seconds=2).to_msg()
         self.trajectory_msg.trajectory.points = [self.point]
         self.get_logger().info('Sending arm goal request...')
-        ##show action state
+        # show action state
         self.get_logger().info('action state: {0}'.format(action_state))
 
         if action_state == 0 | action_state == 2:
             self.arm_controller.send_goal(self.trajectory_msg)
-            
+
             action_state = 1
 
     def arm_move_emotion(self, msg):
@@ -138,15 +141,16 @@ class Commander(Node):
     def move_base(self, linear_x, angular_z):
         self.base_controller.move_base(linear_x, angular_z)
 
+
 if __name__ == '__main__':
     rclpy.init(args=None)
 
-    actionclinetnode = ArmControllerNode()
+    action_client = ArmControllerNode()
     commander = Commander()
 
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(commander)
-    executor.add_node(actionclinetnode)
+    executor.add_node(action_client)
 
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
