@@ -5,7 +5,10 @@ from rknnlite.api import RKNNLite
 
 from vision.depth import *
 from vision.sort import Sort
+from vision import yolov5
+from vision import yolov7
 
+import csv
 import random
 from itertools import count
 import pandas as pd
@@ -13,18 +16,19 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from random import randrange
 
-import csv
-import vision.yolo
 
+import threading
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
 from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
-from example_interfaces.msg import Int16
 from example_interfaces.msg import Int16MultiArray
 
-# RKNN_MODEL = '/home/mju/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7.rknn'  # 절대경로
-RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'
+# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7.rknn'  # 절대경로
+# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'
+# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7-tiny_tk2_RK3588_i8.rknn'
+RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yoloxs_tk2_RK3588_i8.rknn'
 
 
 class VisionNode(Node):
@@ -165,30 +169,20 @@ class VisionNode(Node):
         outputs = self.rknn_lite.inference(inputs=[self.img])
         self.get_logger().info('RKNN: Done')
 
-        # Post process
-        input0_data = outputs[0]
-        input1_data = outputs[1]
-        input2_data = outputs[2]
+        # yolov7 post process
+        self.boxes, self.classes, self.scores = yolov7.post_process(outputs)
+        # self.img = yolov7.draw(self.img, boxes, scores, classes)
 
-        input0_data = input0_data.reshape([3, -1]+list(input0_data.shape[-2:]))
-        input1_data = input1_data.reshape([3, -1]+list(input1_data.shape[-2:]))
-        input2_data = input2_data.reshape([3, -1]+list(input2_data.shape[-2:]))
+        # yolov5 post process
+        # self.boxes, self.classes, self.scores = yolov5.post_process(outputs)
 
-        input_data = list()
-        input_data.append(np.transpose(input0_data, (2, 3, 0, 1)))
-        input_data.append(np.transpose(input1_data, (2, 3, 0, 1)))
-        input_data.append(np.transpose(input2_data, (2, 3, 0, 1)))
-
-        # Yolov5 post process
-        self.boxes, self.classes, self.scores = vision.yolo.yolov5_post_process(input_data)
-
-        # Extract person
+        # extract person
         self.p_boxes = np.array([])
         self.p_scores = np.array([])
 
         if self.boxes is not None:
             for box, score, cl in zip(self.boxes, self.scores, self.classes):
-                if vision.yolo.CLASSES[cl] == 'person':
+                if yolov5.CLASSES[cl] == 'person':
                     self.p_boxes = np.append(self.p_boxes, box)
                     self.p_scores = np.append(self.p_scores, score)
 
@@ -284,17 +278,22 @@ def main(args=None):
     rclpy.init(args=args)
     node = VisionNode()
 
-    # node.init_video("video")
+    # node.init_video("webcam")
     node.init_depth()
     node.init_rknn()
     node.init_sort()
     node.init_csv_log()
 
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    executor_thread = threading.Thread(target=executor.spin)
+    executor_thread.start()
+
     while True:
         start = dt.datetime.utcnow()
         rclpy.spin_once(node, timeout_sec=0)
 
-        # node.read_video("video") # read and resize image
+        # node.read_video("webcam") # read and resize image
         node.read_depth(False)
         node.run_rknn() # yolo inference
         node.run_sort() # object tracking
