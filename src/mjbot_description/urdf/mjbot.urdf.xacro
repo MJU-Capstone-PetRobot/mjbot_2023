@@ -9,7 +9,7 @@
   <xacro:include filename="$(find mjbot_description)/urdf/mjbot.materials.xacro" />
 
   <!-- ros2_control -->
-  <xacro:include filename="$(find mjbot_description)/urdf/ros2_control/mjbot_base_control.urdf.xacro" />
+  <!-- <xacro:include filename="$(find mjbot_description)/urdf/ros2_control/mjbot_base_control.urdf.xacro" /> -->
 
 
   <xacro:include filename="$(find mjbot_description)/urdf/ros2_control/mjbot_arm.ros2_control.xacro" />
@@ -17,7 +17,7 @@
 
   <xacro:mjbot prefix="$(arg prefix)" />
 
-  <xacro:mjbot_ros2_control   name="mjbot" />
+  <!-- <xacro:mjbot_ros2_control   name="mjbot" /> -->
   <xacro:mjbot_arm_ros2_control name="mjbot_arm" />
   
 
