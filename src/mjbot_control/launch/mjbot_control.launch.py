@@ -1,7 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler, DeclareLaunchArgument
+from launch.actions import RegisterEventHandler
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command
 from launch_ros.actions import Node
@@ -9,21 +9,47 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    # Define robot description using ros2 param
+    # Define paths and configurations
     robot_description = Command(
         ['ros2 param get --hide-type /robot_state_publisher robot_description'])
-
-    # Define paths to controller configuration files
     package_share_directory = get_package_share_directory("mjbot_control")
     controller_params_file = os.path.join(
         package_share_directory, 'config', 'mjbot_controller.yaml')
+
+    # Define nodes
+    control_node = create_control_node(
+        robot_description, controller_params_file)
+    joint_state_broadcaster_spawner = create_spawner_node(
+        "joint_state_broadcaster")
+    diff_drive_controller_spawner = create_spawner_node("diff_controller")
+    load_trajectory_controller = create_spawner_node(
+        "arm_joint_trajectory_controller")
     arm_control_node = Node(package='mjbot_control',
                             executable='arm_control_node.py', output='screen')
     neck_control_node = Node(package='mjbot_control',
                              executable='neck_control_node.py', output='screen')
 
-    # Node to run the controller manager
-    control_node = Node(
+    # Define event handlers for delayed starts
+    delay_diff_drive_after_joint_state = create_delay_handler(
+        joint_state_broadcaster_spawner, diff_drive_controller_spawner)
+    delay_trajectory_after_diff_drive = create_delay_handler(
+        diff_drive_controller_spawner, load_trajectory_controller)
+    delay_arm_after_joint_state = create_delay_handler(
+        joint_state_broadcaster_spawner, arm_control_node)
+
+    # Return the merged launch description
+    return LaunchDescription([
+        control_node,
+        joint_state_broadcaster_spawner,
+        delay_diff_drive_after_joint_state,
+        delay_trajectory_after_diff_drive,
+        delay_arm_after_joint_state,
+        neck_control_node,
+    ])
+
+
+def create_control_node(robot_description, controller_params_file):
+    return Node(
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[
@@ -34,67 +60,20 @@ def generate_launch_description():
         output="both",
     )
 
-    # Node to spawn the joint state broadcaster
-    joint_state_broadcaster_spawner = Node(
+
+def create_spawner_node(controller_name):
+    return Node(
         package="controller_manager",
         executable="spawner",
-        arguments=["joint_state_broadcaster",
+        arguments=[controller_name,
                    "--controller-manager", "/controller_manager"],
     )
 
-    # Node to spawn the diff drive controller
-    diff_drive_controller_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["diff_controller",
-                   "--controller-manager", "/controller_manager"],
-    )
 
-    # Node to spawn the joint trajectory controller
-    load_trajectory_controller = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["arm_joint_trajectory_controller",
-                   "--controller-manager", "/controller_manager"],
-        output="screen",
-    )
-
-    # Delay start of diff_drive_controller_spawner after joint_state_broadcaster_spawner
-    delay_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
+def create_delay_handler(target_action, on_exit_action):
+    return RegisterEventHandler(
         event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[diff_drive_controller_spawner]
+            target_action=target_action,
+            on_exit=[on_exit_action]
         )
     )
-
-    delay_controller_spawner_after__diff_drive_controller_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=diff_drive_controller_spawner,
-            on_exit=[load_trajectory_controller]
-        )
-    )
-
-    delay_arm_control_node_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-        event_handler=OnProcessExit(
-            target_action=joint_state_broadcaster_spawner,
-            on_exit=[arm_control_node]
-        )
-    )
-
-
-    # List of nodes to be launched
-    nodes = [
-        control_node,
-        # arm_control_node,
-        # neck_control_node,
-
-
-        joint_state_broadcaster_spawner,
-        delay_controller_spawner_after__diff_drive_controller_spawner,
-
-        delay_controller_spawner_after_joint_state_broadcaster_spawner,
-        #delay_arm_control_node_after_joint_state_broadcaster_spawner
-    ]
-
-    # Return the merged launch description
-    return LaunchDescription(nodes)
