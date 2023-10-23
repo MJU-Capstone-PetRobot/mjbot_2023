@@ -158,10 +158,12 @@ def main(args=None):
                     talking_node.publish_emotions("5")
                     # ans_emotion = 1
                     # emotion_strength = 0
-                elif emotion == "NULL" and response == "산책 가자":  # 왼손
+                elif emotion == "NULL" and response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("walk")
                 elif emotion == "NULL" and response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
+                elif emotion == "NULL" and response == "왼쪽":  # 왼쪽
+                    talking_node.publish_arm_motions("give_left_hand")
                 elif emotion == "NULL" and response == "hug":  # 오른손
                     talking_node.publish_arm_motions("hug")
                 else:
