@@ -127,10 +127,24 @@ def nms_boxes(boxes, scores):
     return keep
 
 
-def yolov5_post_process(input_data):
+def post_process(raw_data):
     masks = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
     anchors = [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45],
                [59, 119], [116, 90], [156, 198], [373, 326]]
+
+    # Post process
+    input0_data = raw_data[0]
+    input1_data = raw_data[1]
+    input2_data = raw_data[2]
+
+    input0_data = input0_data.reshape([3, -1]+list(input0_data.shape[-2:]))
+    input1_data = input1_data.reshape([3, -1]+list(input1_data.shape[-2:]))
+    input2_data = input2_data.reshape([3, -1]+list(input2_data.shape[-2:]))
+
+    input_data = list()
+    input_data.append(np.transpose(input0_data, (2, 3, 0, 1)))
+    input_data.append(np.transpose(input1_data, (2, 3, 0, 1)))
+    input_data.append(np.transpose(input2_data, (2, 3, 0, 1)))
 
     boxes, classes, scores = [], [], []
     for input, mask in zip(input_data, masks):
@@ -172,13 +186,19 @@ def draw(image, boxes, scores, classes):
     """Draw the boxes on the image.
     # Argument:
         image: original image.
-        boxes: ndarray, boxes of objects.
-        classes: ndarray, classes of objects.
+        boxes: ndarray, boxes of objects. 2D
+        classes: ndarray, classes of objects. 1D
         scores: ndarray, scores of objects.
         all_classes: all classes name.
     """
-    p_size = [0, 0]  # w, h
-    p_center = [0, 0]  # cx, cy
+    p_size = [0, 0] # w, h
+    p_center = [0, 0] # cx, cy
+
+    p_boxes = np.array([])
+    p_scores = np.array([])
+
+    # print("boxes ndim {}".format(boxes.ndim))
+    # print("sroces ndim {}".format(scores.ndim))
 
     for box, score, cl in zip(boxes, scores, classes):
         left, top, right, bottom = box
@@ -194,6 +214,9 @@ def draw(image, boxes, scores, classes):
         else_color = (255, 0, 0)
 
         if CLASSES[cl] == 'person':
+            p_boxes = np.append(p_boxes, box)
+            p_scores = np.append(p_scores, score)
+
             box_color = p_color
 
             p_size[0] = (int)(right - left)  # w
@@ -213,4 +236,4 @@ def draw(image, boxes, scores, classes):
         cv2.putText(image, '{0} {1:.2f}'.format(
             CLASSES[cl], score), (left, top - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-    return p_size, p_center
+    return p_size, p_center, p_boxes, p_scores
