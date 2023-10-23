@@ -28,7 +28,6 @@ from example_interfaces.msg import Int16MultiArray
 # RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7.rknn'  # 절대경로
 # RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'
 RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7-tiny_tk2_RK3588_i8.rknn'
-# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yoloxs_tk2_RK3588_i8.rknn'
 
 
 class VisionNode(Node):
