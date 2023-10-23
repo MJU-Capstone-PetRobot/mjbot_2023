@@ -164,7 +164,7 @@ def main(args=None):
                     talking_node.publish_arm_motions("give_right_hand")
                 elif emotion == "NULL" and response == "왼쪽":  # 왼쪽
                     talking_node.publish_arm_motions("give_left_hand")
-                elif emotion == "NULL" and response == "hug":  # 오른손
+                elif emotion == "NULL" and response == "안기":  # 안기
                     talking_node.publish_arm_motions("hug")
                 else:
                     talking_node.publish_emotions("0")
