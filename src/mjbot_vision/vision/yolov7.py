@@ -8,8 +8,6 @@ import numpy as np
 values = [12.0, 16.0, 19.0, 36.0, 40.0, 28.0, 36.0, 75.0, 76.0,
           55.0, 72.0, 146.0, 142.0, 110.0, 192.0, 243.0, 459.0, 401.0]
 
-anchors = np.array(values).reshape(3, -1, 2).tolist()
-
 IMG_SIZE = (640, 640)
 OBJ_THRESH = 0.25
 NMS_THRESH = 0.45
@@ -130,6 +128,7 @@ def box_process(position, anchors):
 
 def post_process(input_data):
     boxes, scores, classes_conf = [], [], []
+    anchors = np.array(values).reshape(3, -1, 2).tolist()
 
     input_data = [_in.reshape([len(anchors[0]), -1]+list(_in.shape[-2:])) for _in in input_data]
     for i in range(len(input_data)):

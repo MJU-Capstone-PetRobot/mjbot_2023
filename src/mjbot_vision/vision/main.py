@@ -27,8 +27,8 @@ from example_interfaces.msg import Int16MultiArray
 
 # RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7.rknn'  # 절대경로
 # RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'
-# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7-tiny_tk2_RK3588_i8.rknn'
-RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yoloxs_tk2_RK3588_i8.rknn'
+RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7-tiny_tk2_RK3588_i8.rknn'
+# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yoloxs_tk2_RK3588_i8.rknn'
 
 
 class VisionNode(Node):
@@ -282,16 +282,15 @@ def main(args=None):
     node.init_depth()
     node.init_rknn()
     node.init_sort()
-    node.init_csv_log()
+    # node.init_csv_log()
 
-    executor = MultiThreadedExecutor()
+    executor = MultiThreadedExecutor() # 노드 내부의 콜백 함수를 스레드로 잘라서 실행
     executor.add_node(node)
-    executor_thread = threading.Thread(target=executor.spin)
+    executor_thread = threading.Thread(target=executor.spin) # 메인 함수에서 자식 스레드를 만들어서 Ros 코드를 돌림
     executor_thread.start()
 
     while True:
         start = dt.datetime.utcnow()
-        rclpy.spin_once(node, timeout_sec=0)
 
         # node.read_video("webcam") # read and resize image
         node.read_depth(False)
@@ -305,7 +304,7 @@ def main(args=None):
         node.runtime_sec += node.duration_sec
         node.runtime_sec = round(node.runtime_sec, 3)
 
-        node.run_csv_log()
+        # node.run_csv_log()
         node.detect_fall()  
         node.publish_fps()
         node.publish_owner_exists()
