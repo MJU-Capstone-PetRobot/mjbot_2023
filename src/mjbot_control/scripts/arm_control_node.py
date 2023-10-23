@@ -129,7 +129,8 @@ class Commander(Node):
         if position_key:
             self.set_and_send_arm_position(self.poses[position_key])
             # Reset to default after the emotion
-            self.set_and_send_arm_position(self.poses['default'])
+            self.create_timer(
+                2.0, lambda: self.set_and_send_arm_position(self.poses['default']))
 
     def holding_hand(self):
         self.set_and_send_arm_position(self.poses['holding_hand'])
