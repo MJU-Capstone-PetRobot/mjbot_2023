@@ -1,3 +1,5 @@
+import os
+
 import datetime as dt
 import numpy as np
 import cv2
@@ -16,7 +18,6 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from random import randrange
 
-
 import threading
 import rclpy
 from rclpy.node import Node
@@ -25,9 +26,8 @@ from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
 from example_interfaces.msg import Int16MultiArray
 
-# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7.rknn'  # 절대경로
-# RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov5s-640-640-rk3588.rknn'
-RKNN_MODEL = '/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/yolov7-tiny_tk2_RK3588_i8.rknn'
+# RKNN_MODEL = 'yolov5s-640-640-rk3588.rknn'
+RKNN_MODEL = 'yolov7-tiny_tk2_RK3588_i8.rknn'
 
 
 class VisionNode(Node):
@@ -143,12 +143,16 @@ class VisionNode(Node):
             src, 80, 80, 0, 0, cv2.BORDER_CONSTANT, (0, 0, 0))
 
     def init_rknn(self):
+        current_dir = os.getcwd()
+        model_dir = current_dir + '/src/mjbot_vision/vision/' + RKNN_MODEL
+        print(model_dir)
+
         # Using verbose option saves lots of state
         self.rknn_lite = RKNNLite(verbose=False)
 
         # Load RKNN model
         self.get_logger().info('RKNN: Load RKNN model')
-        ret = self.rknn_lite.load_rknn(RKNN_MODEL)
+        ret = self.rknn_lite.load_rknn(model_dir)
         if ret != 0:
             self.get_logger().info('RKNN: Fail to load RKNN model')
             exit(ret)
