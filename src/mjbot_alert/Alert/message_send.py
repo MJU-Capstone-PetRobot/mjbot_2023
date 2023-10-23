@@ -1,18 +1,69 @@
-from gps import *
-import serial, time, pynmea2
+import gps
+import serial
+import time
+import pynmea2
+import googlemaps
+from twilio.rest import Client
 from datetime import datetime
-import pytz, dateutil.parser
 
+
+def gps_set():
+    gpsd = gps.gps(mode=gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+    print("gps 작동 시작")
+    while True:
+        # Wait for valid data
+        while True:
+            nx = gpsd.next()
+            if nx['class'] == 'TPV':
+                break
+        # Extract gps info
+        mju_latitude = getattr(nx, 'lat', "Unknown")
+        mju_longitude = getattr(nx, 'lon', "Unknown")
+        if mju_latitude != "Unknown" and mju_longitude != "Unknown":
+            return [mju_latitude, mju_longitude]
+
+
+def googlemap_api():
+    API = "AIzaSyD5fvkrnY2xbyp7DB9LK-bQbT1RzbgpvE8"  # API 값
+    # 위도 경도 -> 지번 주소로 변경 // 역지오코드
+    gmaps = googlemaps.Client(key=API)  # api key
+    latitude, longitude = gps_set()
+    reverse_geocode_result = \
+        gmaps.reverse_geocode((latitude, longitude), language='ko')
+    gps = reverse_geocode_result[1]["formatted_address"]
+    return gps
+
+
+def send_message(problem):
+    gps = googlemap_api()
+    # Twilio
+    # 계정 token 입력
+    account_sid = "AC9750ecd4335fbb71324acf4bd9b64857"
+    auth_token = "0b8f878c64425badea5a26bde51a4b80"
+    client = Client(account_sid, auth_token)
+    problem_thing = ""
+
+    if problem == 1:
+        problem_thing = "낙상 사고"
+    elif problem == 2:
+        problem_thing = "화재 발생"
+
+    message = client.messages \
+        .create(
+        body=f"명자 위험 알림. 종류 : {problem_thing}. 위치는 {gps}",
+        from_="+14437015330",
+        to="+821095560116"
+    )
+    print("메세지 전송 완료")
+
+
+""" 여기 부분 예전 코드
 def gps_start():
-    print("시작")
-    """
     필요한 gpsd 라이브러리 설치
     sudo apt install gpsd,gpsd-clients
     pip3 install gpsd-py3
     pip3 install pynmea2
-    """
 
-    """
     gps 사용 시작
     sudo gpsd /dev/ttyFIQ0 -F /var/run/gpsd.sock
     sudo chmod 666 /dev/ttyFIQ0     >> 권한 설정
@@ -21,7 +72,6 @@ def gps_start():
     sudo service gpsd restart
     sudo service gpsd status     >> make sure active(running)
     cgps
-    """
 
     # 라즈베리파이 시리얼 통신
     port = '/dev/ttyFIQ0'
@@ -35,92 +85,4 @@ def gps_start():
         mj_latitude = round(msg.latitude, 6)
         mj_longitude = round(msg.longitude, 6)
     time.sleep(0.01)
-    print("gps_start 끝")
-def gps_set():
-    print("gps_set 시작")
-    # import the necessary libraries
-    from gps import gps
-    import time
-    from datetime import datetime
-    import pytz, dateutil.parser
-
-    gps_start()
-
-    running = True
-
-    def getPositionData(gps):
-        nx = gpsd.next()
-
-        if nx['class'] == 'TPV':
-            # extract gps info
-            mju_latitude = getattr(nx, 'lat', "Unknown")
-            mju_longitude = getattr(nx, 'lon', "Unknown")
-
-            return [mju_latitude, mju_longitude]
-        else:
-            return [None, None]
-
-    # Tell gpsd we are ready to receive messages
-    gpsd = gps(mode=WATCH_ENABLE | WATCH_NEWSTYLE)
-
-    try:
-        print("Application started!")
-        while running:
-            # call function to extract and append GPS data
-            gps_data = getPositionData(gpsd)
-            if gps_data[0] is not None and gps_data[1] is not None:
-                latitude = gps_data[0]
-                longitude = gps_data[1]
-                return [latitude, longitude]
-            # delay running the program for 1 second
-            time.sleep(1)
-
-    # if the user presses ctrl+c, the program will stop running
-    except (KeyboardInterrupt):
-        running = False
-    print("gps set 끝")
-def googlemap_api():
-    import googlemaps
-    import serial
-    print("google map 시작")
-    latitude = gps_set()[0]
-    longitude = gps_set()[1]
-
-    # 위도 경도 -> 지번 주소로 변경 // 역지오코드
-    API = "AIzaSyD5fvkrnY2xbyp7DB9LK-bQbT1RzbgpvE8"  # API 값
-
-    # 위도 경도 -> 지번 주소로 변경 // 역지오코드
-    gmaps = googlemaps.Client(key=API) # api key
-    reverse_geocode_result = \
-        gmaps.reverse_geocode((latitude, longitude), language='ko')
-    gps = reverse_geocode_result[1]["formatted_address"]
-    print("google map 끝")
-    return gps
-
-def send_message(problem):
-    print("메세지 전송 시작")
-    from twilio.rest import Client
-    global problem_thing
-    gps = googlemap_api()
-    import time
-
-    # Twilio
-    # 계정 token 입력
-    account_sid = "AC9750ecd4335fbb71324acf4bd9b64857"
-    auth_token = "0b8f878c64425badea5a26bde51a4b80"
-    client = Client(account_sid, auth_token)
-
-    if problem == 1:
-        problem_thing = "낙상 사고"
-    elif problem == 2:
-        problem_thing = "화재 발생"
-
-    message = client.messages \
-        .create(
-        body=f"위험 위험!!, 할머니가 위험해요. 종류 : {problem_thing}. 위치는 {gps}",
-        from_="+14437015330",
-        to="+821095560116"
-    )
-    print("메세지 전송 끝")
-    time.sleep(1000000)
-    
+"""

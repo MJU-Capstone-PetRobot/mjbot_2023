@@ -1,16 +1,11 @@
 #!/usr/bin/python3
 import os
+import time
+
 import rclpy
 from rclpy.node import Node
 from example_interfaces.msg import Bool, Int32
 from Alert.message_send import *
-
-
-# class TalkingNode(Node):
-#     def __init__(self):
-#         super().__init__('talking_node')
-#         self.get_logger().info("Talking Node")
-#         self.publisher_fire = self.create_publisher(String, 'fire', 10)
 
 class ListeningNode(Node):
     def __init__(self):
@@ -24,6 +19,7 @@ class ListeningNode(Node):
 
         if msg.data == True:
             send_message(1)  # 낙상 사고 발생 문자 발송
+            time.sleep(1000)
 
     def subscribe_callback_fire(self, msg):
 
@@ -31,6 +27,7 @@ class ListeningNode(Node):
 
         if msg.data >= 200:
             send_message(2)  # 화재 사고 발생 문자 발송
+            time.sleep(1000)
 
 
 def main(args=None):
