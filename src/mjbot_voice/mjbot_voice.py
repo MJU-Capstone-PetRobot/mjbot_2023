@@ -90,6 +90,8 @@ class VoiceSuscriber(Node):
 
 
 def main(args=None):
+    import os
+    from os import path
     global common
     common = 0
     rclpy.init(args=args)
@@ -103,6 +105,18 @@ def main(args=None):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
+    path_sample = "./sampleWav.wav"
+    path_result = "./ResultMP3.mp3"
+    path_test = "./test.wav"
+
+    if path.exists("./sampleWav.wav"):
+        os.remove("./sampleWav.wav")
+    if path.exists("./ResultMP3.mp3"):
+        os.remove("./ResultMP3.mp3")
+    if path.exists("test.wav"):
+        os.remove("./test.wav")
+
+    call_num = 0
     while 1:
         # 먼저 말 거는 기능 실험용
         if common == 0:
@@ -113,6 +127,12 @@ def main(args=None):
         # speak_first()
         # 대화 시작
         response = mic()
+        if response == "":
+            call_num += 1
+            print(call_num)
+        if call_num == 3:
+                speaking("로봇이라고 불러주세요!")
+                call_num = 0
         if response == "로봇":
             speaking("네")
 
@@ -120,6 +140,14 @@ def main(args=None):
             if response == "초기화":
                 speaking("초기화를 진행합니다!")
                 name_ini()
+            elif response == "종료":
+                speaking("시스템을 종료합니다.")
+                break
+            elif response == "조용":
+                speaking("네 조용히 하겠습니다!")
+                call_num = - 1000000
+            
+            print(call_num)
 
             check = name_check()
             name_check_ = check[0]
@@ -136,6 +164,8 @@ def main(args=None):
                     talking_node.publish_arm_motions("give_left_hand")
                 elif response == "안기":  # 안기
                     talking_node.publish_arm_motions("hug")
+                elif response == "조용":
+                    break
                 else:
                     response_ = mj.gpt_send_anw(response)
                     emotion = response_[0]
