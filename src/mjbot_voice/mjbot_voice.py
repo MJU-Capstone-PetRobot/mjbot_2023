@@ -21,23 +21,22 @@ class TalkingNode(Node):
             String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
 
-
-    def publish_emotions(self, emotion):
-        '''
-        표정
-        '''
-        msg = String()  # Updated message type to String
-        msg.data = str(emotion)
-        self.publisher_emotions.publish(msg)
-        self.get_logger().info('Published: %s' % msg.data)  # Updated log message format
-
     def publish_arm_motions(self, Arm_motions):
         '''
         모터 제어
         '''
         msg = String()
-        msg.data = Arm_motions
+        msg.data = str(Arm_motions)
         self.publisher_arm_mode.publish(msg)
+        self.get_logger().info('Published: %s' % msg.data)
+
+    def publish_emotions(self, emotions):
+        '''
+        감정 제어
+        '''
+        msg = String()
+        msg.data = str(emotions)
+        self.publisher_emotions.publish(msg)
         self.get_logger().info('Published: %s' % msg.data)
 
 
