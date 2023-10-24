@@ -20,16 +20,6 @@ class TalkingNode(Node):
         self.publisher_emotions = self.create_publisher(String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
 
-        # self.publisher_walk = self.create_publisher(Int16, 'walk', 10)
-
-    # def publish_walk(self, walk):
-    #     '''
-    #     산책
-    #     '''
-    #     msg = Int16()
-    #     msg.data = walk
-    #     self.publisher_walk.publish(msg)
-    #     self.get_logger().info('Published: %d' % msg.data)
 
     def publish_emotions(self, emotion):
         '''
@@ -40,13 +30,13 @@ class TalkingNode(Node):
         self.publisher_emotions.publish(msg)
         self.get_logger().info('Published: %s' % msg.data)  # Updated log message format
 
-    def publish_arm_motions(self, Arm_motions):
+    def publish_arm_mode(self, Arm_motions):
         '''
         모터 제어
         '''
         msg = String()
-        msg.data = Arm_motions
-        self.publisher_arm_motions.publish(msg)
+        msg.data = str(Arm_motions)
+        self.publisher_arm_mode.publish(msg)
         self.get_logger().info('Published: %s' % msg.data)
 
 
@@ -137,7 +127,15 @@ def main(args=None):
 
             mj = MYOUNGJA(name_check_, value_check)
             while response != "":
-                # talking_node.publish_emotions("6")
+                if response == "산책 가자":
+                    talking_node.publish_arm_mode("walk")
+                elif response == "오른손":  # 오른손
+                    talking_node.publish_arm_mode("give_right_hand")
+                elif response == "왼쪽":  # 왼쪽
+                    talking_node.publish_arm_mode("give_left_hand")
+                elif response == "안기":  # 안기
+                    talking_node.publish_arm_mode("hug")
+
                 response_ = mj.gpt_send_anw(response)
                 emotion = response_[0]
 
@@ -150,14 +148,6 @@ def main(args=None):
                     talking_node.publish_emotions("4")
                 elif emotion == "슬픔":
                     talking_node.publish_emotions("5")
-                elif emotion == "NULL" and response == "산책 가자":  # 산책 가자
-                    talking_node.publish_arm_motions("walk")
-                elif emotion == "NULL" and response == "오른손":  # 오른손
-                    talking_node.publish_arm_motions("give_right_hand")
-                elif emotion == "NULL" and response == "왼쪽":  # 왼쪽
-                    talking_node.publish_arm_motions("give_left_hand")
-                elif emotion == "NULL" and response == "안기":  # 안기
-                    talking_node.publish_arm_motions("hug")
                 else:
                     talking_node.publish_emotions("0")
 
@@ -169,7 +159,6 @@ def main(args=None):
                 talking_node.publish_emotions("6")
 
                 response = mic()
-                
 
                 if response == "":
                     os.remove("sampleWav.wav")
