@@ -299,13 +299,15 @@ def name_check():
             elif manWoman == "여자":
                 manWoman_ = "she"
             else:
-                while manWoman == "남자" or manWoman == "여자":
+                while manWoman != "남자" or "여자":
                     speaking("잘 못 들었어요. 다시 한번 알려주세요.")
                     manWoman = mic_first()
                     if manWoman == "남자":
                         manWoman_ = "he"
+                        break
                     elif manWoman == "여자":
                         manWoman_ = "she"
+                        break
             common = 1
             speaking("사용자 초기 설정이 완료되었습니다.")
         else:
@@ -326,10 +328,12 @@ def name_check():
 
 def name_ini():
     import json
-    with open('./user_value.json', 'r') as f:
-        data = json.load(f)
-        data["user"][0]["user_name"] = ""
-        data["user"][0]["user_value"] = ""
+    write_data = {
+            "user_name": "",
+            "user_value": ""
+        }
+    with open('./user_value.json', 'w') as d:
+                json.dump(write_data, d)
 
 
 def mp3_time_check():
