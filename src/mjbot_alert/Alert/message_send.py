@@ -1,10 +1,10 @@
-import gps
-import serial
-import time
-import pynmea2
+# import gps
+# import serial
+# import time
+# import pynmea2
 import googlemaps
 from twilio.rest import Client
-from datetime import datetime
+# from datetime import datetime
 
 
 # def gps_set():
