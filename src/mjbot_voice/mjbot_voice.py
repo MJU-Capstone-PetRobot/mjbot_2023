@@ -100,7 +100,6 @@ class VoiceSuscriber(Node):
 
 
 def main(args=None):
-    import time
     global common
     common = 0
     rclpy.init(args=args)
@@ -141,9 +140,6 @@ def main(args=None):
                 # talking_node.publish_emotions("6")
                 response_ = mj.gpt_send_anw(response)
                 emotion = response_[0]
-                # emotion = mj.gpt_send_anw(response)[0]
-                # ans_emotion = 0
-                # emotion_strength = 1
 
                 # NULL, close, moving, wink, angry, sad, daily
                 if emotion == "평범":
@@ -152,12 +148,8 @@ def main(args=None):
                     talking_node.publish_emotions("2")
                 elif emotion == "분노":
                     talking_node.publish_emotions("4")
-                    # ans_emotion = 3
-                    # emotion_strength = 2
                 elif emotion == "슬픔":
                     talking_node.publish_emotions("5")
-                    # ans_emotion = 1
-                    # emotion_strength = 0
                 elif emotion == "NULL" and response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("walk")
                 elif emotion == "NULL" and response == "오른손":  # 오른손
@@ -172,9 +164,7 @@ def main(args=None):
                 os.remove("sampleWav.wav")
 
                 ans = response_[1]
-                # ans = mj.gpt_send_anw(response)[1]
 
-                # time_thing = speaking(ans)
                 speaking(ans)
                 talking_node.publish_emotions("6")
 
