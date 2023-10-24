@@ -1,4 +1,3 @@
-# 터미널에서 pip install -r requirements.txt 커맨드로 모듈 다운로드!!
 aiohttp==3.8.5
 aiohttp-retry==2.8.3
 aiosignal==1.3.1

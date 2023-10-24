@@ -4,12 +4,12 @@ from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from example_interfaces.msg import Int32, Bool
+from std_msgs.msg import Int32, Bool
 import threading
 
 """
-Publisher : 감정(example_interfaces.msg/String) , 팔 제어(std_msgs.msg/String)
-Subscriber : 낙상(example_interfaces.msg/Bool) , 잔량(example_interfaces.msg/String) , 쓰담쓰담(example_interfaces.msg/Bool) , 일산화탄소(exmaple_interfaces.msg/Int32)  
+Publisher : 감정(std_msgs.msg/String) , 팔 제어(std_msgs.msg/String)
+Subscriber : 낙상(std_msgs.msg/Bool) , 잔량(std_msgs.msg/String) , 쓰담쓰담(std_msgs.msg/Bool) , 일산화탄소(exmaple_interfaces.msg/Int32)  
 """
 
 
@@ -17,7 +17,8 @@ class TalkingNode(Node):
     def __init__(self):
         super().__init__('talking_node')
         self.get_logger().info("Talking Node")
-        self.publisher_emotions = self.create_publisher(String, 'emo', 10)  # Updated topic name and message type
+        self.publisher_emotions = self.create_publisher(
+            String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
 
         # self.publisher_walk = self.create_publisher(Int16, 'walk', 10)
@@ -46,7 +47,7 @@ class TalkingNode(Node):
         '''
         msg = String()
         msg.data = Arm_motions
-        self.publisher_arm_motions.publish(msg)
+        self.publisher_arm_mode.publish(msg)
         self.get_logger().info('Published: %s' % msg.data)
 
 
@@ -116,9 +117,9 @@ def main(args=None):
     while 1:
         # 먼저 말 거는 기능 실험용
         if common == 0:
-            speak_first_ex()
+            # speak_first_ex()
 
-        common = 1
+            common = 1
         # 먼저 말 거는 기능
         # speak_first()
         # 대화 시작
@@ -150,13 +151,13 @@ def main(args=None):
                     talking_node.publish_emotions("4")
                 elif emotion == "슬픔":
                     talking_node.publish_emotions("5")
-                elif emotion == "NULL" and response == "산책 가자":  # 산책 가자
+                elif response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("walk")
-                elif emotion == "NULL" and response == "오른손":  # 오른손
+                elif response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
-                elif emotion == "NULL" and response == "왼쪽":  # 왼쪽
+                elif response == "왼손":  # 왼손
                     talking_node.publish_arm_motions("give_left_hand")
-                elif emotion == "NULL" and response == "안기":  # 안기
+                elif response == "안기":  # 안기
                     talking_node.publish_arm_motions("hug")
                 else:
                     talking_node.publish_emotions("0")
@@ -169,7 +170,6 @@ def main(args=None):
                 talking_node.publish_emotions("6")
 
                 response = mic()
-                
 
                 if response == "":
                     os.remove("sampleWav.wav")
@@ -182,4 +182,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
