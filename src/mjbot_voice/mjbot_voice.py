@@ -21,16 +21,6 @@ class TalkingNode(Node):
             String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
 
-        # self.publisher_walk = self.create_publisher(Int16, 'walk', 10)
-
-    # def publish_walk(self, walk):
-    #     '''
-    #     산책
-    #     '''
-    #     msg = Int16()
-    #     msg.data = walk
-    #     self.publisher_walk.publish(msg)
-    #     self.get_logger().info('Published: %d' % msg.data)
 
     def publish_emotions(self, emotion):
         '''
@@ -139,19 +129,7 @@ def main(args=None):
             mj = MYOUNGJA(name_check_, value_check)
             while response != "":
                 # talking_node.publish_emotions("6")
-                response_ = mj.gpt_send_anw(response)
-                emotion = response_[0]
-
-                # NULL, close, moving, wink, angry, sad, daily
-                if emotion == "평범":
-                    talking_node.publish_emotions("6")
-                elif emotion == "당황":
-                    talking_node.publish_emotions("2")
-                elif emotion == "분노":
-                    talking_node.publish_emotions("4")
-                elif emotion == "슬픔":
-                    talking_node.publish_emotions("5")
-                elif response == "산책 가자":  # 산책 가자
+                if response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("walk")
                 elif response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
@@ -160,14 +138,25 @@ def main(args=None):
                 elif response == "안기":  # 안기
                     talking_node.publish_arm_motions("hug")
                 else:
-                    talking_node.publish_emotions("0")
+                    response_ = mj.gpt_send_anw(response)
+                    emotion = response_[0]
 
+                    # close, moving, wink, angry, sad, daily
+                    if emotion == "평범":
+                        talking_node.publish_emotions("6")
+                    elif emotion == "당황":
+                        talking_node.publish_emotions("2")
+                    elif emotion == "분노":
+                        talking_node.publish_emotions("4")
+                    elif emotion == "슬픔":
+                        talking_node.publish_emotions("5")
+                    else:
+                        talking_node.publish_emotions("0")
+                    ans = response_[1]
+
+                    speaking(ans)
+                    talking_node.publish_emotions("6")
                 os.remove("sampleWav.wav")
-
-                ans = response_[1]
-
-                speaking(ans)
-                talking_node.publish_emotions("6")
 
                 response = mic()
 
