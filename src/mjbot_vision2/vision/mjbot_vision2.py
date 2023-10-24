@@ -18,9 +18,9 @@ from scripts.yolo import *
 
 import rclpy
 from rclpy.node import Node
-from example_interfaces.msg import Bool
-from example_interfaces.msg import Int32
-from example_interfaces.msg import Int16MultiArray
+from std_msgs.msg import Bool
+from std_msgs.msg import Int32
+from std_msgs.msg import Int16MultiArray
 import threading
 from rclpy.executors import MultiThreadedExecutor
 

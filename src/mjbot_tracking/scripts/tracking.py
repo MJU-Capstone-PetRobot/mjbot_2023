@@ -5,7 +5,7 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Point
 from std_msgs.msg import String
 from cv_bridge import CvBridge
-from example_interfaces.msg import Int16MultiArray    # for owner center
+from std_msgs.msg import Int16MultiArray    # for owner center
 import cv2
 import numpy as np
 import math
