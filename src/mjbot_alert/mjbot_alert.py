@@ -4,14 +4,17 @@ import time
 
 import rclpy
 from rclpy.node import Node
-from example_interfaces.msg import Bool, Int32
+from std_msgs.msg import Bool, Int32
 from Alert.message_send import *
+
 
 class ListeningNode(Node):
     def __init__(self):
         super().__init__('Listening_node')
-        self.subscription = self.create_subscription(Bool, 'fall_down', self.subscribe_callback, 10)
-        self.subscription = self.create_subscription(Int32, 'co_ppm', self.subscribe_callback_fire, 10)
+        self.subscription = self.create_subscription(
+            Bool, 'fall_down', self.subscribe_callback, 10)
+        self.subscription = self.create_subscription(
+            Int32, 'co_ppm', self.subscribe_callback_fire, 10)
 
     def subscribe_callback(self, msg):
 

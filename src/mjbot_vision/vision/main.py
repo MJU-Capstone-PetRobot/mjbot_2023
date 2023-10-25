@@ -40,15 +40,15 @@ class VisionNode(Node):
         self.duration_sec = 0
         self.runtime_sec = 0
 
-        self.owner_x : int = 0
-        self.owner_y : int = 0
-        self.owner_z : int = 0
+        self.owner_x: int = 0
+        self.owner_y: int = 0
+        self.owner_z: int = 0
 
         self.owner_exists = False
         self.owner_fall = False
 
-        self.owner_w : int = 0
-        self.owner_h : int = 0
+        self.owner_w: int = 0
+        self.owner_h: int = 0
         self.owner_w_prev = 0
         self.owner_h_prev = 0
         self.owner_w_diff = 0
@@ -180,17 +180,20 @@ class VisionNode(Node):
         self.p_boxes = self.p_boxes.reshape((-1, 4))
         if self.p_boxes.any():
             self.p_scores = self.p_scores.reshape((-1, 1))
-            dets = np.concatenate((self.p_boxes, self.p_scores), 1) 
+            dets = np.concatenate((self.p_boxes, self.p_scores), 1)
             tracker = self.sort.update(dets)
 
-            first_id_index = len(tracker) - 1 # sort output is id descending order
+            # sort output is id descending order
+            first_id_index = len(tracker) - 1
 
             for idx, trk in enumerate(tracker):
                 trk = trk.astype(int)
 
-                if idx == first_id_index: # Get first-id coordinate
-                    cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (0, 255, 0), 2)
-                    cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+                if idx == first_id_index:  # Get first-id coordinate
+                    cv2.rectangle(
+                        self.img, (trk[0], trk[1]), (trk[2], trk[3]), (0, 255, 0), 2)
+                    cv2.putText(
+                        self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
 
                     self.owner_exists = True
 
@@ -203,14 +206,20 @@ class VisionNode(Node):
                     # Get depth distance
                     depth_x = self.owner_x
                     depth_y = self.owner_y - 80
-                    self.owner_z = (int)(self.dep[depth_y, depth_x])  # ordered y, x
+                    self.owner_z = (int)(
+                        self.dep[depth_y, depth_x])  # ordered y, x
 
-                    cv2.putText(self.img, "X {}".format(self.owner_x), (570, 30), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "Y {}".format(self.owner_y), (570, 50), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "Z {}".format(self.owner_z), (570, 70), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "X {}".format(
+                        self.owner_x), (570, 30), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "Y {}".format(
+                        self.owner_y), (570, 50), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "Z {}".format(
+                        self.owner_z), (570, 70), 1, 1, (0, 255, 0), 2)
 
-                    cv2.putText(self.img, "W {}".format(self.owner_w), (500, 30), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "H {}".format(self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "W {}".format(
+                        self.owner_w), (500, 30), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "H {}".format(
+                        self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
                 else:
                     cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
                     cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
@@ -223,8 +232,10 @@ class VisionNode(Node):
             
     def detect_fall(self):
         if self.owner_exists:
-            self.owner_w_diff = (self.owner_w - self.owner_w_prev) / self.duration_sec
-            self.owner_h_diff = (self.owner_h - self.owner_h_prev) / self.duration_sec 
+            self.owner_w_diff = (
+                self.owner_w - self.owner_w_prev) / self.duration_sec
+            self.owner_h_diff = (
+                self.owner_h - self.owner_h_prev) / self.duration_sec
 
             if self.owner_h_diff <= -500:
                 self.owner_fall = True
@@ -238,7 +249,6 @@ class VisionNode(Node):
             # self.owner_h_diff = 0
             # self.owner_w_prev = 0
             # self.owner_h_prev = 0
-
 
     def init_csv_log(self):
         current_dir = os.getcwd()
@@ -283,9 +293,10 @@ def main(args=None):
     node.init_sort()
     # node.init_csv_log()
 
-    executor = MultiThreadedExecutor() # 노드 내부의 콜백 함수를 스레드로 잘라서 실행
+    executor = MultiThreadedExecutor()  # 노드 내부의 콜백 함수를 스레드로 잘라서 실행
     executor.add_node(node)
-    executor_thread = threading.Thread(target=executor.spin) # 메인 함수에서 자식 스레드를 만들어서 Ros 코드를 돌림
+    # 메인 함수에서 자식 스레드를 만들어서 Ros 코드를 돌림
+    executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
     while True:
@@ -293,8 +304,10 @@ def main(args=None):
 
         # node.read_video("webcam") # read and resize image
         node.read_depth(False)
+
         node.run_rknn() # object detecting
         node.run_sort() # object tracking
+
 
         duration = dt.datetime.utcnow() - start
         node.fps = int(round(1000000 / duration.microseconds))
@@ -306,10 +319,12 @@ def main(args=None):
         # node.run_csv_log()
         node.detect_fall()  
 
+
         if node.owner_fall:
             node.publish_owner_fall()
 
-        cv2.putText(node.img, f'fps: {node.fps}', (25, 50), 1, 2, (0, 255, 0), 2)
+        cv2.putText(node.img, f'fps: {node.fps}',
+                    (25, 50), 1, 2, (0, 255, 0), 2)
         cv2.imshow("result", node.img)
 
         # If the `q` key was pressed, break from the loop

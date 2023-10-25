@@ -2,8 +2,8 @@ import rclpy
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import UInt16
 from rclpy.node import Node
-from example_interfaces.msg import Bool
-from example_interfaces.msg import Int32
+from std_msgs.msg import Bool
+from std_msgs.msg import Int32
 import time
 
 

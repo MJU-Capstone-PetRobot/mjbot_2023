@@ -2,15 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
-from geometry_msgs.msg import Point
-from std_msgs.msg import String
-from cv_bridge import CvBridge
-from example_interfaces.msg import Int16MultiArray    # for owner center
-import cv2
-import numpy as np
-import math
-
-# from rclpy.qos import qos_profile_default
+from std_msgs.msg import Int16MultiArray
 
 
 class PIDController:
@@ -32,9 +24,7 @@ class PIDController:
 class Driver(Node):
     def __init__(self):
         super().__init__('driver')
-        self.publisher_ = self.create_publisher(Twist, 'cmd_vel_tracker', 10)
-        # timer_period = 0.5  # seconds
-        # self.timer = self.create_timer(timer_period, self.callback)
+        self.publisher = self.create_publisher(Twist, 'cmd_vel_tracker', 10)
         self.subscription = self.create_subscription(
             Int16MultiArray,
             'owner_center',
@@ -42,70 +32,50 @@ class Driver(Node):
             10)
         self.base_cmd = Twist()
 
-        # ideal distance from target
-        self.target_distance = 500
+        self.target_distance = 800
 
-        # distance controller PID
-        self.z_pid = PIDController(0.5, 0.1, 0.1)
+        # PID controller for yaw control
+        self.yaw_pid = PIDController(0.5, 0.1, 0.1)
 
-        # image description
-        self.imgW = 640
-        self.imgH = 360
+        self.image_width = 640
+        self.image_height = 360
 
-        self.base_cmd.linear.x = 0.0
-        self.base_cmd.linear.y = 0.0
-        self.base_cmd.linear.z = 0.0
-        self.base_cmd.angular.x = 0.0
-        self.base_cmd.angular.y = 0.0
-        self.base_cmd.angular.z = 0.0
-
-    def update(self, linear_x, angular_z):
-        self.base_cmd.linear.x = linear_x
-        self.base_cmd.angular.z = angular_z
-        print("Linear X: ")
-        print(linear_x)
-        print("\n")
-        print("Angular Z: ")
-        print(angular_z)
-        print("\n")
-        self.publisher_.publish(self.base_cmd)
-        self.get_logger().info("PUB: /cmd_vel_tracker: {}".format(self.base_cmd))
+    def update(self, linear_speed, angular_speed):
+        self.base_cmd.linear.x = linear_speed
+        self.base_cmd.angular.z = angular_speed
+        self.publisher.publish(self.base_cmd)
+        self.get_logger().info("Published: /cmd_vel_tracker: {}".format(self.base_cmd))
 
     def callback(self, msg):
-        # Kalman filtering done here?
+        person_x = msg.data[0] * 1.0
+        person_y = msg.data[1] * 1.0
+        person_distance = msg.data[2] * 1.0
 
-        x_c = msg.data[0]*1.0
-        y_c = msg.data[1]*1.0
-        z = msg.data[2]*1.0
+        offset_x = person_x - self.image_width / 2
+        theta = offset_x / self.image_width
 
-        self.get_logger().info("x_c: {}".format(x_c))
+        # Use the PID controller to calculate angular_speed
+        angular_speed = -self.yaw_pid.update(theta)
 
-        offset_x = x_c - self.imgW / 2
-        theta = offset_x / self.imgW
-
-        z_error = self.target_distance - z
-
-        angular = -0.5 * theta
-        # linear = -self.z_pid.update(z_error)
-
-        if (z <= 300):
-            linear = 0.0
-            angular = 180.0
+        # Calculate linear_speed based on the person's distance
+        if person_distance <= 300:
+            linear_speed = 0.0
+        elif person_distance >= 1200:
+            linear_speed = 1.0  # Max speed is 1.0 when person_distance is greater than or equal to 1200
         else:
-            linear = z - self.target_distance
+            # Linear interpolation between 0.4 and 1.0 based on the range of person_distance
+            linear_speed = 0.4 + (person_distance - 800) * 0.2 / 400
 
-        if linear < 0:
-            linear = 0.0
+        # Make sure the linear_speed doesn't exceed 1.0
+        linear_speed = min(1.0, linear_speed)
 
-        self.update(linear*0.001, angular)
+        self.update(linear_speed, angular_speed)
 
 
 def main(args=None):
     rclpy.init(args=args)
     driver = Driver()
-
     rclpy.spin(driver)
-
     driver.destroy_node()
     rclpy.shutdown()
 

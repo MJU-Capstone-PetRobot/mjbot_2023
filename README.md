@@ -40,3 +40,6 @@ sudo apt install ros-humble-twist-mux
 sudo -H apt-get install -y ros-humble-joint-state-publisher
 sudo -H apt-get install -y python3-serial
 
+sudo apt-get install ffmpeg
+sudo apt-get install libasound-dev
+sudo apt-get install portaudio19-dev
