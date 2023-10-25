@@ -7,6 +7,7 @@ from example_interfaces.msg import Bool
 from example_interfaces.msg import Int32
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import UInt16
+from sensor_msgs.msg import Range
 
 import serial
 import threading
@@ -34,7 +35,7 @@ class OpiEspNode(Node):
         self.publisher_bat_state_ = self.create_publisher(String, "bat", 10)
         self.publisher_touch_ = self.create_publisher(Bool, "touch", 10)
         self.publisher_co_ = self.create_publisher(Int32, "co_ppm", 10)
-        self.publisher_distance_ = self.create_publisher(Int32, "distance", 10)
+        self.publisher_distance_ = self.create_publisher(Range, "distance", 10)
 
         self.subscriber_emo = self.create_subscription(String, "emo", self.callback_emo, 10)
         self.subscriber_neck_rpy = self.create_subscription(Vector3, "neck_rpy", self.callback_neck_rpy, 10)
@@ -63,10 +64,15 @@ class OpiEspNode(Node):
         self.get_logger().info("[PUB] /co_ppm: {}".format(msg.data))
 
     def publisher_distance(self, dist): 
-        msg = Int32()
-        msg.data = dist
+        msg = Range()
+        msg.radiation_type = 0 # ULTRASOUND
+        msg.field_of_view = 1.0472 # radian, 60 degree = 1.0472 radian
+        msg.min_range = 0.030 # m
+        msg.max_range = 4.500 # m
+        msg.range = dist / 1000 # mm -> m
+
         self.publisher_distance_.publish(msg)
-        self.get_logger().info("[PUB] /distance: {}".format(msg.data))   
+        self.get_logger().info("[PUB] /distance: {}".format(msg.range))   
 
     def callback_emo(self, sub_msg):
         self.get_logger().info("[SUB] /emo: {}".format(sub_msg.data))
