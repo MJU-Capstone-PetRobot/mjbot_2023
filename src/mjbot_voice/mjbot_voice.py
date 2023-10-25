@@ -105,16 +105,12 @@ def main(args=None):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
-    path_sample = "./sampleWav.wav"
-    path_result = "./ResultMP3.mp3"
-    path_test = "./test.wav"
-
     if path.exists("./sampleWav.wav"):
         os.remove("./sampleWav.wav")
     if path.exists("./ResultMP3.mp3"):
         os.remove("./ResultMP3.mp3")
-    if path.exists("test.wav"):
-        os.remove("./test.wav")
+    if path.exists("yes.wav"):
+        os.remove("./yes.wav")
 
     call_num = 0
     while 1:
@@ -131,20 +127,20 @@ def main(args=None):
             call_num += 1
             print(call_num)
         if call_num == 3:
-                speaking("로봇이라고 불러주세요!")
+                use_sound("./mp3/say_my_name.wav")
                 call_num = 0
         if response == "로봇":
-            speaking("네")
+            use_sound("./mp3/yes.wav")
 
             response = mic()
             if response == "초기화":
-                speaking("초기화를 진행합니다!")
+                use_sound("./mp3/reset.wav")
                 name_ini()
             elif response == "종료":
-                speaking("시스템을 종료합니다.")
+                use_sound("./mp3/off.wav")
                 break
             elif response == "조용":
-                speaking("네 조용히 하겠습니다!")
+                use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
             
             print(call_num)

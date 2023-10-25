@@ -111,10 +111,10 @@ def speak_first():
 def speak_first_ex():
     import time
 
-    speaking("좋은 아침이에요!! 오늘도 좋은 하루 되세요!!")
-    time.sleep(3)
+    use_sound("./mp3/ex1.wav")
+    time.sleep(2)
 
-    speaking("안녕하세요.")
+    use_sound("./mp3/ex_2.wav")
 
 
 def speaking(anw_text):
@@ -288,11 +288,11 @@ def name_check():
     with open('./user_value.json', 'r') as f:
         data = json.load(f)
         if data["user_name"] == "":
-            speaking("사용자 정보가 없어, 초기 설정 진행하겠습니다.")
-            speaking("이름이 어떻게 되세요?")
+            use_sound("./mp3/first_0.wav")
+            use_sound("./mp3/first_set_2.wav")
             name_ = mic_first()
             speaking(f"안녕하세요! {name_}님")
-            speaking("성별은 어떻게 되세요? 남자 또는 여자로 대답해주세요.")
+            use_sound("./mp3/first_set_3.wav")
             manWoman = mic_first()
             if manWoman == "남자":
                 manWoman_ = "he"
@@ -300,7 +300,7 @@ def name_check():
                 manWoman_ = "she"
             else:
                 while manWoman != "남자" or "여자":
-                    speaking("잘 못 들었어요. 다시 한번 알려주세요.")
+                    use_sound("./mp3/first_set_4.wav")
                     manWoman = mic_first()
                     if manWoman == "남자":
                         manWoman_ = "he"
@@ -309,7 +309,7 @@ def name_check():
                         manWoman_ = "she"
                         break
             common = 1
-            speaking("사용자 초기 설정이 완료되었습니다.")
+            use_sound("./mp3/first_set_done.wav")
         else:
             name_ = data["user_name"]
             manWoman_ = data["user_value"]
@@ -362,3 +362,9 @@ def mp3_time_check():
 #     print(f"새로운 시간은 {new_min}분 {new_sec}초")
 
 #     return [new_min, new_sec]
+
+def use_sound(loc):
+    from playsound import playsound as pl
+
+    # data, fs = sf.read(filename, dtype='')
+    pl(loc)
