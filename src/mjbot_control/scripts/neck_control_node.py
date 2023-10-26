@@ -1,6 +1,6 @@
 import rclpy
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import UInt16, Bool, Int32, Int16MultiArray, String
+from std_msgs.msg import UInt16, Int16MultiArray, String
 from rclpy.node import Node
 import time
 import random
@@ -26,17 +26,15 @@ class NeckControllerPublisher(Node):
 
     def __init__(self):
         super().__init__('neck_controller_publisher')
+        self.setup_publishers()
+        self.initialize_properties()
 
-        # Publishers
+    def setup_publishers(self):
         self.RPYpublisher = self.create_publisher(Vector3, 'float_values', 10)
         self.Zpublisher = self.create_publisher(UInt16, 'z_value', 10)
 
-        # Subscriptions
-        self.owner_center_subscription = self.create_subscription(
-            Int16MultiArray, 'owner_center', self.owner_center_callback, 10)
-
-        # Properties
-        self.dt = 0.5  # seconds
+    def initialize_properties(self):
+        self.dt = 0.5
         self.rostimer = 0.05
         self.timer = self.create_timer(self.rostimer, self.publish_values)
         self.image_width = 640
@@ -100,56 +98,37 @@ class NeckControllerPublisher(Node):
             time.sleep(self.rostimer)
 
 
-class AlertSubscriber(Node):
-    def __init__(self):
-        super().__init__('alert_subscriber')
-        self.fall_down_subscription = self.create_subscription(
-            Bool, 'fall_down', self.fall_down_callback, 10)
-        self.co_ppm_subscription = self.create_subscription(
-            Int32, 'co_ppm', self.co_ppm_callback, 10)
-        self.neck_controller_publisher = NeckControllerPublisher()
-
-    def fall_down_callback(self, msg):
-        if msg.data:
-            self.get_logger().info('Fall Down Alert')
-            self.neck_controller_publisher.publish_values(1, 1, 1, 100)
-            time.sleep(1)
-            self.neck_controller_publisher.publish_values(1, 1, 1, 60)
-
-    def co_ppm_callback(self, msg):
-        if msg.data >= 200:
-            self.get_logger().info('High CO PPM Alert')
-            self.neck_controller_publisher.publish_values(1, 1, 1, 100)
-            time.sleep(1)
-            self.neck_controller_publisher.publish_values(1, 1, 1, 60)
-
-
-class EmotionExpression(Node):
+class CommandNeck(Node):
     def __init__(self):
         super().__init__('emotion_expression')
+        self.setup_publishers_and_subscriptions()
+        self.emotion = UInt16(data=0)
+        self.neck_controller_publisher = NeckControllerPublisher()
+
+    def setup_publishers_and_subscriptions(self):
         self.emotion_publisher = self.create_publisher(UInt16, 'emotion', 10)
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
-        self.emotion = UInt16(data=0)
-        self.neck_controller_publisher = NeckControllerPublisher()  # create an instance of NeckControllerPublisher
+        self.owner_center_subscription = self.create_subscription(
+            Int16MultiArray, 'owner_center', self.owner_center_callback, 10)
 
     def callback_emo(self, msg):
         emotion = msg.data
-        if emotion == "Daily":
-            self.neck_controller_publisher.publish_values(0, 0, 0, 70)
-        elif emotion == "wink":
-            self.tilt(direction='left')
-        elif emotion == "sad":
-            self.nod()
-        elif emotion == "angry":
-            self.shake()
-        elif emotion == "moving":
-            self.turn()
-        elif emotion == "mic_waiting":
-            # Example: Tilt upwards (listening pose)
-            self.listening()
-            self.neck_controller_publisher.publish_values(0, 1, 0, 70)
-    
+        emotion_to_function_map = {
+            "Daily": self.daily,
+            "wink": self.tilt,
+            "sad": self.nod,
+            "angry": self.shake,
+            "moving": self.turn,
+            "mic_waiting": self.listening
+        }
+        function_to_execute = emotion_to_function_map.get(emotion)
+        if function_to_execute:
+            function_to_execute()
+
+    def daily(self):
+        self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+
     def listening(self):
         # """A subtle nodding  gesture to indicate that the robot is listening"""
         total_duration = 3  # seconds
@@ -202,11 +181,16 @@ class EmotionExpression(Node):
         value = 1 if direction == 'left' else -1
         self.neck_controller_publisher.publish_values(value, 0, 0, 70)
         time.sleep(duration)
+    def owner_center_callback(self, msg):
+        yaw_error = (msg.data[0] - self.image_width / 2) / self.image_width
+        target_yaw = 1 * yaw_error
+        self.neck_controller_publisher.publish_values(target_yaw, 1, 1, 70)
+
 
 def main(args=None):
     rclpy.init(args=args)
-    alert_subscriber = AlertSubscriber()
-    rclpy.spin(alert_subscriber)
+    command_neck_node = CommandNeck()
+    rclpy.spin(command_neck_node)
     rclpy.shutdown()
 
 
