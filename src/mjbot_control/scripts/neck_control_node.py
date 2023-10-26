@@ -1,27 +1,45 @@
 import rclpy
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import UInt16
+from std_msgs.msg import UInt16, Int16MultiArray, String
 from rclpy.node import Node
-from std_msgs.msg import Bool
-from std_msgs.msg import Int32
 import time
+import random
+
+
+class PIDController:
+    def __init__(self, kp, ki, kd):
+        self.Kp = kp
+        self.Ki = ki
+        self.Kd = kd
+        self.last_error = 0.0
+        self.integral = 0.0
+
+    def update(self, error):
+        derivative = error - self.last_error
+        self.integral += error
+        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
+        self.last_error = error
+        return output
 
 
 class NeckControllerPublisher(Node):
 
     def __init__(self):
         super().__init__('neck_controller_publisher')
+        self.setup_publishers()
+        self.initialize_properties()
+
+    def setup_publishers(self):
         self.RPYpublisher = self.create_publisher(Vector3, 'float_values', 10)
         self.Zpublisher = self.create_publisher(UInt16, 'z_value', 10)
-        self.dt = 0.5  # seconds
+
+    def initialize_properties(self):
+        self.dt = 0.5
         self.rostimer = 0.05
         self.timer = self.create_timer(self.rostimer, self.publish_values)
-        self.originRPY = Vector3()
-        self.originZ = UInt16()
-        self.originRPY.x = 0.0
-        self.originRPY.y = 0.0
-        self.originRPY.z = 0.0
-        self.originZ.data = 70
+        self.image_width = 640
+        self.originRPY = Vector3(x=0.0, y=0.0, z=0.0)
+        self.originZ = UInt16(data=70)
         self.t0 = time.time()
         self.targetRPY = Vector3()
         self.targetZ = UInt16()
@@ -62,58 +80,117 @@ class NeckControllerPublisher(Node):
 
         self.targetZ.data = round(a0z + a1z * ((time.time()-self.t0)) + a2z * (
             (time.time()-self.t0)) ** 2 + a3z * ((time.time()-self.t0)) ** 3)
-        self.get_logger().info('self.targetRPY.x: %f' % self.targetRPY.x)
-        self.get_logger().info('self.targetRPY.y: %f' % self.targetRPY.y)
-        self.get_logger().info('self.targetRPY.z: %f' % self.targetRPY.z)
-        self.get_logger().info('self.targetZ.data: %f' % self.targetZ.data)
 
-        return time.time() - self.t0
+    def owner_center_callback(self, msg):
+        yaw_error = (msg.data[0] - self.image_width / 2) / self.image_width
+        target_yaw = 1 * yaw_error
+        self.publish_values(target_yaw, 1, 1, 70)
 
     def publish_values(self, r, p, y, z):
         self.t0 = time.time()
         while time.time() - self.t0 < self.dt:
             self.interpolate(r, p, y, z)
-            msg = Vector3()
-            msg.x = self.targetRPY.x
-            msg.y = self.targetRPY.y
-            msg.z = self.targetRPY.z
-            zmsg = UInt16()
-            zmsg.data = round(self.targetZ.data)
+            msg = Vector3(x=self.targetRPY.x,
+                          y=self.targetRPY.y, z=self.targetRPY.z)
+            zmsg = UInt16(data=round(self.targetZ.data))
             self.Zpublisher.publish(zmsg)
             self.RPYpublisher.publish(msg)
             time.sleep(self.rostimer)
 
-        self.get_logger().info('self.t0: %f' % self.t0)
 
-
-class AlertSubscriber(Node):
+class CommandNeck(Node):
     def __init__(self):
-        super().__init__('alert_subscriber')
-        self.fall_down_subscription = self.create_subscription(
-            Bool, 'fall_down', self.fall_down_callback, 10)
-        self.co_ppm_subscription = self.create_subscription(
-            Int32, 'co_ppm', self.co_ppm_callback, 10)
+        super().__init__('emotion_expression')
+        self.setup_publishers_and_subscriptions()
+        self.emotion = UInt16(data=0)
         self.neck_controller_publisher = NeckControllerPublisher()
 
-    def fall_down_callback(self, msg):
-        if msg.data:
-            self.get_logger().info('Fall Down Alert')
-            self.neck_controller_publisher.publish_values(1, 1, 1, 100)
-            time.sleep(1)
-            self.neck_controller_publisher.publish_values(1, 1, 1, 60)
+    def setup_publishers_and_subscriptions(self):
+        self.emotion_publisher = self.create_publisher(UInt16, 'emotion', 10)
+        self.subscriber_emo = self.create_subscription(
+            String, "emo", self.callback_emo, 10)
+        self.owner_center_subscription = self.create_subscription(
+            Int16MultiArray, 'owner_center', self.owner_center_callback, 10)
 
-    def co_ppm_callback(self, msg):
-        if msg.data >= 200:
-            self.get_logger().info('High CO PPM Alert')
-            self.neck_controller_publisher.publish_values(1, 1, 1, 100)
-            time.sleep(1)
-            self.neck_controller_publisher.publish_values(1, 1, 1, 60)
+    def callback_emo(self, msg):
+        emotion = msg.data
+        emotion_to_function_map = {
+            "Daily": self.daily,
+            "wink": self.tilt,
+            "sad": self.nod,
+            "angry": self.shake,
+            "moving": self.turn,
+            "mic_waiting": self.listening
+        }
+        function_to_execute = emotion_to_function_map.get(emotion)
+        if function_to_execute:
+            function_to_execute()
+
+    def daily(self):
+        self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+
+    def listening(self):
+        # """A subtle nodding  gesture to indicate that the robot is listening"""
+        total_duration = 3  # seconds
+        num_nods = random.randint(0, 4)  # Random number of nods between 0 and 4
+        
+        if num_nods == 0:
+            time.sleep(total_duration)
+            return
+
+        duration_per_nod = total_duration / num_nods
+        
+        for _ in range(num_nods):
+            # Slight move down
+            self.neck_controller_publisher.publish_values(0, -0.5, 0, 70)
+            time.sleep(duration_per_nod / 4)
+            # Slight move up
+            self.neck_controller_publisher.publish_values(0, 0.5, 0, 70)
+            time.sleep(duration_per_nod / 4)
+            # Return to neutral
+            self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+            time.sleep(duration_per_nod / 2)
+
+    def nod(self, duration=1):
+        # Move down
+        self.neck_controller_publisher.publish_values(0, -1, 0, 70)
+        time.sleep(duration/2)
+        # Move up
+        self.neck_controller_publisher.publish_values(0, 1, 0, 70)
+        time.sleep(duration/2)
+
+    def tilt(self, direction='left', duration=1):
+        # Tilt left or right based on the direction
+        value = 1 if direction == 'left' else -1
+        self.neck_controller_publisher.publish_values(value, 0, 0, 70)
+        time.sleep(duration)
+
+    def shake(self, duration=1):
+        # Move to the left
+        self.neck_controller_publisher.publish_values(1, 0, 0, 70)
+        time.sleep(duration/3)
+        # Move to the right
+        self.neck_controller_publisher.publish_values(-1, 0, 0, 70)
+        time.sleep(duration/3)
+        # Return to the center
+        self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+        time.sleep(duration/3)
+
+    def turn(self, direction='left', duration=1):
+        # Turn to the left or right based on the direction
+        value = 1 if direction == 'left' else -1
+        self.neck_controller_publisher.publish_values(value, 0, 0, 70)
+        time.sleep(duration)
+    def owner_center_callback(self, msg):
+        yaw_error = (msg.data[0] - self.image_width / 2) / self.image_width
+        target_yaw = 1 * yaw_error
+        self.neck_controller_publisher.publish_values(target_yaw, 1, 1, 70)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    alert_subscriber = AlertSubscriber()
-    rclpy.spin(alert_subscriber)
+    command_neck_node = CommandNeck()
+    rclpy.spin(command_neck_node)
     rclpy.shutdown()
 
 

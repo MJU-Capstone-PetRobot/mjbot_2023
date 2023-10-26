@@ -9,7 +9,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from rclpy.duration import Duration
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Empty
+from std_msgs.msg import Bool, Int32
 import time
 
 
@@ -64,6 +64,15 @@ class Commander(Node):
         self.joint_states_subscription = self.create_subscription(
             JointState, '/joint_states', self.joint_states_callback, 10)
         self.joint_efforts = {}
+        self.mode_publisher = self.create_publisher(String, 'mode', 10)
+        self.mode_subscription = self.create_subscription(
+            String, 'mode', self.mode_callback, 10)
+        self.fall_down_subscription = self.create_subscription(
+            Bool, 'fall_down', self.fall_down_callback, 10)
+        self.co_ppm_subscription = self.create_subscription(
+            Int32, 'co_ppm', self.co_ppm_callback, 10)
+
+        self.current_mode = "idle"
 
         self.position_key = 'default'
 
@@ -96,6 +105,9 @@ class Commander(Node):
             'holding_hand': [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
         }
 
+    def mode_callback(self, msg: String):
+        self.current_mode = msg.data
+
     def joint_states_callback(self, msg: JointState):
         """Callback to handle incoming JointState messages."""
         for name, effort in zip(msg.name, msg.effort):
@@ -114,12 +126,31 @@ class Commander(Node):
             # Check again after 0.5 seconds
             self.create_timer(0.5, self.send_startup_sequence)
 
+    def fall_down_callback(self, msg):
+        if msg.data:
+            self.position_key = 'alert'
+            self.get_logger().info('Fall Down Alert')
+            self.arm_move_alert()
+
+    def co_ppm_callback(self, msg):
+        if msg.data >= 200:
+            self.position_key = 'alert'
+            self.get_logger().info('High CO PPM Alert')
+            self.arm_move_alert()
+
     def arm_mode_callback(self, msg):
+        if self.current_mode != "idle":
+            return
         self.new_arm_mode_received = True
         self.position_key = 'default'  # Default position key
 
-        if msg.data == "walk":
-            self.position_key = 'walk'
+        if msg.data == "holding_hand":
+            self.position_key = 'holding_hand'
+            # Trigger HoldingHandNode
+
+            self.current_mode = "holding_hand"
+            self.set_and_send_arm_position(self.poses[self.position_key])
+            self.mode_publisher.publish(String(data="holding_hand"))
 
             return
         elif msg.data == "give_right_hand":
@@ -135,7 +166,7 @@ class Commander(Node):
     def post_action_check(self):
         # Exclude the 'walk' position from the joint effort check
         time.sleep(1)
-        if self.position_key != "walk":
+        if self.position_key != "holding_hand" or self.position_key != "alert":
 
             while True:
                 if self.position_key != "default" and self.arm_controller.action_state == ActionState.SUCCEEDED:
@@ -170,6 +201,22 @@ class Commander(Node):
             # Reset to default after the emotion
             self.create_timer(
                 2.0, lambda: self.set_and_send_arm_position(self.poses['default']))
+
+    def arm_move_alert(self, msg):
+        self.trajectory_msg.trajectory.points = []
+        self.add_trajectory_point(self.poses['default'], 1)
+        self.add_trajectory_point([0.0, 0.6, 0.1, 0.0, -0.6, -0.1], 2)
+        self.add_trajectory_point([0.0, 1.3, 0.5, 0.0, -1.3, -0.3], 2.5)
+        self.add_trajectory_point([0.0, 0.6, 0.1, 0.0, -0.6, -0.1], 3)
+        self.add_trajectory_point([0.0, 1.3, 0.5, 0.0, -1.3, -0.3], 3.5)
+        self.add_trajectory_point([0.0, 0.6, 0.1, 0.0, -0.6, -0.1], 4)
+        self.add_trajectory_point([0.0, 1.3, 0.5, 0.0, -1.3, -0.3], 4.5)
+        self.add_trajectory_point(self.poses['default'], 6)
+        self.get_logger().info('Sending alert sequence...')
+
+        if self.arm_controller.action_state in [ActionState.NONE, ActionState.SUCCEEDED]:
+            self.arm_controller.send_goal(
+                self.trajectory_msg, self.arm_controller.goal_response_callback)
 
     def set_and_send_hug_sequence(self):
         self.trajectory_msg.trajectory.points = []

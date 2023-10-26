@@ -51,8 +51,9 @@ install(
 
 install(
   PROGRAMS
-    scripts/arm_control_node.py
+    scripts/idle_mode.py
     scripts/neck_control_node.py
+    scripts/holding_hand_mode.py
   DESTINATION
     lib/${PROJECT_NAME}
 )
