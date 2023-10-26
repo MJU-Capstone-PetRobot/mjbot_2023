@@ -25,9 +25,11 @@ def generate_launch_description():
     load_trajectory_controller = create_spawner_node(
         "arm_joint_trajectory_controller")
     arm_control_node = Node(package='mjbot_control',
-                            executable='arm_control_node.py', output='screen')
+                            executable='idle_mode.py', output='screen')
     neck_control_node = Node(package='mjbot_control',
                              executable='neck_control_node.py', output='screen')
+    holding_hand_node = Node(package='mjbot_control',
+                             executable='holding_hand_mode.py', output='screen')
 
     # Define event handlers for delayed starts
     delay_diff_drive_after_joint_state = create_delay_handler(
@@ -44,6 +46,7 @@ def generate_launch_description():
         delay_diff_drive_after_joint_state,
         delay_trajectory_after_diff_drive,
         delay_arm_after_joint_state,
+        holding_hand_node
         # neck_control_node,
     ])
 

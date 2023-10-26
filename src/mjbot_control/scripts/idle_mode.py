@@ -64,6 +64,11 @@ class Commander(Node):
         self.joint_states_subscription = self.create_subscription(
             JointState, '/joint_states', self.joint_states_callback, 10)
         self.joint_efforts = {}
+        self.mode_publisher = self.create_publisher(String, 'mode', 10)
+        self.mode_subscription = self.create_subscription(
+            String, 'mode', self.mode_callback, 10)
+
+        self.current_mode = "idle"
 
         self.position_key = 'default'
 
@@ -96,6 +101,9 @@ class Commander(Node):
             'holding_hand': [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
         }
 
+    def mode_callback(self, msg: String):
+        self.current_mode = msg.data
+
     def joint_states_callback(self, msg: JointState):
         """Callback to handle incoming JointState messages."""
         for name, effort in zip(msg.name, msg.effort):
@@ -115,11 +123,18 @@ class Commander(Node):
             self.create_timer(0.5, self.send_startup_sequence)
 
     def arm_mode_callback(self, msg):
+        if self.current_mode != "idle":
+            return
         self.new_arm_mode_received = True
         self.position_key = 'default'  # Default position key
 
-        if msg.data == "walk":
-            self.position_key = 'walk'
+        if msg.data == "holding_hand":
+            self.position_key = 'holding_hand'
+            # Trigger HoldingHandNode
+
+            self.current_mode = "holding_hand"
+            self.set_and_send_arm_position(self.poses[self.position_key])
+            self.mode_publisher.publish(String(data="holding_hand"))
 
             return
         elif msg.data == "give_right_hand":
@@ -135,7 +150,7 @@ class Commander(Node):
     def post_action_check(self):
         # Exclude the 'walk' position from the joint effort check
         time.sleep(1)
-        if self.position_key != "walk":
+        if self.position_key != "holding_hand":
 
             while True:
                 if self.position_key != "default" and self.arm_controller.action_state == ActionState.SUCCEEDED:

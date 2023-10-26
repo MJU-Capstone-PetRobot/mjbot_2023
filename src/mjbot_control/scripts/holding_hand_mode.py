@@ -12,9 +12,11 @@ class HoldingHandNode(Node):
 
         self.subscription_mode = self.create_subscription(
             String, 'mode', self.mode_callback, 10)
-        self.pub_cmd_vel = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.pub_cmd_vel = self.create_publisher(Twist, 'cmd_vel_walk', 10)
         self.joint_states_subscription = self.create_subscription(
             JointState, '/joint_states', self.joint_states_callback, 10)
+        self.should_continue = False
+        self.create_timer(0.1, self.holding_hand_timer_callback)
 
         self.joint_efforts = {}
         self.target_cmd_vel = Twist()
@@ -22,11 +24,15 @@ class HoldingHandNode(Node):
 
     def mode_callback(self, msg: String):
         if msg.data == "holding_hand":
-            self.holding_hand()
+            self.should_continue = True
         elif msg.data == "idle":
             self.should_continue = False
         else:
             self.get_logger().warn("Unknown mode received!")
+
+    def holding_hand_timer_callback(self):
+        if self.should_continue:
+            self.holding_hand()
 
     def joint_states_callback(self, msg: JointState):
         """Callback to handle incoming JointState messages."""
@@ -41,6 +47,8 @@ class HoldingHandNode(Node):
 
         r_shoulder_pitch_effort = self.get_joint_effort('r_shoulder_pitch')
         r_shoulder_roll_effort = self.get_joint_effort('r_shoulder_roll')
+        self.get_logger().info(
+            "r_shoulder_pitch_effort: {}, r_shoulder_roll_effort: {}".format(r_shoulder_pitch_effort, r_shoulder_roll_effort))
 
         cmd_vel = Twist()
 
@@ -56,7 +64,7 @@ class HoldingHandNode(Node):
             if r_shoulder_roll_effort > 250:
                 cmd_vel.angular.z = 0.5
                 cmd_vel.linear.x = 0.1 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
-            elif r_shoulder_roll_effort < -250:
+            elif r_shoulder_roll_effort < -50:
                 cmd_vel.angular.z = -0.5
                 cmd_vel.linear.x = -0.1 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
 
