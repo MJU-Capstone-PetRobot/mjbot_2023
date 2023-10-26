@@ -1,27 +1,46 @@
 import rclpy
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import UInt16
+from std_msgs.msg import UInt16, Bool, Int32, Int16MultiArray
 from rclpy.node import Node
-from std_msgs.msg import Bool
-from std_msgs.msg import Int32
 import time
+
+
+class PIDController:
+    def __init__(self, kp, ki, kd):
+        self.Kp = kp
+        self.Ki = ki
+        self.Kd = kd
+        self.last_error = 0.0
+        self.integral = 0.0
+
+    def update(self, error):
+        derivative = error - self.last_error
+        self.integral += error
+        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
+        self.last_error = error
+        return output
 
 
 class NeckControllerPublisher(Node):
 
     def __init__(self):
         super().__init__('neck_controller_publisher')
+
+        # Publishers
         self.RPYpublisher = self.create_publisher(Vector3, 'float_values', 10)
         self.Zpublisher = self.create_publisher(UInt16, 'z_value', 10)
+
+        # Subscriptions
+        self.owner_center_subscription = self.create_subscription(
+            Int16MultiArray, 'owner_center', self.owner_center_callback, 10)
+
+        # Properties
         self.dt = 0.5  # seconds
         self.rostimer = 0.05
         self.timer = self.create_timer(self.rostimer, self.publish_values)
-        self.originRPY = Vector3()
-        self.originZ = UInt16()
-        self.originRPY.x = 0.0
-        self.originRPY.y = 0.0
-        self.originRPY.z = 0.0
-        self.originZ.data = 70
+        self.image_width = 640
+        self.originRPY = Vector3(x=0.0, y=0.0, z=0.0)
+        self.originZ = UInt16(data=70)
         self.t0 = time.time()
         self.targetRPY = Vector3()
         self.targetZ = UInt16()
@@ -62,28 +81,22 @@ class NeckControllerPublisher(Node):
 
         self.targetZ.data = round(a0z + a1z * ((time.time()-self.t0)) + a2z * (
             (time.time()-self.t0)) ** 2 + a3z * ((time.time()-self.t0)) ** 3)
-        self.get_logger().info('self.targetRPY.x: %f' % self.targetRPY.x)
-        self.get_logger().info('self.targetRPY.y: %f' % self.targetRPY.y)
-        self.get_logger().info('self.targetRPY.z: %f' % self.targetRPY.z)
-        self.get_logger().info('self.targetZ.data: %f' % self.targetZ.data)
 
-        return time.time() - self.t0
+    def owner_center_callback(self, msg):
+        yaw_error = (msg.data[0] - self.image_width / 2) / self.image_width
+        target_yaw = 1 * yaw_error
+        self.publish_values(target_yaw, 1, 1, 70)
 
     def publish_values(self, r, p, y, z):
         self.t0 = time.time()
         while time.time() - self.t0 < self.dt:
             self.interpolate(r, p, y, z)
-            msg = Vector3()
-            msg.x = self.targetRPY.x
-            msg.y = self.targetRPY.y
-            msg.z = self.targetRPY.z
-            zmsg = UInt16()
-            zmsg.data = round(self.targetZ.data)
+            msg = Vector3(x=self.targetRPY.x,
+                          y=self.targetRPY.y, z=self.targetRPY.z)
+            zmsg = UInt16(data=round(self.targetZ.data))
             self.Zpublisher.publish(zmsg)
             self.RPYpublisher.publish(msg)
             time.sleep(self.rostimer)
-
-        self.get_logger().info('self.t0: %f' % self.t0)
 
 
 class AlertSubscriber(Node):

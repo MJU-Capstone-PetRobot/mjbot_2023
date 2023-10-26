@@ -9,7 +9,7 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from rclpy.duration import Duration
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Empty
+from std_msgs.msg import Bool, Int32
 import time
 
 
@@ -67,6 +67,10 @@ class Commander(Node):
         self.mode_publisher = self.create_publisher(String, 'mode', 10)
         self.mode_subscription = self.create_subscription(
             String, 'mode', self.mode_callback, 10)
+        self.fall_down_subscription = self.create_subscription(
+            Bool, 'fall_down', self.fall_down_callback, 10)
+        self.co_ppm_subscription = self.create_subscription(
+            Int32, 'co_ppm', self.co_ppm_callback, 10)
 
         self.current_mode = "idle"
 
@@ -122,6 +126,18 @@ class Commander(Node):
             # Check again after 0.5 seconds
             self.create_timer(0.5, self.send_startup_sequence)
 
+    def fall_down_callback(self, msg):
+        if msg.data:
+            self.position_key = 'alert'
+            self.get_logger().info('Fall Down Alert')
+            self.arm_move_alert()
+
+    def co_ppm_callback(self, msg):
+        if msg.data >= 200:
+            self.position_key = 'alert'
+            self.get_logger().info('High CO PPM Alert')
+            self.arm_move_alert()
+
     def arm_mode_callback(self, msg):
         if self.current_mode != "idle":
             return
@@ -150,7 +166,7 @@ class Commander(Node):
     def post_action_check(self):
         # Exclude the 'walk' position from the joint effort check
         time.sleep(1)
-        if self.position_key != "holding_hand":
+        if self.position_key != "holding_hand" or self.position_key != "alert":
 
             while True:
                 if self.position_key != "default" and self.arm_controller.action_state == ActionState.SUCCEEDED:
@@ -185,6 +201,24 @@ class Commander(Node):
             # Reset to default after the emotion
             self.create_timer(
                 2.0, lambda: self.set_and_send_arm_position(self.poses['default']))
+
+    def arm_move_alert(self, msg):
+        self.trajectory_msg.trajectory.points = []
+        self.add_trajectory_point(self.poses['default'], 1)
+        self.add_trajectory_point([0.0, 1.0, 0.3, 0.0, -1.0, -0.3], 2)
+        self.add_trajectory_point([0.0, 1.0, 0.5, 0.0, 1.5, 0.0], 2.5)
+        self.add_trajectory_point([0.0, 1.0, -0.5, 0.0, 1.5, 0.0], 3)
+        self.add_trajectory_point([0.0, 1.0, 0.5, 0.0, 1.5, 0.0], 3.5)
+        self.add_trajectory_point(
+            [0.0, 1.0, -0.5, 0.0, 1.5, 0.0], 4)  # 3change
+        self.add_trajectory_point([0.0, 1.0, 0.5, 0.0, 1.5, 0.0], 4.5)
+
+        self.add_trajectory_point(self.poses['default'], 6)
+        self.get_logger().info('Sending alert sequence...')
+
+        if self.arm_controller.action_state in [ActionState.NONE, ActionState.SUCCEEDED]:
+            self.arm_controller.send_goal(
+                self.trajectory_msg, self.arm_controller.goal_response_callback)
 
     def set_and_send_hug_sequence(self):
         self.trajectory_msg.trajectory.points = []
