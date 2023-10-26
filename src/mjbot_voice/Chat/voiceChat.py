@@ -29,7 +29,7 @@ class MYOUNGJA():
         :return: 답변
         '''
         self.gpt_standard_messages = [{"role": "system",
-                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer politely in korean. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer."}]
+                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer politely in korean and under 5 seconds. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer."}]
         self.gpt_standard_messages.append({"role": "user", "content": question})
 
         response = openai.ChatCompletion.create(
@@ -124,8 +124,8 @@ def speaking(anw_text):
     from playsound import playsound as pl
 
     # NAVER CLOVA
-    client_id = "ud0o0y1iat"
-    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
+    client_id = "5ezz7ibsqa"
+    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
     encText = urllib.parse.quote(anw_text)
     data = f"speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
     urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
@@ -165,8 +165,8 @@ def mic_first():
     from scipy.io.wavfile import write
 
     ## NAVER CLOVA API
-    client_id = "ud0o0y1iat"
-    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
+    client_id = "5ezz7ibsqa"
+    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
 
     # 음성 녹음
     fs = 44100
@@ -228,8 +228,8 @@ def mic():
     from scipy.io.wavfile import write
 
     ## NAVER CLOVA API
-    client_id = "ud0o0y1iat"
-    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
+    client_id = "5ezz7ibsqa"
+    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
 
     # 음성 녹음
     fs = 44100
