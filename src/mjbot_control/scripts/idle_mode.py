@@ -205,14 +205,12 @@ class Commander(Node):
     def arm_move_alert(self, msg):
         self.trajectory_msg.trajectory.points = []
         self.add_trajectory_point(self.poses['default'], 1)
-        self.add_trajectory_point([0.0, 1.0, 0.3, 0.0, -1.0, -0.3], 2)
-        self.add_trajectory_point([0.0, 1.0, 0.5, 0.0, 1.5, 0.0], 2.5)
-        self.add_trajectory_point([0.0, 1.0, -0.5, 0.0, 1.5, 0.0], 3)
-        self.add_trajectory_point([0.0, 1.0, 0.5, 0.0, 1.5, 0.0], 3.5)
-        self.add_trajectory_point(
-            [0.0, 1.0, -0.5, 0.0, 1.5, 0.0], 4)  # 3change
-        self.add_trajectory_point([0.0, 1.0, 0.5, 0.0, 1.5, 0.0], 4.5)
-
+        self.add_trajectory_point([0.0, 0.6, 0.1, 0.0, -0.6, -0.1], 2)
+        self.add_trajectory_point([0.0, 1.3, 0.5, 0.0, -1.3, -0.3], 2.5)
+        self.add_trajectory_point([0.0, 0.6, 0.1, 0.0, -0.6, -0.1], 3)
+        self.add_trajectory_point([0.0, 1.3, 0.5, 0.0, -1.3, -0.3], 3.5)
+        self.add_trajectory_point([0.0, 0.6, 0.1, 0.0, -0.6, -0.1], 4)
+        self.add_trajectory_point([0.0, 1.3, 0.5, 0.0, -1.3, -0.3], 4.5)
         self.add_trajectory_point(self.poses['default'], 6)
         self.get_logger().info('Sending alert sequence...')
 

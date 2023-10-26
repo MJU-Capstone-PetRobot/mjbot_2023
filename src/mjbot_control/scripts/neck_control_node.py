@@ -1,8 +1,9 @@
 import rclpy
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import UInt16, Bool, Int32, Int16MultiArray
+from std_msgs.msg import UInt16, Bool, Int32, Int16MultiArray, String
 from rclpy.node import Node
 import time
+import random
 
 
 class PIDController:
@@ -122,6 +123,85 @@ class AlertSubscriber(Node):
             time.sleep(1)
             self.neck_controller_publisher.publish_values(1, 1, 1, 60)
 
+
+class EmotionExpression(Node):
+    def __init__(self):
+        super().__init__('emotion_expression')
+        self.emotion_publisher = self.create_publisher(UInt16, 'emotion', 10)
+        self.subscriber_emo = self.create_subscription(
+            String, "emo", self.callback_emo, 10)
+        self.emotion = UInt16(data=0)
+        self.neck_controller_publisher = NeckControllerPublisher()  # create an instance of NeckControllerPublisher
+
+    def callback_emo(self, msg):
+        emotion = msg.data
+        if emotion == "Daily":
+            self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+        elif emotion == "wink":
+            self.tilt(direction='left')
+        elif emotion == "sad":
+            self.nod()
+        elif emotion == "angry":
+            self.shake()
+        elif emotion == "moving":
+            self.turn()
+        elif emotion == "mic_waiting":
+            # Example: Tilt upwards (listening pose)
+            self.listening()
+            self.neck_controller_publisher.publish_values(0, 1, 0, 70)
+    
+    def listening(self):
+        # """A subtle nodding  gesture to indicate that the robot is listening"""
+        total_duration = 3  # seconds
+        num_nods = random.randint(0, 4)  # Random number of nods between 0 and 4
+        
+        if num_nods == 0:
+            time.sleep(total_duration)
+            return
+
+        duration_per_nod = total_duration / num_nods
+        
+        for _ in range(num_nods):
+            # Slight move down
+            self.neck_controller_publisher.publish_values(0, -0.5, 0, 70)
+            time.sleep(duration_per_nod / 4)
+            # Slight move up
+            self.neck_controller_publisher.publish_values(0, 0.5, 0, 70)
+            time.sleep(duration_per_nod / 4)
+            # Return to neutral
+            self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+            time.sleep(duration_per_nod / 2)
+
+    def nod(self, duration=1):
+        # Move down
+        self.neck_controller_publisher.publish_values(0, -1, 0, 70)
+        time.sleep(duration/2)
+        # Move up
+        self.neck_controller_publisher.publish_values(0, 1, 0, 70)
+        time.sleep(duration/2)
+
+    def tilt(self, direction='left', duration=1):
+        # Tilt left or right based on the direction
+        value = 1 if direction == 'left' else -1
+        self.neck_controller_publisher.publish_values(value, 0, 0, 70)
+        time.sleep(duration)
+
+    def shake(self, duration=1):
+        # Move to the left
+        self.neck_controller_publisher.publish_values(1, 0, 0, 70)
+        time.sleep(duration/3)
+        # Move to the right
+        self.neck_controller_publisher.publish_values(-1, 0, 0, 70)
+        time.sleep(duration/3)
+        # Return to the center
+        self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+        time.sleep(duration/3)
+
+    def turn(self, direction='left', duration=1):
+        # Turn to the left or right based on the direction
+        value = 1 if direction == 'left' else -1
+        self.neck_controller_publisher.publish_values(value, 0, 0, 70)
+        time.sleep(duration)
 
 def main(args=None):
     rclpy.init(args=args)
