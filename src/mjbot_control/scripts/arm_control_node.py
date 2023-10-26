@@ -10,6 +10,7 @@ from geometry_msgs.msg import Twist
 from rclpy.duration import Duration
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Empty
+import time
 
 
 class ActionState:
@@ -26,6 +27,7 @@ class ArmControllerNode(Node):
         self._action_client = ActionClient(
             self, FollowJointTrajectory, '/arm_joint_trajectory_controller/follow_joint_trajectory')
         self.action_state = ActionState.NONE
+        self.action_done_event = threading.Event()
 
     def send_goal(self, trajectory_msg, callback=None):
         goal_msg = FollowJointTrajectory.Goal()
@@ -49,18 +51,7 @@ class ArmControllerNode(Node):
         result = future.result().result
         self.get_logger().info('Arm result received: {0}'.format(result))
         self.action_state = ActionState.SUCCEEDED
-
-
-class BaseControllerNode(Node):
-    def __init__(self):
-        super().__init__('base_controller_node')
-        self.publisher_ = self.create_publisher(Twist, 'cmd_vel_walk', 10)
-        self.base_cmd = Twist()
-
-    def move_base(self, linear_x, angular_z):
-        self.base_cmd.linear.x = linear_x
-        self.base_cmd.angular.z = angular_z
-        self.publisher_.publish(self.base_cmd)
+        self.action_done_event.set()
 
 
 class Commander(Node):
@@ -73,13 +64,12 @@ class Commander(Node):
         self.joint_states_subscription = self.create_subscription(
             JointState, '/joint_states', self.joint_states_callback, 10)
         self.joint_efforts = {}
-        self.stop_holding_hand_publisher = self.create_publisher(
-            Empty, 'stop_holding_hand', 10)
-        self.stop_holding_hand_publisher.publish(Empty())
+
+        self.position_key = 'default'
 
         self.new_arm_mode_received = False
         self.arm_controller = arm_controller
-        self.base_controller = BaseControllerNode()
+
         self.current_cmd_vel = Twist()
         self.target_cmd_vel = Twist()
 
@@ -126,32 +116,57 @@ class Commander(Node):
 
     def arm_mode_callback(self, msg):
         self.new_arm_mode_received = True
-        position_key = 'default'  # Default position key
+        self.position_key = 'default'  # Default position key
 
         if msg.data == "walk":
-            position_key = 'walk'
+            self.position_key = 'walk'
 
             return
         elif msg.data == "give_right_hand":
-            position_key = 'give_right_hand'
+            self.position_key = 'give_right_hand'
         elif msg.data == "give_left_hand":
-            position_key = 'give_left_hand'
+            self.position_key = 'give_left_hand'
         elif msg.data == "hug":
+            self.position_key = 'hug'
             self.set_and_send_hug_sequence()
 
-        self.stop_holding_hand_publisher.publish(
-            Empty())  # Stop the holding_hand functionality
-        self.set_and_send_arm_position(self.poses[position_key])
+        self.set_and_send_arm_position(self.poses[self.position_key])
+
+    def post_action_check(self):
+        # Exclude the 'walk' position from the joint effort check
+        time.sleep(1)
+        if self.position_key != "walk":
+
+            while True:
+                if self.position_key != "default" and self.arm_controller.action_state == ActionState.SUCCEEDED:
+
+                    r_shoulder_pitch_effort = self.get_joint_effort(
+                        'r_shoulder_pitch')
+                    l_shoulder_pitch_effort = self.get_joint_effort(
+                        'l_shoulder_pitch')
+
+                    # If the effort exceeds the threshold, move to default position and break out of loop
+                    if r_shoulder_pitch_effort is not None and l_shoulder_pitch_effort is not None:
+                        if abs(r_shoulder_pitch_effort) > 500 or abs(l_shoulder_pitch_effort) > 500:
+                            self.set_and_send_arm_position(
+                                self.poses['default'])
+                            self.position_key = 'default'
+                            self.get_logger().info('Joint effort exceeded limit. Moving to default position.')
+                            break
+                else:
+                    break
+
+            time.sleep(0.5)
 
     def arm_move_emotion(self, msg):
-        position_key = None
+        self.position_key = None
         if msg.data == "2":
-            position_key = 'emotion_2'
+            self.position_key = 'emotion_2'
         elif msg.data == "4":
-            position_key = 'emotion_4'
+            self.position_key = 'emotion_4'
 
-        if position_key:
-            self.set_and_send_arm_position(self.poses[position_key])
+        if self.position_key:
+            self.set_and_send_arm_position(self.poses[self.position_key])
             # Reset to default after the emotion
             self.create_timer(
                 2.0, lambda: self.set_and_send_arm_position(self.poses['default']))
@@ -224,6 +239,9 @@ if __name__ == '__main__':
 
     try:
         while rclpy.ok():
+            if arm_controller.action_done_event.is_set():
+                arm_controller.action_done_event.clear()
+                commander.post_action_check()
             rate.sleep()
     except KeyboardInterrupt:
         pass
