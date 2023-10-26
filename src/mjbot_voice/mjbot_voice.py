@@ -131,8 +131,11 @@ def main(args=None):
                 call_num = 0
         if response == "로봇":
             use_sound("./mp3/yes.wav")
-
+            # 대답 기다리는 동안 표정 변화
+            talking_node.publish_emotions("7")
             response = mic()
+            talking_node.publish_emotions("6")
+
             if response == "초기화":
                 use_sound("./mp3/reset.wav")
                 name_ini()
