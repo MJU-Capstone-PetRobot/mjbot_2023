@@ -132,9 +132,9 @@ def main(args=None):
         if response == "로봇":
             use_sound("./mp3/yes.wav")
             # 대답 기다리는 동안 표정 변화
-            talking_node.publish_emotions("7")
+            talking_node.publish_emotions("mic_waiting")
             response = mic()
-            talking_node.publish_emotions("6")
+            talking_node.publish_emotions("daily")
 
             if response == "초기화":
                 use_sound("./mp3/reset.wav")
@@ -145,8 +145,7 @@ def main(args=None):
             elif response == "조용":
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
-            
-            print(call_num)
+
 
             check = name_check()
             name_check_ = check[0]
@@ -154,7 +153,6 @@ def main(args=None):
 
             mj = MYOUNGJA(name_check_, value_check)
             while response != "":
-                # talking_node.publish_emotions("6")
                 if response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("walk")
                 elif response == "오른손":  # 오른손
@@ -171,19 +169,19 @@ def main(args=None):
 
                     # close, moving, wink, angry, sad, daily
                     if emotion == "평범":
-                        talking_node.publish_emotions("6")
+                        talking_node.publish_emotions("daily")
                     elif emotion == "당황":
-                        talking_node.publish_emotions("2")
+                        talking_node.publish_emotions("panic")
                     elif emotion == "분노":
-                        talking_node.publish_emotions("4")
+                        talking_node.publish_emotions("angry")
                     elif emotion == "슬픔":
-                        talking_node.publish_emotions("5")
+                        talking_node.publish_emotions("sad")
                     else:
-                        talking_node.publish_emotions("0")
+                        talking_node.publish_emotions("daily")
                     ans = response_[1]
 
                     speaking(ans)
-                    talking_node.publish_emotions("6")
+                    talking_node.publish_emotions("daily")
                 os.remove("sampleWav.wav")
 
                 response = mic()
