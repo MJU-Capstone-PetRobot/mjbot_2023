@@ -8,6 +8,8 @@ from rclpy.action import ActionClient
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from rclpy.duration import Duration
+from sensor_msgs.msg import JointState
+from std_msgs.msg import Empty
 
 
 class ActionState:
@@ -68,9 +70,18 @@ class Commander(Node):
             String, 'arm_mode', self.arm_mode_callback, 10)
         self.subscription_emotions = self.create_subscription(
             String, 'emo', self.arm_move_emotion, 10)
+        self.joint_states_subscription = self.create_subscription(
+            JointState, '/joint_states', self.joint_states_callback, 10)
+        self.joint_efforts = {}
+        self.stop_holding_hand_publisher = self.create_publisher(
+            Empty, 'stop_holding_hand', 10)
+        self.stop_holding_hand_publisher.publish(Empty())
 
+        self.new_arm_mode_received = False
         self.arm_controller = arm_controller
         self.base_controller = BaseControllerNode()
+        self.current_cmd_vel = Twist()
+        self.target_cmd_vel = Twist()
 
         self.joint_names = [
             'r_shoulder_pitch',
@@ -95,6 +106,15 @@ class Commander(Node):
             'holding_hand': [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
         }
 
+    def joint_states_callback(self, msg: JointState):
+        """Callback to handle incoming JointState messages."""
+        for name, effort in zip(msg.name, msg.effort):
+            self.joint_efforts[name] = effort
+
+    def get_joint_effort(self, joint_name):
+        """Returns the effort of a given joint."""
+        return self.joint_efforts.get(joint_name, None)
+
     def send_startup_sequence(self):
         # If the action state is NONE, send the hello_sequence
         if self.arm_controller.action_state == ActionState.NONE:
@@ -105,10 +125,12 @@ class Commander(Node):
             self.create_timer(0.5, self.send_startup_sequence)
 
     def arm_mode_callback(self, msg):
+        self.new_arm_mode_received = True
         position_key = 'default'  # Default position key
 
         if msg.data == "walk":
-            self.holding_hand()
+            position_key = 'walk'
+
             return
         elif msg.data == "give_right_hand":
             position_key = 'give_right_hand'
@@ -117,6 +139,8 @@ class Commander(Node):
         elif msg.data == "hug":
             self.set_and_send_hug_sequence()
 
+        self.stop_holding_hand_publisher.publish(
+            Empty())  # Stop the holding_hand functionality
         self.set_and_send_arm_position(self.poses[position_key])
 
     def arm_move_emotion(self, msg):
@@ -131,9 +155,6 @@ class Commander(Node):
             # Reset to default after the emotion
             self.create_timer(
                 2.0, lambda: self.set_and_send_arm_position(self.poses['default']))
-
-    def holding_hand(self):
-        self.set_and_send_arm_position(self.poses['holding_hand'])
 
     def set_and_send_hug_sequence(self):
         self.trajectory_msg.trajectory.points = []
@@ -197,9 +218,9 @@ if __name__ == '__main__':
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
 
-    commander.send_startup_sequence()
+    # commander.send_startup_sequence()
 
-    rate = commander.create_rate(2)
+    rate = commander.create_rate(50)
 
     try:
         while rclpy.ok():
