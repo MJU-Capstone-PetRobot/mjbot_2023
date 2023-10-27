@@ -3,11 +3,12 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
-from example_interfaces.msg import Bool
-from example_interfaces.msg import Int32
-from geometry_msgs.msg import Vector3
+from std_msgs.msg import Int32
+from std_msgs.msg import Bool
 from std_msgs.msg import UInt16
+
 from sensor_msgs.msg import Range
+from geometry_msgs.msg import Vector3
 
 import serial
 import threading
@@ -32,10 +33,11 @@ class OpiEspNode(Node):
         self.emo = ''
         self.neck = [0, 0, 0, 0]
 
+        self.publisher_ultrasonic_1_ = self.create_publisher(Range, "ultrasonic_1", 10)
+        self.publisher_ultrasonic_2_ = self.create_publisher(Range, "ultrasonic_2", 10)
         self.publisher_bat_state_ = self.create_publisher(String, "bat", 10)
         self.publisher_touch_ = self.create_publisher(Bool, "touch", 10)
         self.publisher_co_ = self.create_publisher(Int32, "co_ppm", 10)
-        self.publisher_distance_ = self.create_publisher(Range, "distance", 10)
 
         self.subscriber_emo = self.create_subscription(String, "emo", self.callback_emo, 10)
         self.subscriber_neck_rpy = self.create_subscription(Vector3, "neck_rpy", self.callback_neck_rpy, 10)
@@ -49,33 +51,42 @@ class OpiEspNode(Node):
         msg = String()
         msg.data = bat
         self.publisher_bat_state_.publish(msg)
-        self.get_logger().info("[PUB] /bat: {}".format(msg.data))
+        self.get_logger().info("[PUB] /bat [{}]".format(msg.data))
 
     def publisher_touch(self, touch): 
         msg = Bool()
         msg.data = touch
         self.publisher_touch_.publish(msg)
-        self.get_logger().info("[PUB] /touch: {}".format(msg.data))
+        self.get_logger().info("[PUB] /touch [{}]".format(msg.data))
 
     def publisher_co(self, co_ppm): 
         msg = Int32()
         msg.data = co_ppm
         self.publisher_co_.publish(msg)
-        self.get_logger().info("[PUB] /co_ppm: {}".format(msg.data))
+        self.get_logger().info("[PUB] /co_ppm [{}]".format(msg.data))
 
-    def publisher_distance(self, dist): 
-        msg = Range()
-        msg.radiation_type = 0 # ULTRASOUND
-        msg.field_of_view = 1.0472 # radian, 60 degree = 1.0472 radian
-        msg.min_range = 0.030 # m
-        msg.max_range = 4.500 # m
-        msg.range = dist / 1000 # mm -> m
+    def publisher_ultrasonic(self, ultra_1, ultra_2): 
+        msg_1 = Range()
+        msg_1.radiation_type = 0 # ULTRASOUND
+        msg_1.field_of_view = 1.0472 # radian, 60 degree = 1.0472 radian
+        msg_1.min_range = 0.030 # m
+        msg_1.max_range = 4.500 # m
+        msg_1.range = ultra_1 / 1000 # mm -> m
 
-        self.publisher_distance_.publish(msg)
-        self.get_logger().info("[PUB] /distance: {}".format(msg.range))   
+        msg_2 = Range()
+        msg_2.radiation_type = 0 # ULTRASOUND
+        msg_2.field_of_view = 1.0472 # radian, 60 degree = 1.0472 radian
+        msg_2.min_range = 0.030 # m
+        msg_2.max_range = 4.500 # m
+        msg_2.range = ultra_2 / 1000 # mm -> m
+
+        self.publisher_ultrasonic_1_.publish(msg_1)
+        self.publisher_ultrasonic_2_.publish(msg_2)
+
+        self.get_logger().info("[PUB] /ultrasonic_1, 2 [{}] [{}]".format(msg_1.range, msg_2.range))   
 
     def callback_emo(self, sub_msg):
-        self.get_logger().info("[SUB] /emo: {}".format(sub_msg.data))
+        self.get_logger().info("[SUB] /emo: [{}]".format(sub_msg.data))
         self.emo = sub_msg.data
 
         opi_packet = "(E" + self.emo + ")"
@@ -84,7 +95,7 @@ class OpiEspNode(Node):
         opi_packet = ''
 
     def callback_neck_rpy(self, sub_msg):
-        self.get_logger().info("[SUB] /neck_rpy: {} {} {}".format(sub_msg.x, sub_msg.y, sub_msg.z))
+        self.get_logger().info("[SUB] /neck_rpy: [{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z))
         self.neck[0] = sub_msg.x
         self.neck[1] = sub_msg.y
         self.neck[3] = sub_msg.z
@@ -95,7 +106,7 @@ class OpiEspNode(Node):
         opi_packet = ''
 
     def callback_neck_z(self, sub_msg):
-        self.get_logger().info("[SUB] /neck_z: {}".format(sub_msg.data))
+        self.get_logger().info("[SUB] /neck_z: [{}]".format(sub_msg.data))
         self.neck[2] = sub_msg.data
 
         opi_packet = '(N' + str(self.neck) + ')'
@@ -114,32 +125,22 @@ def receive_from_esp(SerialObj):
                 esp_packet = esp_packet.strip()
 
                 if esp_packet[0] == '<' and esp_packet[len(esp_packet) -1] == '>':
-                    msg = ""
-                    msg = "[ESP->OPI] "
-                    msg += esp_packet + " "
-
+ 
                     if esp_packet[1] == 'T':
                         touch = esp_packet[2]
-                        msg += "[TOUCH] " + touch
                         node.publisher_touch(bool(touch))
                     elif esp_packet[1] == 'C':
                         co_ppm = esp_packet[2:-1]
-                        msg += "[CO_PPM] " + co_ppm + "ppm"
                         node.publisher_co(int(co_ppm))
                     elif esp_packet[1] == 'D':
                         distance = esp_packet[2:-1]
-                        msg += "[DISTANCE] " + distance + "mm"
-                        node.publisher_distance(int(distance))
+                        node.publisher_ultrasonic(int(distance), int(distance))
                     elif esp_packet[1] == 'B':
                         bat_state = esp_packet[2:-1]
-                        msg += "[BAT] " + bat_state
                         node.publish_bat(bat_state)
                     else:
-                        msg += "[ERROR]"
+                        print("esp packet not defined")
 
-                    print(msg)
-                else:
-                    print(esp_packet)
                 esp_packet = ""
 
     SerialObj.close()
@@ -149,21 +150,12 @@ def main(args=None):
     global node
     node = OpiEspNode()
 
-    thread = threading.Thread(target=receive_from_esp, args=(SerialObj,))
-    thread.start()
+    serial_thread = threading.Thread(target=receive_from_esp, args=(SerialObj,))
+    serial_thread.start()
 
     while True:
         rclpy.spin_once(node, timeout_sec=0)
 
-        # opi_packet = "(E3)"
-        # SerialObj.write(opi_packet.encode())
-        # time.sleep(1)
-
-        # opi_packet = "(N1,5,80,1)"
-        # SerialObj.write(opi_packet.encode())
-        # time.sleep(1)
-
-        # node.publish_bat(bat_state)
 
     rclpy.shutdown()
     esp_thread = False
