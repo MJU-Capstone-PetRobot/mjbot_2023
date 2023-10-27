@@ -103,6 +103,7 @@ def main(args=None):
     import os
     from os import path
     global common
+    import time
     common = 0
     rclpy.init(args=args)
     talking_node = TalkingNode()
@@ -124,15 +125,24 @@ def main(args=None):
 
     call_num = 0
     while 1:
+        check = name_check()
+        name_check_ = check[0]
+        value_check = check[1]
+
+        # modes : tracking, holding_hand, idle, random_move
+        mj = MYOUNGJA(name_check_, value_check)
+
         # 먼저 말 거는 기능 실험용
         if common == 0:
-            # speak_first_ex()
-
-            common = 1
+            use_sound("./mp3/ex1.wav")
+            time.sleep(2)
+            use_sound("./mp3/ex_2.wav")
+        common = 1
         # 먼저 말 거는 기능
         # speak_first()
+
         # 대화 시작
-        response = mic()
+        response = mic(2)
         if response == "":
             call_num += 1
             print(call_num)
@@ -143,7 +153,7 @@ def main(args=None):
             use_sound("./mp3/yes.wav")
             # 대답 기다리는 동안 표정 변화
             talking_node.publish_emotions("mic_waiting")
-            response = mic()
+            response = mic(3)
             talking_node.publish_emotions("daily")
 
             if response == "초기화":
@@ -156,11 +166,6 @@ def main(args=None):
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
 
-            check = name_check()
-            name_check_ = check[0]
-            value_check = check[1]
-            # modes : tracking, holding_hand, idle, random_move
-            mj = MYOUNGJA(name_check_, value_check)
             while response != "":
                 if response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("walk")
@@ -198,7 +203,8 @@ def main(args=None):
                     talking_node.publish_emotions("daily")
                 os.remove("sampleWav.wav")
 
-                response = mic()
+                talking_node.publish_emotions("mic_wating")
+                response = mic(3)
 
                 if response == "":
                     os.remove("sampleWav.wav")

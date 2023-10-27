@@ -3,6 +3,10 @@ import openai
 ## ChatGPT
 openai.api_key = "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"
 
+# NAVER CLOVA
+client_id_g = "5ezz7ibsqa"
+client_secret_g = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
+
 
 class MYOUNGJA():
     memory_size = 100
@@ -13,6 +17,9 @@ class MYOUNGJA():
         MYOUNGJA.nameValue = name
         MYOUNGJA.manWomanValue = manWoman
 
+    gpt_standard_messages = [{"role": "system",
+                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. And if user say nothing then please do not say anything. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer. Your patient's name is {nameValue} and {manWomanValue} is an old korean."}]
+
     def set_memory_size(self, memory_size):
         '''
         클래스 내의 질문 담을 메모리 저장
@@ -22,15 +29,6 @@ class MYOUNGJA():
         self.memory_size = memory_size
 
     def gpt_send_anw(self, question: str):
-        import openai
-        '''
-        질문을 ChatGPT에 넣어서 답변 출력
-        :param question: 질문
-        :return: 답변
-        '''
-        self.gpt_standard_messages = [{"role": "system",
-                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer politely in korean and under 5 seconds. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer."}]
-        self.gpt_standard_messages.append({"role": "user", "content": question})
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -63,12 +61,8 @@ class MYOUNGJA():
             ans_emotion = "평범"
             ans_real = ""
 
+        self.gpt_standard_messages.append({"role": "user", "content": question})
         self.gpt_standard_messages.append({"role": "assistant", "content": answer})
-        if self.memory_size * 2 < len(self.gpt_standard_messages):
-            self.gpt_standard_messages.pop(1)
-            self.gpt_standard_messages.pop(1)
-
-        self.memory_size += 1
 
         return [ans_emotion, ans_real]
 
@@ -108,15 +102,6 @@ def speak_first():
     tmt.sleep(3)
 
 
-def speak_first_ex():
-    import time
-
-    use_sound("./mp3/ex1.wav")
-    time.sleep(2)
-
-    use_sound("./mp3/ex_2.wav")
-
-
 def speaking(anw_text):
     import os
     import urllib.request
@@ -124,8 +109,8 @@ def speaking(anw_text):
     from playsound import playsound as pl
 
     # NAVER CLOVA
-    client_id = "5ezz7ibsqa"
-    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
+    client_id = client_id_g
+    client_secret = client_secret_g
     encText = urllib.parse.quote(anw_text)
     data = f"speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
     urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
@@ -154,8 +139,7 @@ def speaking(anw_text):
         os.remove("test.wav")
 
 
-
-def mic_first():
+def mic(time):
     '''
     주어진 음성을 마이크로 녹음 후 문장으로 변환
     :return: 음성 파일 문장으로 변환시켜 넘김
@@ -165,75 +149,12 @@ def mic_first():
     from scipy.io.wavfile import write
 
     ## NAVER CLOVA API
-    client_id = "5ezz7ibsqa"
-    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
+    client_id = client_id_g
+    client_secret = client_secret_g
 
     # 음성 녹음
     fs = 44100
-    seconds = 3
-
-    myRecording = sd.rec(int(seconds * fs), samplerate=fs, channels=4)  # channels는 마이크 장치 번호
-    print("녹음 시작")
-    # 마이크 장치 번호 찾기 => python -m sounddevice
-    sd.wait()
-    write('sampleWav.wav', fs, myRecording)
-
-    # Voice To Text => 목소리를 텍스트로 변환
-    ## 기본 설정
-    lang = "Kor"  # 언어 코드 ( Kor, Jpn, Eng, Chn )
-    url = "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=" + lang
-
-    ## 녹음된 Voice 파일
-    data_voice = open('sampleWav.wav', 'rb')
-
-    ## 사용할 header
-    headers = {
-        "X-NCP-APIGW-API-KEY-ID": client_id,
-        "X-NCP-APIGW-API-KEY": client_secret,
-        "Content-Type": "application/octet-stream"
-    }
-
-    ## VTT 출력
-    response = requests.post(url, data=data_voice, headers=headers)
-
-    result_man = str(response.text)
-    result = list(result_man)
-    count_down = 0
-    say_str = []
-
-    for i in range(0, len(result) - 2):
-        if count_down == 3:
-            say_str.append(result[i])
-
-        if response.text[i] == "\"":
-            if count_down == 3:
-                break
-            else:
-                count_down += 1
-
-    anw_str = ''.join(map(str, say_str))
-
-    print(anw_str)
-
-    return anw_str
-
-
-def mic():
-    '''
-    주어진 음성을 마이크로 녹음 후 문장으로 변환
-    :return: 음성 파일 문장으로 변환시켜 넘김
-    '''
-    import requests
-    import sounddevice as sd
-    from scipy.io.wavfile import write
-
-    ## NAVER CLOVA API
-    client_id = "5ezz7ibsqa"
-    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
-
-    # 음성 녹음
-    fs = 44100
-    seconds = 3
+    seconds = time
 
     myRecording = sd.rec(int(seconds * fs), samplerate=fs, channels=4)  # channels는 마이크 장치 번호
     print("녹음 시작")
@@ -290,10 +211,10 @@ def name_check():
         if data["user_name"] == "":
             use_sound("./mp3/first_0.wav")
             use_sound("./mp3/first_set_2.wav")
-            name_ = mic_first()
+            name_ = mic(2)
             speaking(f"안녕하세요! {name_}님")
             use_sound("./mp3/first_set_3.wav")
-            manWoman = mic_first()
+            manWoman = mic(2)
             if manWoman == "남자":
                 manWoman_ = "he"
             elif manWoman == "여자":
@@ -301,7 +222,7 @@ def name_check():
             else:
                 while manWoman != "남자" or "여자":
                     use_sound("./mp3/first_set_4.wav")
-                    manWoman = mic_first()
+                    manWoman = mic(2)
                     if manWoman == "남자":
                         manWoman_ = "he"
                         break
@@ -325,7 +246,6 @@ def name_check():
 
     return [name_, manWoman_]
 
-
 def name_ini():
     import json
     write_data = {
@@ -334,34 +254,6 @@ def name_ini():
         }
     with open('./user_value.json', 'w') as d:
                 json.dump(write_data, d)
-
-
-def mp3_time_check():
-    from mutagen.mp3 import MP3
-
-    audio = MP3("./ResultMP3.mp3")
-
-    return audio.info.length
-
-# def time_check(time):
-
-#     from datetime import datetime
-
-#     now = datetime.now()
-
-#     min = int(time / 60)
-#     sec = time % 60
-#     print(f"지금 {now} 분 {min}, 초 {sec}")
-
-#     new_min = now.minute + min
-#     new_sec = now.second + sec
-#     if new_sec > 60:
-#         new_sec -= 60
-#         new_min += 1
-
-#     print(f"새로운 시간은 {new_min}분 {new_sec}초")
-
-#     return [new_min, new_sec]
 
 def use_sound(loc):
     from playsound import playsound as pl
