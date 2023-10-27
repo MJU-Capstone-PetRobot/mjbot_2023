@@ -29,7 +29,7 @@ class MYOUNGJA():
         :return: 답변
         '''
         self.gpt_standard_messages = [{"role": "system",
-                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer politely in korean. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer."}]
+                                       "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support. Your patient's name is {MYOUNGJA.nameValue} and {MYOUNGJA.manWomanValue} is an old korean.  So Please answer politely in korean and under 5 seconds. And if user say nothing then please do not say anything. and also analyze feeling of {question} in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer."}]
         self.gpt_standard_messages.append({"role": "user", "content": question})
 
         response = openai.ChatCompletion.create(
@@ -111,10 +111,10 @@ def speak_first():
 def speak_first_ex():
     import time
 
-    speaking("좋은 아침이에요!! 오늘도 좋은 하루 되세요!!")
-    time.sleep(3)
+    use_sound("./mp3/ex1.wav")
+    time.sleep(2)
 
-    speaking("안녕하세요.")
+    use_sound("./mp3/ex_2.wav")
 
 
 def speaking(anw_text):
@@ -124,8 +124,8 @@ def speaking(anw_text):
     from playsound import playsound as pl
 
     # NAVER CLOVA
-    client_id = "ud0o0y1iat"
-    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
+    client_id = "5ezz7ibsqa"
+    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
     encText = urllib.parse.quote(anw_text)
     data = f"speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
     urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
@@ -165,8 +165,8 @@ def mic_first():
     from scipy.io.wavfile import write
 
     ## NAVER CLOVA API
-    client_id = "ud0o0y1iat"
-    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
+    client_id = "5ezz7ibsqa"
+    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
 
     # 음성 녹음
     fs = 44100
@@ -228,8 +228,8 @@ def mic():
     from scipy.io.wavfile import write
 
     ## NAVER CLOVA API
-    client_id = "ud0o0y1iat"
-    client_secret = "eiQpNDsn5yTddyERg6U7s9IXXOSodlnD9UUMYq3k"
+    client_id = "5ezz7ibsqa"
+    client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
 
     # 음성 녹음
     fs = 44100
@@ -288,26 +288,28 @@ def name_check():
     with open('./user_value.json', 'r') as f:
         data = json.load(f)
         if data["user_name"] == "":
-            speaking("사용자 정보가 없어, 초기 설정 진행하겠습니다.")
-            speaking("이름이 어떻게 되세요?")
+            use_sound("./mp3/first_0.wav")
+            use_sound("./mp3/first_set_2.wav")
             name_ = mic_first()
             speaking(f"안녕하세요! {name_}님")
-            speaking("성별은 어떻게 되세요? 남자 또는 여자로 대답해주세요.")
+            use_sound("./mp3/first_set_3.wav")
             manWoman = mic_first()
             if manWoman == "남자":
                 manWoman_ = "he"
             elif manWoman == "여자":
                 manWoman_ = "she"
             else:
-                while manWoman == "남자" or manWoman == "여자":
-                    speaking("잘 못 들었어요. 다시 한번 알려주세요.")
+                while manWoman != "남자" or "여자":
+                    use_sound("./mp3/first_set_4.wav")
                     manWoman = mic_first()
                     if manWoman == "남자":
                         manWoman_ = "he"
+                        break
                     elif manWoman == "여자":
                         manWoman_ = "she"
+                        break
             common = 1
-            speaking("사용자 초기 설정이 완료되었습니다.")
+            use_sound("./mp3/first_set_done.wav")
         else:
             name_ = data["user_name"]
             manWoman_ = data["user_value"]
@@ -326,10 +328,12 @@ def name_check():
 
 def name_ini():
     import json
-    with open('./user_value.json', 'r') as f:
-        data = json.load(f)
-        data["user"][0]["user_name"] = ""
-        data["user"][0]["user_value"] = ""
+    write_data = {
+            "user_name": "",
+            "user_value": ""
+        }
+    with open('./user_value.json', 'w') as d:
+                json.dump(write_data, d)
 
 
 def mp3_time_check():
@@ -358,3 +362,9 @@ def mp3_time_check():
 #     print(f"새로운 시간은 {new_min}분 {new_sec}초")
 
 #     return [new_min, new_sec]
+
+def use_sound(loc):
+    from playsound import playsound as pl
+
+    # data, fs = sf.read(filename, dtype='')
+    pl(loc)

@@ -22,9 +22,10 @@ import threading
 import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
-from example_interfaces.msg import Bool
-from example_interfaces.msg import Int32
-from example_interfaces.msg import Int16MultiArray
+
+from std_msgs.msg import Bool
+from std_msgs.msg import Int32
+from std_msgs.msg import Int16MultiArray
 
 # RKNN_MODEL = 'yolov5s-640-640-rk3588.rknn'
 RKNN_MODEL = 'yolov7-tiny_tk2_RK3588_i8.rknn'
@@ -39,15 +40,15 @@ class VisionNode(Node):
         self.duration_sec = 0
         self.runtime_sec = 0
 
-        self.owner_x : int = 0
-        self.owner_y : int = 0
-        self.owner_z : int = 0
+        self.owner_x: int = 0
+        self.owner_y: int = 0
+        self.owner_z: int = 0
 
         self.owner_exists = False
         self.owner_fall = False
 
-        self.owner_w : int = 0
-        self.owner_h : int = 0
+        self.owner_w: int = 0
+        self.owner_h: int = 0
         self.owner_w_prev = 0
         self.owner_h_prev = 0
         self.owner_w_diff = 0
@@ -61,43 +62,26 @@ class VisionNode(Node):
                            "w_diff", "h_diff",
                            "exists", "fall"]
 
-        self.publisher_fps_ = self.create_publisher(Int32, "fps", 10)
-        self.publisher_owner_exists_ = self.create_publisher(
-            Bool, "owner_exists", 10)
-        self.publisher_owner_center_ = self.create_publisher(
-            Int16MultiArray, "owner_center", 10)
-        self.publisher_owner_size_ = self.create_publisher(
-            Int16MultiArray, "owner_size", 10)
-        self.publisher_owner_fall_ = self.create_publisher(
-            Bool, "owner_fall", 10)
-        self.get_logger().info("Node has been started")
+        self.publisher_owner_size_ = self.create_publisher(Int16MultiArray, "owner_size", 10)
+        self.publisher_owner_xyz_ = self.create_publisher(Int16MultiArray, "owner_xyz", 10)
+        self.publisher_owner_fall_ = self.create_publisher(Bool, "owner_fall", 10)
 
-    def publish_fps(self):
-        msg = Int32()
-        msg.data = self.fps
-        self.publisher_fps_.publish(msg)
-        self.get_logger().info("PUB: /fps: {}".format(msg.data))
+        self.timer_ = self.create_timer(0.01, self.publish_owner_size_and_xyz)
 
-    def publish_owner_exists(self):
-        msg = Bool()
-        msg.data = self.owner_exists
-        self.publisher_owner_exists_.publish(msg)
-        self.get_logger().info("PUB: /owner_fall: {}".format(msg.data))
+        self.get_logger().info("Vision Node has been started")
 
-    def publish_owner_size(self):
+    def publish_owner_size_and_xyz(self): # 100hz
         msg = Int16MultiArray()
         msg.data = [self.owner_w, self.owner_h]
         self.publisher_owner_size_.publish(msg)
         self.get_logger().info("PUB: /owner_size: {}".format(msg.data))
 
-    def publish_owner_center(self):
         msg = Int16MultiArray()
-
         msg.data = [self.owner_x, self.owner_y, self.owner_z]
-        self.publisher_owner_center_.publish(msg)
-        self.get_logger().info("PUB: /owner_center: {}".format(msg.data))
+        self.publisher_owner_xyz_.publish(msg)
+        self.get_logger().info("PUB: /owner_xyz: {}".format(msg.data))
 
-    def publish_owner_fall(self):
+    def publish_owner_fall(self): # event
         msg = Bool()
         msg.data = self.owner_fall
         self.publisher_owner_fall_.publish(msg)
@@ -194,19 +178,22 @@ class VisionNode(Node):
 
     def run_sort(self):
         self.p_boxes = self.p_boxes.reshape((-1, 4))
-        if self.p_boxes is not None:
+        if self.p_boxes.any():
             self.p_scores = self.p_scores.reshape((-1, 1))
-            dets = np.concatenate((self.p_boxes, self.p_scores), 1) 
+            dets = np.concatenate((self.p_boxes, self.p_scores), 1)
             tracker = self.sort.update(dets)
 
-            first_id_index = len(tracker) - 1 # sort output is id descending order
+            # sort output is id descending order
+            first_id_index = len(tracker) - 1
 
             for idx, trk in enumerate(tracker):
                 trk = trk.astype(int)
 
-                if idx == first_id_index: # Get first-id coordinate
-                    cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (0, 255, 0), 2)
-                    cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+                if idx == first_id_index:  # Get first-id coordinate
+                    cv2.rectangle(
+                        self.img, (trk[0], trk[1]), (trk[2], trk[3]), (0, 255, 0), 2)
+                    cv2.putText(
+                        self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
 
                     self.owner_exists = True
 
@@ -219,22 +206,36 @@ class VisionNode(Node):
                     # Get depth distance
                     depth_x = self.owner_x
                     depth_y = self.owner_y - 80
-                    self.owner_z = (int)(self.dep[depth_y, depth_x])  # ordered y, x
+                    self.owner_z = (int)(
+                        self.dep[depth_y, depth_x])  # ordered y, x
 
-                    cv2.putText(self.img, "X {}".format(self.owner_x), (570, 30), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "Y {}".format(self.owner_y), (570, 50), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "Z {}".format(self.owner_z), (570, 70), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "X {}".format(
+                        self.owner_x), (570, 30), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "Y {}".format(
+                        self.owner_y), (570, 50), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "Z {}".format(
+                        self.owner_z), (570, 70), 1, 1, (0, 255, 0), 2)
 
-                    cv2.putText(self.img, "W {}".format(self.owner_w), (500, 30), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "H {}".format(self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "W {}".format(
+                        self.owner_w), (500, 30), 1, 1, (0, 255, 0), 2)
+                    cv2.putText(self.img, "H {}".format(
+                        self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
                 else:
                     cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
                     cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+        else:
+            self.owner_exists = False
+
+            self.owner_x = 0
+            self.owner_y = 0
+            self.owner_z = 0
             
     def detect_fall(self):
         if self.owner_exists:
-            self.owner_w_diff = (self.owner_w - self.owner_w_prev) / self.duration_sec
-            self.owner_h_diff = (self.owner_h - self.owner_h_prev) / self.duration_sec 
+            self.owner_w_diff = (
+                self.owner_w - self.owner_w_prev) / self.duration_sec
+            self.owner_h_diff = (
+                self.owner_h - self.owner_h_prev) / self.duration_sec
 
             if self.owner_h_diff <= -500:
                 self.owner_fall = True
@@ -249,14 +250,19 @@ class VisionNode(Node):
             # self.owner_w_prev = 0
             # self.owner_h_prev = 0
 
-
     def init_csv_log(self):
-        with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'w') as csv_file:
+        current_dir = os.getcwd()
+        log_dir = current_dir + '/src/mjbot_vision/vision/log.csv'
+
+        with open(log_dir, 'w') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
             csv_writer.writeheader()
 
     def run_csv_log(self):
-        with open('/home/drcl/Desktop/mjbot_2023/src/mjbot_vision/vision/log.csv', 'a') as csv_file:
+        current_dir = os.getcwd()
+        log_dir = current_dir + '/src/mjbot_vision/vision/log.csv'
+
+        with open(log_dir, 'a') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=self.fieldnames)
 
             info = {
@@ -287,9 +293,10 @@ def main(args=None):
     node.init_sort()
     # node.init_csv_log()
 
-    executor = MultiThreadedExecutor() # 노드 내부의 콜백 함수를 스레드로 잘라서 실행
+    executor = MultiThreadedExecutor()  # 노드 내부의 콜백 함수를 스레드로 잘라서 실행
     executor.add_node(node)
-    executor_thread = threading.Thread(target=executor.spin) # 메인 함수에서 자식 스레드를 만들어서 Ros 코드를 돌림
+    # 메인 함수에서 자식 스레드를 만들어서 Ros 코드를 돌림
+    executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
     while True:
@@ -297,8 +304,10 @@ def main(args=None):
 
         # node.read_video("webcam") # read and resize image
         node.read_depth(False)
-        node.run_rknn() # yolo inference
+
+        node.run_rknn() # object detecting
         node.run_sort() # object tracking
+
 
         duration = dt.datetime.utcnow() - start
         node.fps = int(round(1000000 / duration.microseconds))
@@ -309,16 +318,13 @@ def main(args=None):
 
         # node.run_csv_log()
         node.detect_fall()  
-        node.publish_fps()
-        node.publish_owner_exists()
 
-        if node.owner_exists:
-            node.publish_owner_size()
-            node.publish_owner_center()
+
         if node.owner_fall:
             node.publish_owner_fall()
 
-        cv2.putText(node.img, f'fps: {node.fps}', (25, 50), 1, 2, (0, 255, 0), 2)
+        cv2.putText(node.img, f'fps: {node.fps}',
+                    (25, 50), 1, 2, (0, 255, 0), 2)
         cv2.imshow("result", node.img)
 
         # If the `q` key was pressed, break from the loop

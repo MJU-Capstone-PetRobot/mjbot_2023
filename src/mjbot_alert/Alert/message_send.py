@@ -1,33 +1,38 @@
-import gps
-import serial
-import time
-import pynmea2
+# import gps
+# import serial
+# import time
+# import pynmea2
 import googlemaps
 from twilio.rest import Client
-from datetime import datetime
+# from datetime import datetime
 
 
-def gps_set():
-    gpsd = gps.gps(mode=gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
-    print("gps 작동 시작")
-    while True:
-        # Wait for valid data
-        while True:
-            nx = gpsd.next()
-            if nx['class'] == 'TPV':
-                break
-        # Extract gps info
-        mju_latitude = getattr(nx, 'lat', "Unknown")
-        mju_longitude = getattr(nx, 'lon', "Unknown")
-        if mju_latitude != "Unknown" and mju_longitude != "Unknown":
-            return [mju_latitude, mju_longitude]
+# def gps_set():
+#     gpsd = gps.gps(mode=gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+#     print("gps 작동 시작")
+#     while True:
+#         # Wait for valid data
+#         while True:
+#             nx = gpsd.next()
+#             if nx['class'] == 'TPV':
+#                 break
+#         # Extract gps info
+#         mju_latitude = getattr(nx, 'lat', "Unknown")
+#         mju_longitude = getattr(nx, 'lon', "Unknown")
+#         if mju_latitude != "Unknown" and mju_longitude != "Unknown":
+#             return [mju_latitude, mju_longitude]
 
 
 def googlemap_api():
     API = "AIzaSyD5fvkrnY2xbyp7DB9LK-bQbT1RzbgpvE8"  # API 값
     # 위도 경도 -> 지번 주소로 변경 // 역지오코드
     gmaps = googlemaps.Client(key=API)  # api key
-    latitude, longitude = gps_set()
+    # latitude, longitude = gps_set()
+
+    ## GPS가 잘 안 되어서, 학교 주소로 임의로 설정
+    latitude = 37.24278
+    longitude = 127.17889
+    
     reverse_geocode_result = \
         gmaps.reverse_geocode((latitude, longitude), language='ko')
     gps = reverse_geocode_result[1]["formatted_address"]

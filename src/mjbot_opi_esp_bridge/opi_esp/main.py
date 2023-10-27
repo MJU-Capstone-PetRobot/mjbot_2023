@@ -13,8 +13,8 @@ from geometry_msgs.msg import Vector3
 import serial
 import threading
 
-port = '/dev/ttyUSB0' 
-baud = 115200 
+port = '/dev/ttyUSB0'
+baud = 115200
 
 SerialObj = serial.Serial(port, baud, timeout=3)
 esp_thread = True
@@ -26,6 +26,7 @@ touch = ""
 co_ppm = ""
 distance = ""
 bat_state = ""
+
 
 class OpiEspNode(Node):
     def __init__(self):
@@ -39,27 +40,30 @@ class OpiEspNode(Node):
         self.publisher_touch_ = self.create_publisher(Bool, "touch", 10)
         self.publisher_co_ = self.create_publisher(Int32, "co_ppm", 10)
 
-        self.subscriber_emo = self.create_subscription(String, "emo", self.callback_emo, 10)
-        self.subscriber_neck_rpy = self.create_subscription(Vector3, "neck_rpy", self.callback_neck_rpy, 10)
-        self.subscriber_neck_z = self.create_subscription(UInt16, "neck_z", self.callback_neck_z, 10)
+        self.subscriber_emo = self.create_subscription(
+            String, "emo", self.callback_emo, 10)
+        self.subscriber_neck_rpy = self.create_subscription(
+            Vector3, "neck_rpy", self.callback_neck_rpy, 10)
+        self.subscriber_neck_z = self.create_subscription(
+            UInt16, "neck_z", self.callback_neck_z, 10)
 
         self.get_logger().info("opi_esp_comm node has been started")
-        
+
     # 발행 : 배터리(string), 터치(bool), 일산화탄소(int), 거리(int)
     # 구독 : 목각도(string), 감정(string)
-    def publish_bat(self, bat): 
+    def publish_bat(self, bat):
         msg = String()
         msg.data = bat
         self.publisher_bat_state_.publish(msg)
         self.get_logger().info("[PUB] /bat [{}]".format(msg.data))
 
-    def publisher_touch(self, touch): 
+    def publisher_touch(self, touch):
         msg = Bool()
         msg.data = touch
         self.publisher_touch_.publish(msg)
         self.get_logger().info("[PUB] /touch [{}]".format(msg.data))
 
-    def publisher_co(self, co_ppm): 
+    def publisher_co(self, co_ppm):
         msg = Int32()
         msg.data = co_ppm
         self.publisher_co_.publish(msg)
@@ -96,6 +100,7 @@ class OpiEspNode(Node):
 
     def callback_neck_rpy(self, sub_msg):
         self.get_logger().info("[SUB] /neck_rpy: [{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z))
+
         self.neck[0] = sub_msg.x
         self.neck[1] = sub_msg.y
         self.neck[3] = sub_msg.z
@@ -114,6 +119,7 @@ class OpiEspNode(Node):
 
         opi_packet = ''
 
+
 def receive_from_esp(SerialObj):
     global esp_packet
     msg = ''
@@ -125,7 +131,6 @@ def receive_from_esp(SerialObj):
                 esp_packet = esp_packet.strip()
 
                 if esp_packet[0] == '<' and esp_packet[len(esp_packet) -1] == '>':
- 
                     if esp_packet[1] == 'T':
                         touch = esp_packet[2]
                         node.publisher_touch(bool(touch))
@@ -145,6 +150,7 @@ def receive_from_esp(SerialObj):
 
     SerialObj.close()
 
+
 def main(args=None):
     rclpy.init(args=args)
     global node
@@ -160,5 +166,6 @@ def main(args=None):
     rclpy.shutdown()
     esp_thread = False
 
-if __name__ == "__main__": 
-    main() 
+
+if __name__ == "__main__":
+    main()
