@@ -26,8 +26,8 @@ class NeckControllerPublisher(Node):
         self.Zpublisher = self.create_publisher(UInt16, 'neck_z', 10)
 
     def initialize_properties(self):
-        self.dt = 0.33
-        self.rostimer = 0.033
+        self.dt = 0.5  # seconds
+        self.rostimer = 0.5 # 20 Hz
         self.timer = self.create_timer(self.rostimer, self.publish_values)
         self.originRPY = Vector3(x=0.0, y=0.0, z=0.0)
         self.originZ = UInt16(data=70)
@@ -66,17 +66,18 @@ class NeckControllerPublisher(Node):
         while time.time() - self.t0 < self.dt:
             self.interpolate(r, p, y, z, self.dt)
 
-            clamped_x = clamp(self.targetRPY.x, -5, 5)*1.0
-            clamped_y = clamp(self.targetRPY.y, -5, 5)*1.0
-            clamped_z = clamp(self.targetRPY.z, -5, 5) * 1.0
+            clamped_x = round(clamp(self.targetRPY.x, -5, 5)*3.0,3)
+            clamped_y = round(clamp(self.targetRPY.y, -5, 5)*3.0,3)
+            clamped_z = round(clamp(self.targetRPY.z, -5, 5) * 10.0,3)
             clamped_data = clamp(self.targetZ.data, 60, 100)
 
             msg = Vector3(x=clamped_x, y=clamped_y, z=clamped_z)
             zmsg = UInt16(data=round(clamped_data))
 
             self.Zpublisher.publish(zmsg)
-            self.RPYpublisher.publish(msg)
             time.sleep(self.rostimer)
+            self.RPYpublisher.publish(msg)
+            
 
 
 class CommandNeck(Node):

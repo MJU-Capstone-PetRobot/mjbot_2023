@@ -12,6 +12,7 @@ from geometry_msgs.msg import Vector3
 
 import serial
 import threading
+from rclpy.executors import MultiThreadedExecutor
 
 port = '/dev/ttyUSB0'
 baud = 115200
@@ -155,14 +156,21 @@ def main(args=None):
     rclpy.init(args=args)
     global node
     node = OpiEspNode()
-
+    executor = rclpy.executors.MultiThreadedExecutor()
+    
+    executor.add_node(node)
+    executor_thread = threading.Thread(target=executor.spin, daemon=True)
+    executor_thread.start()
     serial_thread = threading.Thread(target=receive_from_esp, args=(SerialObj,))
     serial_thread.start()
 
-    while True:
-        rclpy.spin_once(node, timeout_sec=0)
-
-
+   
+    rate = node.create_rate(10)
+    try:
+        while rclpy.ok():
+            rate.sleep()
+    except KeyboardInterrupt:
+        pass
     rclpy.shutdown()
     esp_thread = False
 
