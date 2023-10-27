@@ -170,7 +170,7 @@ def mic_first():
 
     # 음성 녹음
     fs = 44100
-    seconds = 3
+    seconds = 2
 
     myRecording = sd.rec(int(seconds * fs), samplerate=fs, channels=4)  # channels는 마이크 장치 번호
     print("녹음 시작")

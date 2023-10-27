@@ -132,7 +132,7 @@ def main(args=None):
         # 먼저 말 거는 기능
         # speak_first()
         # 대화 시작
-        response = mic()
+        response = mic_first()
         if response == "":
             call_num += 1
             print(call_num)
@@ -156,9 +156,12 @@ def main(args=None):
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
 
-            check = name_check()
-            name_check_ = check[0]
-            value_check = check[1]
+            # check = name_check()
+            # name_check_ = check[0]
+            # value_check = check[1]
+
+            name_check_ = "순자"
+            value_check = "she"
             # modes : tracking, holding_hand, idle, random_move
             mj = MYOUNGJA(name_check_, value_check)
             while response != "":
@@ -198,6 +201,7 @@ def main(args=None):
                     talking_node.publish_emotions("daily")
                 os.remove("sampleWav.wav")
 
+                talking_node.publish_emotions("mic_wating")
                 response = mic()
 
                 if response == "":
