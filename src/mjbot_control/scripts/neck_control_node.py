@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import rclpy
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import UInt16, Int16MultiArray, String
@@ -6,23 +7,14 @@ import time
 import random
 
 
-class PIDController:
-    def __init__(self, kp, ki, kd):
-        self.Kp = kp
-        self.Ki = ki
-        self.Kd = kd
-        self.last_error = 0.0
-        self.integral = 0.0
-
-    def update(self, error):
-        derivative = error - self.last_error
-        self.integral += error
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        self.last_error = error
-        return output
+def clamp(value, min_value, max_value):
+    """Clamp the value between min_value and max_value."""
+    return float(max(min_value, min(max_value, value)))
 
 
 class NeckControllerPublisher(Node):
+    IMAGE_WIDTH = 640
+    IMAGE_HEIGHT = 320
 
     def __init__(self):
         super().__init__('neck_controller_publisher')
@@ -30,14 +22,13 @@ class NeckControllerPublisher(Node):
         self.initialize_properties()
 
     def setup_publishers(self):
-        self.RPYpublisher = self.create_publisher(Vector3, 'float_values', 10)
-        self.Zpublisher = self.create_publisher(UInt16, 'z_value', 10)
+        self.RPYpublisher = self.create_publisher(Vector3, 'neck_rpy', 10)
+        self.Zpublisher = self.create_publisher(UInt16, 'neck_z', 10)
 
     def initialize_properties(self):
-        self.dt = 0.5
-        self.rostimer = 0.05
+        self.dt = 0.33
+        self.rostimer = 0.033
         self.timer = self.create_timer(self.rostimer, self.publish_values)
-        self.image_width = 640
         self.originRPY = Vector3(x=0.0, y=0.0, z=0.0)
         self.originZ = UInt16(data=70)
         self.t0 = time.time()
@@ -45,152 +36,220 @@ class NeckControllerPublisher(Node):
         self.targetZ = UInt16()
 
     def generate_trajectory(self, t0, tf, p0, pf):
-        p0 = float(p0)
-        pf = float(pf)
-        tf_t0_3 = (tf - t0)**3
-        a0 = pf*(t0**2)*(3*tf-t0) + p0*(tf**2)*(tf-3*t0)
-        a0 = a0 / tf_t0_3
+        p0, pf = float(p0), float(pf)
+        tf_t0_3 = (tf - t0) ** 3
 
-        a1 = 6 * t0 * tf * (p0 - pf)
-        a1 = a1 / tf_t0_3
-
-        a2 = 3 * (t0 + tf) * (pf - p0)
-        a2 = a2 / tf_t0_3
-
-        a3 = 2 * (p0 - pf)
-        a3 = a3 / tf_t0_3
+        a0 = (pf * t0**2 * (3 * tf - t0) + p0 *
+              tf**2 * (tf - 3 * t0)) / tf_t0_3
+        a1 = (6 * t0 * tf * (p0 - pf)) / tf_t0_3
+        a2 = (3 * (t0 + tf) * (pf - p0)) / tf_t0_3
+        a3 = (2 * (p0 - pf)) / tf_t0_3
 
         return a0, a1, a2, a3
 
-    def interpolate(self, r, p, y, z):
-        a0t, a1t, a2t, a3t = self.generate_trajectory(
-            0, self.dt, self.originRPY.x, r)
-        a0x, a1x, a2x, a3x = self.generate_trajectory(
-            0, self.dt, self.originRPY.y, p)
-        a0y, a1y, a2y, a3y = self.generate_trajectory(
-            0, self.dt, self.originRPY.z, y)
-        a0z, a1z, a2z, a3z = self.generate_trajectory(
-            0, self.dt, self.originZ.data, z)
-        self.targetRPY.x = a0t + a1t * ((time.time()-self.t0)) + a2t * (
-            (time.time()-self.t0)) ** 2 + a3t * ((time.time()-self.t0)) ** 3
-        self.targetRPY.y = a0x + a1x * ((time.time()-self.t0)) + a2x * (
-            (time.time()-self.t0)) ** 2 + a3x * ((time.time()-self.t0)) ** 3
-        self.targetRPY.z = a0y + a1y * ((time.time()-self.t0)) + a2y * (
-            (time.time()-self.t0)) ** 2 + a3y * ((time.time()-self.t0)) ** 3
+    def interpolate_value(self, start, end):
+        a0, a1, a2, a3 = self.generate_trajectory(0, self.dt, start, end)
+        t = time.time() - self.t0
+        return a0 + a1 * t + a2 * t**2 + a3 * t**3
 
-        self.targetZ.data = round(a0z + a1z * ((time.time()-self.t0)) + a2z * (
-            (time.time()-self.t0)) ** 2 + a3z * ((time.time()-self.t0)) ** 3)
+    def interpolate(self, r, p, y, z, duration):
+        self.dt = duration
+        self.targetRPY.x = self.interpolate_value(self.originRPY.x, r)
+        self.targetRPY.y = self.interpolate_value(self.originRPY.y, p)
+        self.targetRPY.z = self.interpolate_value(self.originRPY.z, y)
+        self.targetZ.data = round(self.interpolate_value(self.originZ.data, z))
 
-    def owner_center_callback(self, msg):
-        yaw_error = (msg.data[0] - self.image_width / 2) / self.image_width
-        target_yaw = 1 * yaw_error
-        self.publish_values(target_yaw, 1, 1, 70)
-
-    def publish_values(self, r, p, y, z):
+    def publish_values(self, r, p, y, z, duration=None):
+        if duration:
+            self.dt = duration  # Update the duration if provided
         self.t0 = time.time()
         while time.time() - self.t0 < self.dt:
-            self.interpolate(r, p, y, z)
-            msg = Vector3(x=self.targetRPY.x,
-                          y=self.targetRPY.y, z=self.targetRPY.z)
-            zmsg = UInt16(data=round(self.targetZ.data))
+            self.interpolate(r, p, y, z, self.dt)
+
+            clamped_x = clamp(self.targetRPY.x, -5, 5)*1.0
+            clamped_y = clamp(self.targetRPY.y, -5, 5)*1.0
+            clamped_z = clamp(self.targetRPY.z, -5, 5) * 1.0
+            clamped_data = clamp(self.targetZ.data, 60, 100)
+
+            msg = Vector3(x=clamped_x, y=clamped_y, z=clamped_z)
+            zmsg = UInt16(data=round(clamped_data))
+
             self.Zpublisher.publish(zmsg)
             self.RPYpublisher.publish(msg)
             time.sleep(self.rostimer)
 
 
 class CommandNeck(Node):
+    EMOTION_FUNCTIONS = {
+        "daily": "daily",
+        "wink": "tilt",
+        "sad": "sad",
+        "angry": "angry",
+        "moving": "moving",
+        "mic_waiting": "listening"
+    }
+    STATE_DAILY = "daily"
+    STATE_EMOTION = "emotion"
+
     def __init__(self):
-        super().__init__('emotion_expression')
+        super().__init__('command_neck_node')
         self.setup_publishers_and_subscriptions()
         self.emotion = UInt16(data=0)
         self.neck_controller_publisher = NeckControllerPublisher()
+        self.last_position = Vector3(x=0.0, y=0.0, z=0.0)
+        self.last_z = UInt16(data=70)
+        self.yaw_errors = [0] * 5  # Last 5 yaw errors
+        self.pitch_errors = [0] * 5  # Last 5 pitch errors
+        self.current_state = self.STATE_DAILY
 
     def setup_publishers_and_subscriptions(self):
         self.emotion_publisher = self.create_publisher(UInt16, 'emotion', 10)
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
         self.owner_center_subscription = self.create_subscription(
-            Int16MultiArray, 'owner_center', self.owner_center_callback, 10)
+            Int16MultiArray, 'owner_xyz', self.owner_center_callback, 10)
 
     def callback_emo(self, msg):
-        emotion = msg.data
-        emotion_to_function_map = {
-            "Daily": self.daily,
-            "wink": self.tilt,
-            "sad": self.nod,
-            "angry": self.shake,
-            "moving": self.turn,
-            "mic_waiting": self.listening
-        }
-        function_to_execute = emotion_to_function_map.get(emotion)
-        if function_to_execute:
-            function_to_execute()
+        self.current_state = self.STATE_EMOTION
+        emotion_function = self.EMOTION_FUNCTIONS.get(msg.data)
+        if emotion_function:
+            getattr(self, emotion_function)()
+        self.current_state = self.STATE_DAILY
 
     def daily(self):
-        self.neck_controller_publisher.publish_values(0, 0, 0, 70)
+        self.owner_center_callback()
+
+    def tilt(self):
+        total_duration = 2  # seconds
+        num_nods = random.randint(1, 3)
+        duration_per_nod = total_duration / num_nods
+
+        for _ in range(num_nods):
+            # Tilt to the left from the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x + 1, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 4)
+
+            # Tilt to the right from the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x - 1, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 4)
+
+            # Return to the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 2)
 
     def listening(self):
-        # """A subtle nodding  gesture to indicate that the robot is listening"""
         total_duration = 3  # seconds
-        num_nods = random.randint(0, 4)  # Random number of nods between 0 and 4
-        
+        num_nods = random.randint(0, 4)
         if num_nods == 0:
-            time.sleep(total_duration)
             return
 
         duration_per_nod = total_duration / num_nods
-        
+
         for _ in range(num_nods):
-            # Slight move down
-            self.neck_controller_publisher.publish_values(0, -0.5, 0, 70)
-            time.sleep(duration_per_nod / 4)
-            # Slight move up
-            self.neck_controller_publisher.publish_values(0, 0.5, 0, 70)
-            time.sleep(duration_per_nod / 4)
-            # Return to neutral
-            self.neck_controller_publisher.publish_values(0, 0, 0, 70)
-            time.sleep(duration_per_nod / 2)
+            # Slight move down from the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y - 0.5, self.last_position.z, self.last_z.data, duration_per_nod / 4)
 
-    def nod(self, duration=1):
-        # Move down
-        self.neck_controller_publisher.publish_values(0, -1, 0, 70)
-        time.sleep(duration/2)
-        # Move up
-        self.neck_controller_publisher.publish_values(0, 1, 0, 70)
-        time.sleep(duration/2)
+            # Slight move up from the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y + 0.5, self.last_position.z, self.last_z.data, duration_per_nod / 4)
 
-    def tilt(self, direction='left', duration=1):
-        # Tilt left or right based on the direction
+            # Return to the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 2)
+
+    def sad(self, duration=2):
+        num_nods = random.randint(1, 3)
+        duration_per_nod = duration / (3 * num_nods)
+
+        for _ in range(num_nods):
+            # Move down from the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y - 1, self.last_position.z, self.last_z.data, duration_per_nod)
+
+            # Move up
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y + 1, self.last_position.z, self.last_z.data, duration_per_nod)
+
+            # Return to the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod)
+
+    def moving(self, duration=1):
+        # Randomly choose a direction (left or right)
+        direction = random.choice(['left', 'right'])
         value = 1 if direction == 'left' else -1
-        self.neck_controller_publisher.publish_values(value, 0, 0, 70)
-        time.sleep(duration)
 
-    def shake(self, duration=1):
-        # Move to the left
-        self.neck_controller_publisher.publish_values(1, 0, 0, 70)
-        time.sleep(duration/3)
-        # Move to the right
-        self.neck_controller_publisher.publish_values(-1, 0, 0, 70)
-        time.sleep(duration/3)
-        # Return to the center
-        self.neck_controller_publisher.publish_values(0, 0, 0, 70)
-        time.sleep(duration/3)
+        # Tilt in the chosen direction from the last position
+        self.neck_controller_publisher.publish_values(
+            self.last_position.x + value, self.last_position.y, self.last_position.z, self.last_z.data, duration / 2)
 
-    def turn(self, direction='left', duration=1):
-        # Turn to the left or right based on the direction
-        value = 1 if direction == 'left' else -1
-        self.neck_controller_publisher.publish_values(value, 0, 0, 70)
-        time.sleep(duration)
-    def owner_center_callback(self, msg):
-        yaw_error = (msg.data[0] - self.image_width / 2) / self.image_width
-        target_yaw = 1 * yaw_error
-        self.neck_controller_publisher.publish_values(target_yaw, 1, 1, 70)
+        # Return to the last position
+        self.neck_controller_publisher.publish_values(
+            self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration / 2)
+
+    def angry(self, duration=2):
+        num_shakes = random.randint(1, 3)
+        duration_per_shake = duration / (3 * num_shakes)
+
+        for _ in range(num_shakes):
+            # Tilt up from the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data + 10, duration_per_shake)
+
+            # Tilt down from the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data - 10, duration_per_shake)
+
+            # Return to the last position
+            self.neck_controller_publisher.publish_values(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_shake)
+
+    def owner_center_callback(self, msg=None):
+        if self.current_state != self.STATE_DAILY:
+            return
+        if msg is None or msg.data[0] == 0:
+            msg = Int16MultiArray(data=[320, 160])  # default center values
+
+        yaw_error = (msg.data[0] - NeckControllerPublisher.IMAGE_WIDTH /
+                     2) / NeckControllerPublisher.IMAGE_WIDTH
+        pitch_error = (msg.data[1] - NeckControllerPublisher.IMAGE_HEIGHT /
+                       2) / NeckControllerPublisher.IMAGE_HEIGHT
+
+        # Update and calculate the moving average for yaw
+        self.yaw_errors.append(yaw_error)
+        self.yaw_errors.pop(0)
+        avg_yaw_error = sum(self.yaw_errors) / len(self.yaw_errors)
+        target_yaw = 0.1 * avg_yaw_error
+
+        # Update and calculate the moving average for pitch
+        self.pitch_errors.append(pitch_error)
+        self.pitch_errors.pop(0)
+        avg_pitch_error = sum(self.pitch_errors) / len(self.pitch_errors)
+        target_pitch = 0.1 * avg_pitch_error
+
+        # Directly adjust based on error without interpolation
+        clamped_x = clamp(target_yaw, -5, 5)
+        clamped_y = clamp(target_pitch, -5, 5)
+        clamped_z = clamp(self.last_position.z, -5, 5)
+
+        # Update last_position and last_z
+        self.last_position.x = clamped_x
+        self.last_position.y = clamped_y
+        self.last_position.z = clamped_z
+        self.last_z.data = round(clamped_z)
+
+        msg = Vector3(x=clamped_x, y=clamped_y, z=clamped_z)
+        zmsg = UInt16(data=self.last_z.data)
+
+        self.neck_controller_publisher.Zpublisher.publish(zmsg)
+        self.neck_controller_publisher.RPYpublisher.publish(msg)
 
 
 def main(args=None):
     rclpy.init(args=args)
-    command_neck_node = CommandNeck()
-    rclpy.spin(command_neck_node)
+    node = CommandNeck()
+    rclpy.spin(node)
     rclpy.shutdown()
 
 

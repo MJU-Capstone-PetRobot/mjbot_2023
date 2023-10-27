@@ -54,9 +54,9 @@ class ArmControllerNode(Node):
         self.action_done_event.set()
 
 
-class Commander(Node):
+class ArmCommander(Node):
     def __init__(self, arm_controller):
-        super().__init__('commander')
+        super().__init__('arm_commander_node')
         self.subscription = self.create_subscription(
             String, 'arm_mode', self.arm_mode_callback, 10)
         self.subscription_emotions = self.create_subscription(
@@ -107,6 +107,12 @@ class Commander(Node):
 
     def mode_callback(self, msg: String):
         self.current_mode = msg.data
+        self.get_logger().info(f"Mode switched to: {self.current_mode}")
+
+        if self.current_mode == "idle":
+            # Here you can place any logic that should run when mode switches to "idle"
+            self.position_key = 'default'
+            self.set_and_send_arm_position(self.poses[self.position_key])
 
     def joint_states_callback(self, msg: JointState):
         """Callback to handle incoming JointState messages."""
@@ -271,10 +277,10 @@ if __name__ == '__main__':
     rclpy.init(args=None)
 
     arm_controller = ArmControllerNode()
-    commander = Commander(arm_controller)
+    arm_commander = ArmCommander(arm_controller)
 
     executor = rclpy.executors.MultiThreadedExecutor()
-    executor.add_node(commander)
+    executor.add_node(arm_commander)
     executor.add_node(arm_controller)
 
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
@@ -282,13 +288,13 @@ if __name__ == '__main__':
 
     # commander.send_startup_sequence()
 
-    rate = commander.create_rate(50)
+    rate = arm_commander.create_rate(50)
 
     try:
         while rclpy.ok():
             if arm_controller.action_done_event.is_set():
                 arm_controller.action_done_event.clear()
-                commander.post_action_check()
+                arm_commander.post_action_check()
             rate.sleep()
     except KeyboardInterrupt:
         pass
