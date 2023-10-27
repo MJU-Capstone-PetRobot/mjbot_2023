@@ -23,15 +23,9 @@ def generate_launch_description():
         output="screen"
     )
 
-    node_mjbot_vision2 = Node(
+    node_mjbot_vision = Node(
         package="vision",
         executable="vision_process",
-        output="screen"
-    )
-
-    node_mjbot_tracking = Node(
-        package="mjbot_tracking",
-        executable="tracking.py",
         output="screen"
     )
 
@@ -83,8 +77,8 @@ def generate_launch_description():
         twist_mux,
         # mjbot_voice_timer,
         # node_mjbot_alert,
-        # node_mjbot_vision2,
-        # node_mjbot_tracking
+        # node_mjbot_vision,
+
     ]
 
     return LaunchDescription(nodes

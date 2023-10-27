@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import rclpy
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import UInt16, Int16MultiArray, String
@@ -91,7 +92,7 @@ class CommandNeck(Node):
     STATE_EMOTION = "emotion"
 
     def __init__(self):
-        super().__init__('emotion_expression')
+        super().__init__('command_neck_node')
         self.setup_publishers_and_subscriptions()
         self.emotion = UInt16(data=0)
         self.neck_controller_publisher = NeckControllerPublisher()
@@ -247,8 +248,8 @@ class CommandNeck(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    command_neck_node = CommandNeck()
-    rclpy.spin(command_neck_node)
+    node = CommandNeck()
+    rclpy.spin(node)
     rclpy.shutdown()
 
 

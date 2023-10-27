@@ -3,6 +3,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray, String
+from collections import deque
 
 
 class PIDController:
@@ -21,13 +22,13 @@ class PIDController:
         return output
 
 
-class Driver(Node):
+class TrackingDriver(Node):
     def __init__(self):
-        super().__init__('driver')
+        super().__init__('tracking_driver_node')
         self.publisher = self.create_publisher(Twist, 'cmd_vel_tracker', 10)
         self.subscription = self.create_subscription(
             Int16MultiArray,
-            'owner_center',
+            'owner_xyz',
             self.callback,
             10)
         self.mode_subscription = self.create_subscription(
@@ -42,9 +43,16 @@ class Driver(Node):
         self.image_width = 640
         self.image_height = 360
 
+        # Moving average filter properties
+        self.filter_length = 5
+        self.data_queue = deque(maxlen=self.filter_length)
+        self.current_mode = None
+
     def mode_callback(self, msg: String):
+        # Update the current mode with the incoming message
+        self.current_mode = msg.data
         if msg.data == "tracking":
-            self.current_mode = msg.data
+            self.get_logger().info("Tracking mode started!")
         else:
             self.get_logger().warn(f"Unknown mode: {msg.data}")
 
@@ -54,14 +62,24 @@ class Driver(Node):
         self.publisher.publish(self.base_cmd)
         self.get_logger().info("Published: /cmd_vel_tracker: {}".format(self.base_cmd))
 
+    def apply_moving_average(self, data):
+        self.data_queue.append(data)
+        if len(self.data_queue) < self.filter_length:
+            return data
+        average_data = [sum(col) / len(col) for col in zip(*self.data_queue)]
+        return average_data
+
     def callback(self, msg):
         if self.current_mode != "tracking":
             return
-        if all(value == 0 for value in msg.data):
+
+        # Apply the moving average filter
+        filtered_data = self.apply_moving_average(msg.data)
+        if all(value == 0 for value in filtered_data):
             return
-        person_x = msg.data[0] * 1.0
-        person_y = msg.data[1] * 1.0
-        person_distance = msg.data[2] * 1.0
+        person_x = filtered_data[0]
+        person_y = filtered_data[1]
+        person_distance = filtered_data[2]
 
         offset_x = person_x - self.image_width / 2
         theta = offset_x / self.image_width
@@ -70,7 +88,7 @@ class Driver(Node):
         angular_speed = -self.yaw_pid.update(theta)
 
         # Calculate linear_speed based on the person's distance
-        if person_distance <= 300:
+        if person_distance <= 400:
             linear_speed = 0.0
         elif person_distance >= 1200:
             linear_speed = 1.0  # Max speed is 1.0 when person_distance is greater than or equal to 1200
@@ -86,9 +104,9 @@ class Driver(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    driver = Driver()
-    rclpy.spin(driver)
-    driver.destroy_node()
+    node = TrackingDriver()
+    rclpy.spin(node)
+    node.destroy_node()
     rclpy.shutdown()
 
 

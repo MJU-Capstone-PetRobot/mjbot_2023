@@ -17,3 +17,7 @@ twist_mux:
         topic   : cmd_vel_walk
         timeout : 0.5
         priority: 40
+      rand:
+        topic   : cmd_vel_rand
+        timeout : 0.5
+        priority: 50

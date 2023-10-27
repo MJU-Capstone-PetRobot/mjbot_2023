@@ -28,9 +28,14 @@ def generate_launch_description():
                             executable='idle_mode.py', output='screen')
     neck_control_node = Node(package='mjbot_control',
                              executable='neck_control_node.py', output='screen')
-    holding_hand_node = Node(package='mjbot_control',
+    holding_hand_mode = Node(package='mjbot_control',
                              executable='holding_hand_mode.py', output='screen')
-
+    tracking_mode = Node(package='mjbot_control',
+                         executable='tracking_mode.py', output='screen')
+    idle_mode = Node(package='mjbot_control',
+                     executable='idle_mode.py', output='screen')
+    random_move_mode = Node(package='mjbot_control',
+                            executable='random_move_mode.py', output='screen')
     # Define event handlers for delayed starts
     delay_diff_drive_after_joint_state = create_delay_handler(
         joint_state_broadcaster_spawner, diff_drive_controller_spawner)
@@ -41,13 +46,16 @@ def generate_launch_description():
 
     # Return the merged launch description
     return LaunchDescription([
-        control_node,
-        joint_state_broadcaster_spawner,
-        delay_diff_drive_after_joint_state,
-        delay_trajectory_after_diff_drive,
-        delay_arm_after_joint_state,
-        holding_hand_node
-        # neck_control_node,
+        # control_node,
+        # joint_state_broadcaster_spawner,
+        # delay_diff_drive_after_joint_state,
+        # delay_trajectory_after_diff_drive,
+        # delay_arm_after_joint_state,
+        holding_hand_mode,
+        tracking_mode,
+        neck_control_node,
+        idle_mode
+
     ])
 
 

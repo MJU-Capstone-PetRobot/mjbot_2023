@@ -25,10 +25,9 @@ class HoldingHandNode(Node):
     def mode_callback(self, msg: String):
         if msg.data == "holding_hand":
             self.should_continue = True
-        elif msg.data == "idle":
-            self.should_continue = False
+            self.get_logger().info("Holding hand mode started!")
         else:
-            self.get_logger().warn("Unknown mode received!")
+            self.should_continue = False
 
     def holding_hand_timer_callback(self):
         if self.should_continue:
