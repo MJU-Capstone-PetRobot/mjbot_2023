@@ -20,6 +20,16 @@ class TalkingNode(Node):
         self.publisher_emotions = self.create_publisher(
             String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
+        self.publisher_mode = self.create_publisher(String, 'mode', 10)
+
+    def publish_mode(self, mode):
+        '''
+        모드 제어
+        '''
+        msg = String()
+        msg.data = str(mode)
+        self.publisher_mode.publish(msg)
+        self.get_logger().info('Published: %s' % msg.data)
 
     def publish_arm_motions(self, Arm_motions):
         '''
@@ -127,8 +137,8 @@ def main(args=None):
             call_num += 1
             print(call_num)
         if call_num == 3:
-                use_sound("./mp3/say_my_name.wav")
-                call_num = 0
+            use_sound("./mp3/say_my_name.wav")
+            call_num = 0
         if response == "로봇":
             use_sound("./mp3/yes.wav")
             # 대답 기다리는 동안 표정 변화
@@ -146,15 +156,19 @@ def main(args=None):
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
 
-
             check = name_check()
             name_check_ = check[0]
             value_check = check[1]
-
+            # modes : tracking, holding_hand, idle, random_move
             mj = MYOUNGJA(name_check_, value_check)
             while response != "":
                 if response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("walk")
+                    talking_node.publish_mode("tracking")
+                elif response == "손잡자":  # 손잡자
+                    talking_node.publish_mode("holding_hand")
+                elif response == "손놔":  # 손놔
+                    talking_node.publish_arm_motions("idle")
                 elif response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
                 elif response == "왼손":  # 왼손
