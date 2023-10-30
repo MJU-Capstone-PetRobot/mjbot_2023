@@ -22,12 +22,12 @@ class NeckControllerPublisher(Node):
         self.initialize_properties()
 
     def setup_publishers(self):
-        self.RPYpublisher = self.create_publisher(Vector3, 'neck_rpy', 10)
+        self.RPYpublisher = self.create_publisher(Vector3, 'neck_rpz', 10)
         self.Zpublisher = self.create_publisher(UInt16, 'neck_z', 10)
 
     def initialize_properties(self):
         self.dt = 0.5  # seconds
-        self.rostimer = 0.5 # 20 Hz
+        self.rostimer = 0.1 # 20 Hz
         self.timer = self.create_timer(self.rostimer, self.publish_values)
         self.originRPY = Vector3(x=0.0, y=0.0, z=0.0)
         self.originZ = UInt16(data=70)

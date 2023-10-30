@@ -9,7 +9,7 @@ from std_msgs.msg import UInt16
 
 from sensor_msgs.msg import Range
 from geometry_msgs.msg import Vector3
-
+import time
 import serial
 import threading
 from rclpy.executors import MultiThreadedExecutor
@@ -33,7 +33,7 @@ class OpiEspNode(Node):
     def __init__(self):
         super().__init__("opi_esp_comm")
         self.emo = ''
-        self.neck = [0, 0, 0, 0]
+        self.neck = [0, 0, 0]
 
         self.publisher_ultrasonic_1_ = self.create_publisher(Range, "ultrasonic_1", 10)
         self.publisher_ultrasonic_2_ = self.create_publisher(Range, "ultrasonic_2", 10)
@@ -44,10 +44,8 @@ class OpiEspNode(Node):
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
         self.subscriber_neck_rpy = self.create_subscription(
-            Vector3, "neck_rpy", self.callback_neck_rpy, 10)
-        self.subscriber_neck_z = self.create_subscription(
-            UInt16, "neck_z", self.callback_neck_z, 10)
-
+            Vector3, "neck_rpz", self.callback_neck_rpy, 10)
+     
         self.get_logger().info("opi_esp_comm node has been started")
 
     # 발행 : 배터리(string), 터치(bool), 일산화탄소(int), 거리(int)
@@ -94,31 +92,24 @@ class OpiEspNode(Node):
         self.get_logger().info("[SUB] /emo: [{}]".format(sub_msg.data))
         self.emo = sub_msg.data
 
-        opi_packet = "(E" + self.emo + ")"
+        opi_packet = "(E^" + self.emo + ")"
+        time.sleep(0.3)
         SerialObj.write(opi_packet.encode())
 
         opi_packet = ''
 
     def callback_neck_rpy(self, sub_msg):
-        self.get_logger().info("[SUB] /neck_rpy: [{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z))
+        self.get_logger().info("[SUB] /neck_rpz: [{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z))
 
         self.neck[0] = sub_msg.x
         self.neck[1] = sub_msg.y
-        self.neck[3] = sub_msg.z
+        self.neck[2] = sub_msg.z
 
-        opi_packet = '(N' + str(self.neck) + ')'
+        opi_packet = '(N^' + str(self.neck) + ')'
         SerialObj.write(opi_packet.encode())
 
         opi_packet = ''
 
-    def callback_neck_z(self, sub_msg):
-        self.get_logger().info("[SUB] /neck_z: [{}]".format(sub_msg.data))
-        self.neck[2] = sub_msg.data
-
-        opi_packet = '(N' + str(self.neck) + ')'
-        SerialObj.write(opi_packet.encode())
-
-        opi_packet = ''
 
 
 def receive_from_esp(SerialObj):
