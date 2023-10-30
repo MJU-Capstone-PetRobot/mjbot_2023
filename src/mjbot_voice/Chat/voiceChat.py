@@ -3,7 +3,7 @@ import time
 import openai
 
 ## ChatGPT
-openai.api_key = "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"
+openai.api_key = "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"
 
 # NAVER CLOVA
 client_id_g = "5ezz7ibsqa"
@@ -19,9 +19,6 @@ class MYOUNGJA():
         nameValue = data["user_name"]
         manWomanValue = data["user_value"]
 
-    gpt_standard_messages = [{"role": "system",
-                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. And if user say nothing then please do not say anything. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer. Your patient's name is {nameValue} and {manWomanValue} is an old korean."}]
-
     def set_memory_size(self, memory_size):
         '''
         클래스 내의 질문 담을 메모리 저장
@@ -31,6 +28,12 @@ class MYOUNGJA():
         self.memory_size = memory_size
 
     def gpt_send_anw(self, question: str):
+        self.gpt_standard_messages = [{"role": "assistant",
+                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. please be a good friend to your patient. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer. Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."}]
+
+
+
+        self.gpt_standard_messages = [{"role": "user", "content" : question}]
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -133,6 +136,8 @@ def speaking(anw_text):
 
         # data, fs = sf.read(filename, dtype='')
         pl("test.wav")
+    else:
+        print("404 error")
 
         # 제작된 음성 파일 삭제
         os.remove("ResultMP3.mp3")
