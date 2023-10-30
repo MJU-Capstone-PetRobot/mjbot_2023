@@ -22,8 +22,8 @@ class NeckControllerPublisher(Node):
         self.initialize_properties()
 
     def setup_publishers(self):
-        self.RPYpublisher = self.create_publisher(Vector3, 'neck_rpz', 10)
-        self.Zpublisher = self.create_publisher(UInt16, 'neck_z', 10)
+        self.RPZpublisher = self.create_publisher(Vector3, 'neck_rpz', 10)
+        self.Yawpublisher = self.create_publisher(UInt16, 'neck_z', 10)
 
     def initialize_properties(self):
         self.dt = 0.5  # seconds

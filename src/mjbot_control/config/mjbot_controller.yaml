@@ -27,6 +27,7 @@ arm_joint_trajectory_controller:
       - l_shoulder_pitch
       - l_shoulder_roll
       - l_elbow_pitch
+      - neck
       
     command_interfaces:
       - position
@@ -43,6 +44,7 @@ forward_position_controller:
       - l_shoulder_pitch
       - l_shoulder_roll
       - l_elbow_pitch
+      - neck
 
     command_interfaces:
       - position
