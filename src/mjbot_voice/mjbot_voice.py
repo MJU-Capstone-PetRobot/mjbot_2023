@@ -125,16 +125,16 @@ def main(args=None):
 
     call_num = 0
     while 1:
-        check = name_check()
+        name_check()
 
         # modes : tracking, holding_hand, idle, random_move
         mj = MYOUNGJA()
 
         # 먼저 말 거는 기능 실험용
-        # if common == 0:
-        #     use_sound("./mp3/ex1.wav")
-        #     time.sleep(2)
-            # use_sound("./mp3/ex_2.wav")
+        if common == 0:
+            use_sound("./mp3/ex1.wav")
+            time.sleep(2)
+            use_sound("./mp3/ex_2.wav")
         common = 1
         # 먼저 말 거는 기능
         # speak_first()
