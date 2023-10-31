@@ -15,7 +15,7 @@ import threading
 from rclpy.executors import MultiThreadedExecutor
 
 port = '/dev/ttyUSB0'
-baud = 115200
+baud = 1000000
 
 SerialObj = serial.Serial(port, baud, timeout=3)
 esp_thread = True
@@ -35,12 +35,19 @@ class OpiEspNode(Node):
         self.emo = ''
         self.neck = [0, 0, 0]
 
+        # 발행
         self.publisher_ultrasonic_1_ = self.create_publisher(Range, "ultrasonic_1", 10)
         self.publisher_ultrasonic_2_ = self.create_publisher(Range, "ultrasonic_2", 10)
-        self.publisher_bat_state_ = self.create_publisher(String, "bat", 10)
+
+        self.publisher_bat_percent_ = self.create_publisher(String, "bat_percent", 10)
+        self.publisher_bat_time_ = self.create_publisher(String, "bat_time", 10)
+
         self.publisher_touch_ = self.create_publisher(Bool, "touch", 10)
         self.publisher_co_ = self.create_publisher(Int32, "co_ppm", 10)
 
+        self.publisher_gps_ = self.create_publisher(String, "gps", 10)
+
+        # 구독 
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
         self.subscriber_neck_rpy = self.create_subscription(
@@ -48,26 +55,10 @@ class OpiEspNode(Node):
      
         self.get_logger().info("opi_esp_comm node has been started")
 
-    # 발행 : 배터리(string), 터치(bool), 일산화탄소(int), 거리(int)
-    # 구독 : 목각도(string), 감정(string)
-    def publish_bat(self, bat):
-        msg = String()
-        msg.data = bat
-        self.publisher_bat_state_.publish(msg)
-        self.get_logger().info("[PUB] /bat [{}]".format(msg.data))
-
-    def publisher_touch(self, touch):
-        msg = Bool()
-        msg.data = touch
-        self.publisher_touch_.publish(msg)
-        self.get_logger().info("[PUB] /touch [{}]".format(msg.data))
-
-    def publisher_co(self, co_ppm):
-        msg = Int32()
-        msg.data = co_ppm
-        self.publisher_co_.publish(msg)
-        self.get_logger().info("[PUB] /co_ppm [{}]".format(msg.data))
-
+    # 발행 : 초음파 센서 1(Range), 초음파 센서 2(Range), 
+    #       배터리 잔량(String), 배터리 지속 시간(String), 
+    #       터치(Bool), 일산화탄소(Int32), GPS(String)
+    # 구독 : 표정(String), 목각도 RPZ(Vector3)
     def publisher_ultrasonic(self, ultra_1, ultra_2): 
         msg_1 = Range()
         msg_1.radiation_type = 0 # ULTRASOUND
@@ -87,6 +78,36 @@ class OpiEspNode(Node):
         self.publisher_ultrasonic_2_.publish(msg_2)
 
         self.get_logger().info("[PUB] /ultrasonic_1, 2 [{}] [{}]".format(msg_1.range, msg_2.range))   
+
+    def publish_bat_percent(self, bat_percent):
+        msg = String()
+        msg.data = bat_percent
+        self.publisher_bat_percent_.publish(msg)
+        self.get_logger().info("[PUB] /bat_percent [{}]".format(msg.data))
+
+    def publish_bat_time(self, bat_time):
+        msg = String()
+        msg.data = bat_time
+        self.publisher_bat_time_.publish(msg)
+        self.get_logger().info("[PUB] /bat_time [{}]".format(msg.data))
+
+    def publisher_touch(self, touch):
+        msg = Bool()
+        msg.data = touch
+        self.publisher_touch_.publish(msg)
+        self.get_logger().info("[PUB] /touch [{}]".format(msg.data))
+
+    def publisher_co(self, co_ppm):
+        msg = Int32()
+        msg.data = co_ppm
+        self.publisher_co_.publish(msg)
+        self.get_logger().info("[PUB] /co_ppm [{}]".format(msg.data))
+
+    def publish_gps(self, gps):
+        msg = String()
+        msg.data = gps
+        self.publisher_gps_.publish(msg)
+        self.get_logger().info("[PUB] /gps [{}]".format(msg.data))
 
     def callback_emo(self, sub_msg):
         self.get_logger().info("[SUB] /emo: [{}]".format(sub_msg.data))
@@ -111,7 +132,6 @@ class OpiEspNode(Node):
         opi_packet = ''
 
 
-
 def receive_from_esp(SerialObj):
     global esp_packet
     msg = ''
@@ -124,17 +144,28 @@ def receive_from_esp(SerialObj):
 
                 if esp_packet[0] == '<' and esp_packet[len(esp_packet) -1] == '>':
                     if esp_packet[1] == 'T':
-                        touch = esp_packet[2]
+                        touch = esp_packet[3]
                         node.publisher_touch(bool(touch))
                     elif esp_packet[1] == 'C':
-                        co_ppm = esp_packet[2:-1]
+                        co_ppm = esp_packet[3:-1]
                         node.publisher_co(int(co_ppm))
                     elif esp_packet[1] == 'D':
-                        distance = esp_packet[2:-1]
-                        node.publisher_ultrasonic(int(distance), int(distance))
+                        end_index = esp_packet.find(',')
+                        distance1 = esp_packet[3:end_index]
+
+                        start_index = end_index +1
+                        distance2 = esp_packet[start_index:-1]
+
+                        node.publisher_ultrasonic(int(distance1), int(distance2))
+                    elif esp_packet[1] == 'B' and esp_packet[2] == 'D':
+                        bat_time = esp_packet[4:-1]
+                        node.publish_bat_time(bat_time)
                     elif esp_packet[1] == 'B':
-                        bat_state = esp_packet[2:-1]
-                        node.publish_bat(bat_state)
+                        bat_percent = esp_packet[3:-1]
+                        node.publish_bat_percent(bat_percent)
+                    elif esp_packet[1] == 'G':
+                        gps = esp_packet[3:-1]
+                        node.publish_gps(gps)
                     else:
                         print("esp packet not defined")
 
