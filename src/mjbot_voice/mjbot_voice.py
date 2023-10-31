@@ -125,12 +125,10 @@ def main(args=None):
 
     call_num = 0
     while 1:
-        check = name_check()
-        name_check_ = check[0]
-        value_check = check[1]
+        name_check()
 
         # modes : tracking, holding_hand, idle, random_move
-        mj = MYOUNGJA(name_check_, value_check)
+        mj = MYOUNGJA()
 
         # 먼저 말 거는 기능 실험용
         if common == 0:

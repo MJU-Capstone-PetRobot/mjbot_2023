@@ -1,7 +1,9 @@
+import time
+
 import openai
 
 ## ChatGPT
-openai.api_key = "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"
+openai.api_key = "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"
 
 # NAVER CLOVA
 client_id_g = "5ezz7ibsqa"
@@ -9,16 +11,13 @@ client_secret_g = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
 
 
 class MYOUNGJA():
+    import json
     memory_size = 100
-    nameValue = ""
-    manWomanValue = ""
 
-    def __init__(self, name, manWoman) -> None:
-        MYOUNGJA.nameValue = name
-        MYOUNGJA.manWomanValue = manWoman
-
-    gpt_standard_messages = [{"role": "system",
-                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. And if user say nothing then please do not say anything. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer. Your patient's name is {nameValue} and {manWomanValue} is an old korean."}]
+    with open('./user_value.json', 'r') as f:
+        data = json.load(f)
+        nameValue = data["user_name"]
+        manWomanValue = data["user_value"]
 
     def set_memory_size(self, memory_size):
         '''
@@ -29,6 +28,12 @@ class MYOUNGJA():
         self.memory_size = memory_size
 
     def gpt_send_anw(self, question: str):
+        self.gpt_standard_messages = [{"role": "assistant",
+                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. please be a good friend to your patient. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer. Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."}]
+
+
+
+        self.gpt_standard_messages = [{"role": "user", "content" : question}]
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -72,12 +77,10 @@ def speak_first():
     먼저 말 거는 함수
     :return: X
     '''
-    from time import time, localtime
-    import time
+    from time import localtime
     import random
 
-    tmt = time()
-    tm = localtime(tmt)
+    tm = localtime()
 
     question_list = ["오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 오늘 어떠세요??", "", "", "", "", "", "", "", ""]
 
@@ -99,7 +102,7 @@ def speak_first():
     elif tm.tm_hour == 15 and tm.tm_min == 00:
         speaking("우리 산책 나가요!")
 
-    tmt.sleep(3)
+    time.sleep(3)
 
 
 def speaking(anw_text):
@@ -133,6 +136,8 @@ def speaking(anw_text):
 
         # data, fs = sf.read(filename, dtype='')
         pl("test.wav")
+    else:
+        print("404 error")
 
         # 제작된 음성 파일 삭제
         os.remove("ResultMP3.mp3")
@@ -258,5 +263,4 @@ def name_ini():
 def use_sound(loc):
     from playsound import playsound as pl
 
-    # data, fs = sf.read(filename, dtype='')
     pl(loc)
