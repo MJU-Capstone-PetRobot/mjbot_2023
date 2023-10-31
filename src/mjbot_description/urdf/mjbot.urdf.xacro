@@ -17,8 +17,8 @@
 
   <xacro:mjbot prefix="$(arg prefix)" />
 
-  <!-- <xacro:mjbot_ros2_control   name="mjbot_base" />
-  <xacro:mjbot_arm_ros2_control name="mjbot_arm" /> -->
+  <xacro:mjbot_ros2_control   name="mjbot_base" />
+  <xacro:mjbot_arm_ros2_control name="mjbot_servos" />
   
 
 </robot>
