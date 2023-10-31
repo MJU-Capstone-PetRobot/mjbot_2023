@@ -35,6 +35,12 @@ def generate_launch_description():
         output="screen"
     )
 
+    node_esp_ros = Node(
+        package="opi_esp",
+        executable="opi_esp_comm",
+        output="screen"
+    )
+
     include_mjbot_control = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_mjbot_control, 'launch',
@@ -78,6 +84,7 @@ def generate_launch_description():
         # mjbot_voice_timer,
         # node_mjbot_alert,
         # node_mjbot_vision,
+        node_esp_ros,
 
     ]
 
