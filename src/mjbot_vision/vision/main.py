@@ -74,7 +74,7 @@ class VisionNode(Node):
         msg = Int16MultiArray()
         msg.data = [self.owner_w, self.owner_h]
         self.publisher_owner_size_.publish(msg)
-        self.get_logger().info("PUB: /owner_size: {}".format(msg.data))
+        # self.get_logger().info("PUB: /owner_size: {}".format(msg.data))
 
         msg = Int16MultiArray()
         msg.data = [self.owner_x, self.owner_y, self.owner_z]
@@ -152,9 +152,9 @@ class VisionNode(Node):
 
     def run_rknn(self):
         # Inference
-        self.get_logger().info('RKNN: Inference')
+        # self.get_logger().info('RKNN: Inference')
         outputs = self.rknn_lite.inference(inputs=[self.img])
-        self.get_logger().info('RKNN: Done')
+        # self.get_logger().info('RKNN: Done')
 
         # yolov7 post process
         self.boxes, self.classes, self.scores = yolov7.post_process(outputs)
@@ -323,9 +323,9 @@ def main(args=None):
         if node.owner_fall:
             node.publish_owner_fall()
 
-        cv2.putText(node.img, f'fps: {node.fps}',
-                    (25, 50), 1, 2, (0, 255, 0), 2)
-        cv2.imshow("result", node.img)
+            cv2.putText(node.img, f'fps: {node.fps}',
+                        (25, 50), 1, 2, (0, 255, 0), 2)
+            cv2.imshow("result", node.img)
 
         # If the `q` key was pressed, break from the loop
         key = cv2.waitKey(1) & 0xFF
