@@ -100,8 +100,8 @@ class ArmCommander(Node):
             'give_left_hand': [0.0, -1.5, 0.0, -1.5, 1.5, 0.3],
             'give_right_hand': [1.5, -1.5, -0.3,  0.0, 1.5, 0.0],
             'hug': [1.5, -1.5, -0.5, -1.5, 1.5, 0.5],
-            'emotion_2': [0.0, 0.0, -1.5, 0.0, 0.0, -1.5],
-            'emotion_4': [0.0, 0.0, -1.5, 0.0, 0.0, 1.5],
+            'moving': [0.0, 0.0, -1.5, 0.0, 0.0, -1.5],
+            'angry': [0.0, 0.0, -1.5, 0.0, 0.0, 1.5],
             'holding_hand': [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
         }
 
@@ -197,10 +197,10 @@ class ArmCommander(Node):
 
     def arm_move_emotion(self, msg):
         self.position_key = None
-        if msg.data == "2":
-            self.position_key = 'emotion_2'
-        elif msg.data == "4":
-            self.position_key = 'emotion_4'
+        if msg.data == "moving":
+            self.position_key = 'moving'
+        elif msg.data == "angry":
+            self.position_key = 'angry'
 
         if self.position_key:
             self.set_and_send_arm_position(self.poses[self.position_key])
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
 
-    # commander.send_startup_sequence()
+    arm_commander.send_startup_sequence()
 
     rate = arm_commander.create_rate(50)
 
