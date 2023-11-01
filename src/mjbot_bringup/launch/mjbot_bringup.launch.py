@@ -81,7 +81,7 @@ def generate_launch_description():
         include_mjbot_description,
         mjbot_control_timer,
         twist_mux,
-        # mjbot_voice_timer,
+        mjbot_voice_timer,
         # node_mjbot_alert,
         # node_mjbot_vision,
         node_esp_ros,

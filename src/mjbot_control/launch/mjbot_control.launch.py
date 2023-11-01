@@ -46,11 +46,11 @@ def generate_launch_description():
 
     # Return the merged launch description
     return LaunchDescription([
-        # control_node,
-        # joint_state_broadcaster_spawner,
-        # delay_diff_drive_after_joint_state,
-        # delay_trajectory_after_diff_drive,
-        # delay_arm_after_joint_state,
+        control_node,
+        joint_state_broadcaster_spawner,
+        delay_diff_drive_after_joint_state,
+        delay_trajectory_after_diff_drive,
+        delay_arm_after_joint_state,
         holding_hand_mode,
         tracking_mode,
         neck_control_node,
