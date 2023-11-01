@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import rclpy
-from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Quaternion
 from std_msgs.msg import UInt16, Int16MultiArray, String
 from rclpy.node import Node
 import time
@@ -22,18 +22,15 @@ class NeckControllerPublisher(Node):
         self.initialize_properties()
 
     def setup_publishers(self):
-        self.RPYpublisher = self.create_publisher(Vector3, 'neck_rpz', 10)
-        self.Zpublisher = self.create_publisher(UInt16, 'neck_z', 10)
+        self.RPYpublisher = self.create_publisher(Quaternion, 'neck_rpz', 10)
 
     def initialize_properties(self):
         self.dt = 0.5  # seconds
-        self.rostimer = 0.1 # 20 Hz
+        self.rostimer = 0.1  # 20 Hz
         self.timer = self.create_timer(self.rostimer, self.publish_values)
-        self.originRPY = Vector3(x=0.0, y=0.0, z=0.0)
-        self.originZ = UInt16(data=70)
+        self.originRPY = Quaternion(x=0.0, y=0.0, z=0.0, w=70)
         self.t0 = time.time()
-        self.targetRPY = Vector3()
-        self.targetZ = UInt16()
+        self.targetRPY = Quaternion()
 
     def generate_trajectory(self, t0, tf, p0, pf):
         p0, pf = float(p0), float(pf)
@@ -66,18 +63,16 @@ class NeckControllerPublisher(Node):
         while time.time() - self.t0 < self.dt:
             self.interpolate(r, p, y, z, self.dt)
 
-            clamped_x = round(clamp(self.targetRPY.x, -5, 5)*3.0,3)
-            clamped_y = round(clamp(self.targetRPY.y, -5, 5)*3.0,3)
-            clamped_z = round(clamp(self.targetRPY.z, -5, 5) * 10.0,3)
-            clamped_data = clamp(self.targetZ.data, 60, 100)
+            clamped_x = round(clamp(self.targetRPYZ.x, -5, 5)*3.0, 3)
+            clamped_y = round(clamp(self.targetRPYZ.y, -5, 5)*3.0, 3)
+            clamped_z = round(clamp(self.targetRPYZ.z, -5, 5) * 3.0, 3)
+            clamped_w = clamp(self.targetRPYZ.w, 60, 100)
 
-            msg = Vector3(x=clamped_x, y=clamped_y, z=clamped_z)
-            zmsg = UInt16(data=round(clamped_data))
+            msg = Quaternion(x=clamped_x, y=clamped_y,
+                             z=clamped_z, w=clamped_w)
 
-            self.Zpublisher.publish(zmsg)
+            self.RPYZpublisher.publish(msg)
             time.sleep(self.rostimer)
-            self.RPYpublisher.publish(msg)
-            
 
 
 class CommandNeck(Node):
@@ -97,8 +92,7 @@ class CommandNeck(Node):
         self.setup_publishers_and_subscriptions()
         self.emotion = UInt16(data=0)
         self.neck_controller_publisher = NeckControllerPublisher()
-        self.last_position = Vector3(x=0.0, y=0.0, z=0.0)
-        self.last_z = UInt16(data=70)
+        self.last_position = Quaternion(x=0.0, y=0.0, z=0.0, w=70.0)
         self.yaw_errors = [0] * 5  # Last 5 yaw errors
         self.pitch_errors = [0] * 5  # Last 5 pitch errors
         self.current_state = self.STATE_DAILY
@@ -233,18 +227,16 @@ class CommandNeck(Node):
         clamped_x = clamp(target_yaw, -5, 5)
         clamped_y = clamp(target_pitch, -5, 5)
         clamped_z = clamp(self.last_position.z, -5, 5)
+        clamped_w = clamp(self.last_position.w, 60, 100)
 
-        # Update last_position and last_z
+        # Update last_position
         self.last_position.x = clamped_x
         self.last_position.y = clamped_y
         self.last_position.z = clamped_z
-        self.last_z.data = round(clamped_z)
+        self.last_position.w = clamped_w
 
-        msg = Vector3(x=clamped_x, y=clamped_y, z=clamped_z)
-        zmsg = UInt16(data=self.last_z.data)
-
-        self.neck_controller_publisher.Zpublisher.publish(zmsg)
-        self.neck_controller_publisher.RPYpublisher.publish(msg)
+        self.neck_controller_publisher.RPYZpublisher.publish(
+            self.last_position)
 
 
 def main(args=None):
