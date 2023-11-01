@@ -144,7 +144,10 @@ def receive_from_esp(SerialObj):
 
                 if esp_packet[0] == '<' and esp_packet[len(esp_packet) -1] == '>':
                     if esp_packet[1] == 'T':
-                        touch = esp_packet[3]
+                        if esp_packet[3] == '0':
+                            touch = False
+                        elif esp_packet[3] == '1':
+                            touch = True
                         node.publisher_touch(bool(touch))
                     elif esp_packet[1] == 'C':
                         co_ppm = esp_packet[3:-1]
