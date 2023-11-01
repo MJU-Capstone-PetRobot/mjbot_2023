@@ -83,8 +83,8 @@ def generate_launch_description():
         twist_mux,
         # mjbot_voice_timer,
         # node_mjbot_alert,
-        # node_mjbot_vision,
-        node_esp_ros,
+        node_mjbot_vision,
+        # node_esp_ros,
 
     ]
 

@@ -39,7 +39,7 @@ class TrackingDriver(Node):
         self.base_cmd = Twist()
 
         self.target_distance = 800
-        self.yaw_pid = PIDController(0.5, 0.1, 0.1)
+        self.yaw_pid = PIDController(0.1, 0.01, 0.01)
         self.image_width = 640
         self.image_height = 360
 
@@ -91,15 +91,15 @@ class TrackingDriver(Node):
         if person_distance <= 400:
             linear_speed = 0.0
         elif person_distance >= 1200:
-            linear_speed = 1.0  # Max speed is 1.0 when person_distance is greater than or equal to 1200
+            linear_speed = 0.5  # Max speed is 1.0 when person_distance is greater than or equal to 1200
         else:
             # Linear interpolation between 0.4 and 1.0 based on the range of person_distance
-            linear_speed = 0.4 + (person_distance - 800) * 0.2 / 400
+            linear_speed = 0.3 + (person_distance - 800) * 0.2 / 400
 
         # Make sure the linear_speed doesn't exceed 1.0
-        linear_speed = min(1.0, linear_speed)
+        linear_speed = min(0.5, linear_speed)
 
-        self.update(linear_speed, angular_speed)
+        self.update(-linear_speed, -angular_speed*0.1)
 
 
 def main(args=None):
