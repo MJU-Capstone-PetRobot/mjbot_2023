@@ -54,17 +54,17 @@ class HoldingHandNode(Node):
         # Check r_shoulder_pitch effort and set linear.x
         if r_shoulder_pitch_effort is not None:
             if r_shoulder_pitch_effort > 220:
-                cmd_vel.linear.x = 0.5
+                cmd_vel.linear.x = 0.3
             elif r_shoulder_pitch_effort < -220:
-                cmd_vel.linear.x = -0.5
+                cmd_vel.linear.x = -0.3
 
         # Check r_shoulder_roll effort and set angular.z and modify linear.x
         if r_shoulder_roll_effort is not None:
-            if r_shoulder_roll_effort > 250:
-                cmd_vel.angular.z = 0.5
+            if r_shoulder_roll_effort > 300:
+                cmd_vel.angular.z = 0.3
                 cmd_vel.linear.x = 0.1 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
             elif r_shoulder_roll_effort < -50:
-                cmd_vel.angular.z = -0.5
+                cmd_vel.angular.z = -0.3
                 cmd_vel.linear.x = -0.1 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
 
         self.target_cmd_vel = cmd_vel
@@ -85,8 +85,8 @@ class HoldingHandNode(Node):
 
     def move_base(self, linear_x, angular_z):
         cmd = Twist()
-        cmd.linear.x = linear_x
-        cmd.angular.z = angular_z
+        cmd.linear.x = -linear_x
+        cmd.angular.z = -angular_z
         self.pub_cmd_vel.publish(cmd)
 
 
