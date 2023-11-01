@@ -185,13 +185,13 @@ def main(args=None):
                     emotion = response_[0]
 
                     # close, moving, wink, angry, sad, daily
-                    if emotion == "평범":
+                    if emotion == "daily":
                         talking_node.publish_emotions("daily")
-                    elif emotion == "당황":
+                    elif emotion == "panic":
                         talking_node.publish_emotions("panic")
-                    elif emotion == "분노":
+                    elif emotion == "angry":
                         talking_node.publish_emotions("angry")
-                    elif emotion == "슬픔":
+                    elif emotion == "sad":
                         talking_node.publish_emotions("sad")
                     else:
                         talking_node.publish_emotions("daily")
