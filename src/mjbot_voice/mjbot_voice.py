@@ -77,8 +77,17 @@ class VoiceSuscriber(Node):
         '''
         self.get_logger().info('Received: %s' % msg.data)
 
-        if msg.data <= 45:
+        import json
+
+        write_data = {
+            "bat_state" : msg.data
+        }
+        with open('./bat_value.json', 'w') as d:
+            json.dump(write_data, d)
+
+        if msg.data <= 40:
             speaking("할머니 배고파요")
+
 
     def subscribe_callback_touch(self, msg):
         '''
@@ -100,6 +109,7 @@ class VoiceSuscriber(Node):
 
 
 def main(args=None):
+    import json
     import os
     from os import path
     global common
@@ -126,6 +136,11 @@ def main(args=None):
     call_num = 0
     while 1:
         name_check()
+
+        # 배터리 잔량 체크
+        with open('./bat_value.json', 'r') as f:
+            data = json.load(f)
+            bat_state = data["bat_state"]
 
         # modes : tracking, holding_hand, idle, random_move
         mj = MYOUNGJA()
@@ -163,6 +178,9 @@ def main(args=None):
             elif response == "조용":
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
+            elif response == "배터리":
+                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다.")
+
 
             while response != "":
                 if response == "산책 가자":  # 산책 가자
