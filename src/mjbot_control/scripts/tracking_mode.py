@@ -73,7 +73,7 @@ class TrackingDriver(Node):
 
         # Calculate linear_speed based on the person's distance ####!!! add -
         if person_distance <= 500:
-            linear_speed = -0.1
+            linear_speed = -0.05
         elif 500 < person_distance < 800:
             linear_speed = 0.0
             angular_speed = 0.0
