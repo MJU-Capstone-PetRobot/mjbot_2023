@@ -69,10 +69,12 @@ class TrackingDriver(Node):
         theta = offset_x / self.image_width
 
         # angular_speed
-        angular_speed = theta
+        angular_speed = -theta
 
-        # Calculate linear_speed based on the person's distance
-        if person_distance <= 800:
+        # Calculate linear_speed based on the person's distance ####!!! add -
+        if person_distance <= 500:
+            linear_speed = -0.1
+        elif 500 < person_distance < 800:
             linear_speed = 0.0
             angular_speed = 0.0
         elif person_distance >= 1200:
@@ -84,7 +86,7 @@ class TrackingDriver(Node):
         # Make sure the linear_speed doesn't exceed 0.1
         linear_speed = min(0.1, linear_speed)
 
-        self.update(-linear_speed, -angular_speed*0.5)
+        self.update(-linear_speed, angular_speed*0.6)
 
 
 def main(args=None):
