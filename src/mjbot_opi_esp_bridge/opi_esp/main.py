@@ -33,7 +33,7 @@ class OpiEspNode(Node):
     def __init__(self):
         super().__init__("opi_esp_comm")
         self.emo = ''
-        self.neck = [0, 0, 0]
+        self.neck = [0, 0, 0,0]
 
         # 발행
         self.publisher_ultrasonic_1_ = self.create_publisher(
@@ -126,14 +126,14 @@ class OpiEspNode(Node):
 
     def callback_neck_rpy(self, sub_msg):
         self.get_logger().info(
-            "[SUB] /neck_rpyz: [{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z))
+            "[SUB] /neck_rpyz: [{}][{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z, sub_msg.w))
 
         self.neck[0] = sub_msg.x
         self.neck[1] = sub_msg.y
         self.neck[2] = sub_msg.z
         self.neck[3] = sub_msg.w
 
-        opi_packet = '(N^' + str(self.neck) + ')'
+        opi_packet = '(N^' + str(self.neck[0])+','+ str(self.neck[1])+','+str(self.neck[2])+','+str(self.neck[3])+ ')'
         SerialObj.write(opi_packet.encode())
 
         opi_packet = ''
