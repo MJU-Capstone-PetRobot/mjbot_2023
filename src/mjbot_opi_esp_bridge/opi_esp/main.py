@@ -33,7 +33,7 @@ class OpiEspNode(Node):
     def __init__(self):
         super().__init__("opi_esp_comm")
         self.emo = ''
-        self.neck = [0, 0, 0]
+        self.neck = [0, 0, 0, 0]
 
         # 발행
         self.publisher_ultrasonic_1_ = self.create_publisher(Range, "ultrasonic_1", 10)
@@ -51,7 +51,9 @@ class OpiEspNode(Node):
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
         self.subscriber_neck_rpy = self.create_subscription(
-            Vector3, "neck_rpz", self.callback_neck_rpy, 10)
+            Vector3, "neck_rpy", self.callback_neck_rpy, 10)
+        self.subscriber_neck_z = self.create_subscription(
+            UInt16, "neck_z", self.callback_neck_z, 10)
      
         self.get_logger().info("opi_esp_comm node has been started")
 
@@ -120,17 +122,19 @@ class OpiEspNode(Node):
         opi_packet = ''
 
     def callback_neck_rpy(self, sub_msg):
-        self.get_logger().info("[SUB] /neck_rpz: [{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z))
 
         self.neck[0] = sub_msg.x
         self.neck[1] = sub_msg.y
         self.neck[2] = sub_msg.z
+        self.get_logger().info("[SUB] /neck_rpy: [{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z))
 
-        opi_packet = '(N^' + str(self.neck) + ')'
+    def callback_neck_z(self, sub_msg):
+        self.neck[3] = sub_msg.data
+        self.get_logger().info("[SUB] /neck_z: [{}]".format(sub_msg.data))
+
+        opi_packet = '(N^' + ', '.join(map(str, self.neck)) + ')'
         SerialObj.write(opi_packet.encode())
-
         opi_packet = ''
-
 
 def receive_from_esp(SerialObj):
     global esp_packet
