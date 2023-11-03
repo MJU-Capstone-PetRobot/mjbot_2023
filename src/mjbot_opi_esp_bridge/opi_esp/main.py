@@ -68,6 +68,8 @@ class OpiEspNode(Node):
     #       터치(Bool), 일산화탄소(Int32), GPS(String)
     # 구독 : 표정(String), 목각도 RPZ(Vector3)
     def publisher_ultrasonic(self, ultra_1, ultra_2):
+        int(ultra_1)
+        int(ultra_2)
         msg_1 = Range()
         msg_1.radiation_type = 0  # ULTRASOUND
         msg_1.field_of_view = 1.0472  # radian, 60 degree = 1.0472 radian
@@ -174,7 +176,7 @@ def receive_from_esp(SerialObj):
                         distance2 = esp_packet[start_index:-1]
 
                         node.publisher_ultrasonic(
-                            int(distance1), int(distance2))
+                            float(distance1), float(distance2))
                     elif esp_packet[1] == 'B' and esp_packet[2] == 'D':
                         bat_time = esp_packet[4:-1]
                         node.publish_bat_time(bat_time)
