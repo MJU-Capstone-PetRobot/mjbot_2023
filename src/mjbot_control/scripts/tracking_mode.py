@@ -6,22 +6,6 @@ from std_msgs.msg import Int16MultiArray, String
 from collections import deque
 
 
-class PIDController:
-    def __init__(self, kp, ki, kd):
-        self.Kp = kp
-        self.Ki = ki
-        self.Kd = kd
-        self.last_error = 0.0
-        self.integral = 0.0
-
-    def update(self, error):
-        derivative = error - self.last_error
-        self.integral += error
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        self.last_error = error
-        return output
-
-
 class TrackingDriver(Node):
     def __init__(self):
         super().__init__('tracking_driver_node')
@@ -39,7 +23,7 @@ class TrackingDriver(Node):
         self.base_cmd = Twist()
 
         self.target_distance = 800
-        self.yaw_pid = PIDController(0.5, 0.1, 0.1)
+
         self.image_width = 640
         self.image_height = 360
 
@@ -84,22 +68,25 @@ class TrackingDriver(Node):
         offset_x = person_x - self.image_width / 2
         theta = offset_x / self.image_width
 
-        # Use the PID controller to calculate angular_speed
-        angular_speed = -self.yaw_pid.update(theta)
+        # angular_speed
+        angular_speed = -theta
 
-        # Calculate linear_speed based on the person's distance
-        if person_distance <= 400:
+        # Calculate linear_speed based on the person's distance ####!!! add -
+        if person_distance <= 500:
+            linear_speed = -0.05
+        elif 500 < person_distance < 800:
             linear_speed = 0.0
+            angular_speed = 0.0
         elif person_distance >= 1200:
-            linear_speed = 1.0  # Max speed is 1.0 when person_distance is greater than or equal to 1200
+            linear_speed = 0.1  # Max speed is 0.1 when person_distance is greater than or equal to 1200
         else:
-            # Linear interpolation between 0.4 and 1.0 based on the range of person_distance
-            linear_speed = 0.4 + (person_distance - 800) * 0.2 / 400
+            # Linear interpolation between 0 and 0.1 based on the range of person_distance
+            linear_speed = (person_distance - 800) * 0.1 / 400
 
-        # Make sure the linear_speed doesn't exceed 1.0
-        linear_speed = min(1.0, linear_speed)
+        # Make sure the linear_speed doesn't exceed 0.1
+        linear_speed = min(0.1, linear_speed)
 
-        self.update(linear_speed, angular_speed)
+        self.update(-linear_speed, angular_speed*0.6)
 
 
 def main(args=None):

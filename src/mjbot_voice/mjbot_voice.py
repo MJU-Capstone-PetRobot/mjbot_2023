@@ -57,8 +57,8 @@ class VoiceSuscriber(Node):
             Bool, 'fall_down', self.subscribe_callback_fall_down, 10)
         self.subscription = self.create_subscription(
             String, 'Bat_state', self.subscribe_callback_bat_state, 10)
-        self.subscription = self.create_subscription(
-            Bool, 'touch', self.subscribe_callback_touch, 10)
+        # self.subscription = self.create_subscription(
+        #     Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
             Int32, 'co', self.subscribe_callback_co, 10)
 
@@ -77,17 +77,26 @@ class VoiceSuscriber(Node):
         '''
         self.get_logger().info('Received: %s' % msg.data)
 
-        if msg.data <= 45:
+        import json
+
+        write_data = {
+            "bat_state" : msg.data
+        }
+        with open('./bat_value.json', 'w') as d:
+            json.dump(write_data, d)
+
+        if msg.data <= 40:
             speaking("할머니 배고파요")
 
-    def subscribe_callback_touch(self, msg):
-        '''
-        터치
-        '''
-        self.get_logger().info(f'Received: {msg.data}')
 
-        if msg.data == True:
-            speaking("깔깔깔")
+    # def subscribe_callback_touch(self, msg):
+    #     '''
+    #     터치
+    #     '''
+    #     self.get_logger().info(f'Received: {msg.data}')
+
+    #     if msg.data == True:
+    #         speaking("깔깔깔")
 
     def subscribe_callback_co(self, msg):
         '''
@@ -100,6 +109,7 @@ class VoiceSuscriber(Node):
 
 
 def main(args=None):
+    import json
     import os
     from os import path
     global common
@@ -125,12 +135,15 @@ def main(args=None):
 
     call_num = 0
     while 1:
-        check = name_check()
-        name_check_ = check[0]
-        value_check = check[1]
+        name_check()
+
+        # 배터리 잔량 체크
+        with open('./bat_value.json', 'r') as f:
+            data = json.load(f)
+            bat_state = data["bat_state"]
 
         # modes : tracking, holding_hand, idle, random_move
-        mj = MYOUNGJA(name_check_, value_check)
+        mj = MYOUNGJA()
 
         # 먼저 말 거는 기능 실험용
         if common == 0:
@@ -165,20 +178,23 @@ def main(args=None):
             elif response == "조용":
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
+            elif response == "배터리":
+                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다.")
+
 
             while response != "":
                 if response == "산책 가자":  # 산책 가자
-                    talking_node.publish_arm_motions("walk")
-                    talking_node.publish_mode("tracking")
-                elif response == "손잡자":  # 손잡자
+                    talking_node.publish_arm_motions("holding_hand")
                     talking_node.publish_mode("holding_hand")
-                elif response == "손놔":  # 손놔
-                    talking_node.publish_arm_motions("idle")
+                elif response == "따라와":  # 따라와
+                    talking_node.publish_mode("tracking")
+                elif response == "멈춰":  # 멈춰
+                    talking_node.publish_mode("idle")
                 elif response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
                 elif response == "왼손":  # 왼손
                     talking_node.publish_arm_motions("give_left_hand")
-                elif response == "안기":  # 안기
+                elif response == "안아줘":  # 안기
                     talking_node.publish_arm_motions("hug")
                 elif response == "조용":
                     break
@@ -187,13 +203,13 @@ def main(args=None):
                     emotion = response_[0]
 
                     # close, moving, wink, angry, sad, daily
-                    if emotion == "평범":
+                    if emotion == "daily":
                         talking_node.publish_emotions("daily")
-                    elif emotion == "당황":
-                        talking_node.publish_emotions("panic")
-                    elif emotion == "분노":
+                    elif emotion == "surprise":
+                        talking_node.publish_emotions("moving")
+                    elif emotion == "angry":
                         talking_node.publish_emotions("angry")
-                    elif emotion == "슬픔":
+                    elif emotion == "sad":
                         talking_node.publish_emotions("sad")
                     else:
                         talking_node.publish_emotions("daily")
