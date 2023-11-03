@@ -184,11 +184,11 @@ def main(args=None):
 
             while response != "":
                 if response == "산책 가자":  # 산책 가자
-                    talking_node.publish_arm_motions("walk")
-                    talking_node.publish_mode("tracking")
-                elif response == "손잡자":  # 손잡자
+                    talking_node.publish_arm_motions("holding_hand")
                     talking_node.publish_mode("holding_hand")
-                elif response == "손놔":  # 손놔
+                elif response == "따라와":  # 따라와
+                    talking_node.publish_mode("tracking")
+                elif response == "멈춰":  # 멈춰
                     talking_node.publish_arm_motions("idle")
                 elif response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
