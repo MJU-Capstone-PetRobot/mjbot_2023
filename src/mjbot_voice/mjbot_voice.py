@@ -184,17 +184,17 @@ def main(args=None):
 
             while response != "":
                 if response == "산책 가자":  # 산책 가자
-                    talking_node.publish_arm_motions("walk")
-                    talking_node.publish_mode("tracking")
-                elif response == "손잡자":  # 손잡자
+                    talking_node.publish_arm_motions("holding_hand")
                     talking_node.publish_mode("holding_hand")
-                elif response == "손놔":  # 손놔
+                elif response == "따라와":  # 따라와
+                    talking_node.publish_mode("tracking")
+                elif response == "멈춰":  # 멈춰
                     talking_node.publish_arm_motions("idle")
                 elif response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
                 elif response == "왼손":  # 왼손
                     talking_node.publish_arm_motions("give_left_hand")
-                elif response == "안기":  # 안기
+                elif response == "안아줘":  # 안기
                     talking_node.publish_arm_motions("hug")
                 elif response == "조용":
                     break
@@ -205,8 +205,8 @@ def main(args=None):
                     # close, moving, wink, angry, sad, daily
                     if emotion == "daily":
                         talking_node.publish_emotions("daily")
-                    elif emotion == "panic":
-                        talking_node.publish_emotions("panic")
+                    elif emotion == "surprise":
+                        talking_node.publish_emotions("moving")
                     elif emotion == "angry":
                         talking_node.publish_emotions("angry")
                     elif emotion == "sad":

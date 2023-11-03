@@ -96,13 +96,13 @@ class ArmCommander(Node):
         self.point = JointTrajectoryPoint()
 
         self.poses = {
-            'default': [0.0, -1.5, 0.0, 0.0, 1.5, 0.0],
-            'give_left_hand': [0.0, -1.5, 0.0, -1.5, 1.5, 0.3],
-            'give_right_hand': [1.5, -1.5, -0.3,  0.0, 1.5, 0.0],
+            'default': [0.1, -1.5, 0.0, -0.1, 1.5, 0.0],
+            'give_left_hand': [0.1, -1.5, 0.0, -1.5, 1.5, 0.3],
+            'give_right_hand': [1.5, -1.5, -0.3,  -0.1, 1.5, 0.0],
             'hug': [1.5, -1.5, -0.5, -1.5, 1.5, 0.5],
-            'moving': [0.0, 0.0, -1.5, 0.0, 0.0, -1.5],
-            'angry': [0.0, 0.0, -1.5, 0.0, 0.0, 1.5],
-            'holding_hand': [0.0, 1.0, 0.3, 0.0, 1.5, 0.0]
+            'moving': [0.1, 0.0, -1.5, -0.1, 0.0, -1.5],
+            'angry': [0.1, 0.0, -1.5, -0.1, 0.0, 1.5],
+            'holding_hand': [0.1, 1.0, 0.3, -0.1, 1.5, 0.0]
         }
 
     def mode_callback(self, msg: String):
