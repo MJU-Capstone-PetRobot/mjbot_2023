@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import rclpy
-from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Quaternion
 from std_msgs.msg import UInt16, Int16MultiArray, String
 from rclpy.node import Node
 import time
@@ -22,18 +22,15 @@ class NeckControllerPublisher(Node):
         self.initialize_properties()
 
     def setup_publishers(self):
-        self.RPYpublisher = self.create_publisher(Vector3, 'neck_rpz', 10)
-        self.Zpublisher = self.create_publisher(UInt16, 'neck_z', 10)
+        self.RPYpublisher = self.create_publisher(Quaternion, 'neck_rpyz', 10)
 
     def initialize_properties(self):
-        self.dt = 0.5  # seconds
-        self.rostimer = 0.1 # 20 Hz
+        self.dt = 0.1  # seconds (lowered for smoother motion)
+        self.rostimer = 0.1  # 10 Hz
         self.timer = self.create_timer(self.rostimer, self.publish_values)
-        self.originRPY = Vector3(x=0.0, y=0.0, z=0.0)
-        self.originZ = UInt16(data=70)
+        self.originRPY = Quaternion(x=0.0, y=0.0, z=0.0, w=70.0)
         self.t0 = time.time()
-        self.targetRPY = Vector3()
-        self.targetZ = UInt16()
+        self.targetRPY = Quaternion()
 
     def generate_trajectory(self, t0, tf, p0, pf):
         p0, pf = float(p0), float(pf)
@@ -57,27 +54,20 @@ class NeckControllerPublisher(Node):
         self.targetRPY.x = self.interpolate_value(self.originRPY.x, r)
         self.targetRPY.y = self.interpolate_value(self.originRPY.y, p)
         self.targetRPY.z = self.interpolate_value(self.originRPY.z, y)
-        self.targetZ.data = round(self.interpolate_value(self.originZ.data, z))
+        self.targetRPY.w = self.interpolate_value(self.originRPY.w, z)
 
-    def publish_values(self, r, p, y, z, duration=None):
-        if duration:
-            self.dt = duration  # Update the duration if provided
-        self.t0 = time.time()
-        while time.time() - self.t0 < self.dt:
-            self.interpolate(r, p, y, z, self.dt)
+    def publish_values(self):
+        self.interpolate(0, 0, 0, 70.0, self.dt)
 
-            clamped_x = round(clamp(self.targetRPY.x, -5, 5)*3.0,3)
-            clamped_y = round(clamp(self.targetRPY.y, -5, 5)*3.0,3)
-            clamped_z = round(clamp(self.targetRPY.z, -5, 5) * 10.0,3)
-            clamped_data = clamp(self.targetZ.data, 60, 100)
+        clamped_x = clamp(self.targetRPY.x, -5, 5)
+        clamped_y = clamp(self.targetRPY.y, -5, 5)
+        clamped_z = clamp(self.targetRPY.z, -5, 5)
+        clamped_w = clamp(self.targetRPY.w, 60, 100)
 
-            msg = Vector3(x=clamped_x, y=clamped_y, z=clamped_z)
-            zmsg = UInt16(data=round(clamped_data))
+        msg = Quaternion(x=clamped_x, y=clamped_y,
+                         z=clamped_z, w=clamped_w)
 
-            self.Zpublisher.publish(zmsg)
-            time.sleep(self.rostimer)
-            self.RPYpublisher.publish(msg)
-            
+        self.RPYpublisher.publish(msg)
 
 
 class CommandNeck(Node):
@@ -97,8 +87,7 @@ class CommandNeck(Node):
         self.setup_publishers_and_subscriptions()
         self.emotion = UInt16(data=0)
         self.neck_controller_publisher = NeckControllerPublisher()
-        self.last_position = Vector3(x=0.0, y=0.0, z=0.0)
-        self.last_z = UInt16(data=70)
+        self.last_position = Quaternion(x=0.0, y=0.0, z=0.0, w=70.0)
         self.yaw_errors = [0] * 5  # Last 5 yaw errors
         self.pitch_errors = [0] * 5  # Last 5 pitch errors
         self.current_state = self.STATE_DAILY
@@ -127,16 +116,19 @@ class CommandNeck(Node):
 
         for _ in range(num_nods):
             # Tilt to the left from the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x + 1, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 4)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x + 1, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_nod / 4)
+            time.sleep(duration_per_nod / 4)
 
             # Tilt to the right from the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x - 1, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 4)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x - 1, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_nod / 4)
+            time.sleep(duration_per_nod / 4)
 
             # Return to the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 2)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_nod / 2)
+            time.sleep(duration_per_nod / 2)
 
     def listening(self):
         total_duration = 3  # seconds
@@ -148,16 +140,19 @@ class CommandNeck(Node):
 
         for _ in range(num_nods):
             # Slight move down from the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y - 0.5, self.last_position.z, self.last_z.data, duration_per_nod / 4)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y - 0.5, self.last_position.z, self.last_position.w, duration_per_nod / 4)
+            time.sleep(duration_per_nod / 4)
 
             # Slight move up from the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y + 0.5, self.last_position.z, self.last_z.data, duration_per_nod / 4)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y + 0.5, self.last_position.z, self.last_position.w, duration_per_nod / 4)
+            time.sleep(duration_per_nod / 4)
 
             # Return to the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod / 2)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_nod / 2)
+            time.sleep(duration_per_nod / 2)
 
     def sad(self, duration=2):
         num_nods = random.randint(1, 3)
@@ -165,16 +160,19 @@ class CommandNeck(Node):
 
         for _ in range(num_nods):
             # Move down from the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y - 1, self.last_position.z, self.last_z.data, duration_per_nod)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y - 1, self.last_position.z, self.last_position.w, duration_per_nod)
+            time.sleep(duration_per_nod)
 
             # Move up
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y + 1, self.last_position.z, self.last_z.data, duration_per_nod)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y + 1, self.last_position.z, self.last_position.w, duration_per_nod)
+            time.sleep(duration_per_nod)
 
             # Return to the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_nod)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_nod)
+            time.sleep(duration_per_nod)
 
     def moving(self, duration=1):
         # Randomly choose a direction (left or right)
@@ -182,12 +180,14 @@ class CommandNeck(Node):
         value = 1 if direction == 'left' else -1
 
         # Tilt in the chosen direction from the last position
-        self.neck_controller_publisher.publish_values(
-            self.last_position.x + value, self.last_position.y, self.last_position.z, self.last_z.data, duration / 2)
+        self.neck_controller_publisher.interpolate(
+            self.last_position.x + value, self.last_position.y, self.last_position.z, self.last_position.w, duration / 2)
+        time.sleep(duration / 2)
 
         # Return to the last position
-        self.neck_controller_publisher.publish_values(
-            self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration / 2)
+        self.neck_controller_publisher.interpolate(
+            self.last_position.x, self.last_position.y, self.last_position.z, self.last_position.w, duration / 2)
+        time.sleep(duration / 2)
 
     def angry(self, duration=2):
         num_shakes = random.randint(1, 3)
@@ -195,16 +195,19 @@ class CommandNeck(Node):
 
         for _ in range(num_shakes):
             # Tilt up from the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data + 10, duration_per_shake)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y, self.last_position.z + 10, self.last_position.w, duration_per_shake)
+            time.sleep(duration_per_shake)
 
             # Tilt down from the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data - 10, duration_per_shake)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y, self.last_position.z - 10, self.last_position.w, duration_per_shake)
+            time.sleep(duration_per_shake)
 
             # Return to the last position
-            self.neck_controller_publisher.publish_values(
-                self.last_position.x, self.last_position.y, self.last_position.z, self.last_z.data, duration_per_shake)
+            self.neck_controller_publisher.interpolate(
+                self.last_position.x, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_shake)
+            time.sleep(duration_per_shake)
 
     def owner_center_callback(self, msg=None):
         if self.current_state != self.STATE_DAILY:
@@ -233,18 +236,16 @@ class CommandNeck(Node):
         clamped_x = clamp(target_yaw, -5, 5)
         clamped_y = clamp(target_pitch, -5, 5)
         clamped_z = clamp(self.last_position.z, -5, 5)
+        clamped_w = clamp(self.last_position.w, 60, 100)
 
-        # Update last_position and last_z
+        # Update last_position
         self.last_position.x = clamped_x
         self.last_position.y = clamped_y
         self.last_position.z = clamped_z
-        self.last_z.data = round(clamped_z)
+        self.last_position.w = clamped_w
 
-        msg = Vector3(x=clamped_x, y=clamped_y, z=clamped_z)
-        zmsg = UInt16(data=self.last_z.data)
-
-        self.neck_controller_publisher.Zpublisher.publish(zmsg)
-        self.neck_controller_publisher.RPYpublisher.publish(msg)
+        self.neck_controller_publisher.RPYpublisher.publish(
+            self.last_position)
 
 
 def main(args=None):

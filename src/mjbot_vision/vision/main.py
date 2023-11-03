@@ -62,15 +62,19 @@ class VisionNode(Node):
                            "w_diff", "h_diff",
                            "exists", "fall"]
 
-        self.publisher_owner_size_ = self.create_publisher(Int16MultiArray, "owner_size", 10)
-        self.publisher_owner_xyz_ = self.create_publisher(Int16MultiArray, "owner_xyz", 10)
-        self.publisher_owner_fall_ = self.create_publisher(Bool, "owner_fall", 10)
+        self.publisher_owner_size_ = self.create_publisher(
+            Int16MultiArray, "owner_size", 10)
+        self.publisher_owner_xyz_ = self.create_publisher(
+            Int16MultiArray, "owner_xyz", 10)
+        self.publisher_owner_fall_ = self.create_publisher(
+            Bool, "owner_fall", 10)
 
         self.timer_ = self.create_timer(0.01, self.publish_owner_size_and_xyz)
+        self.process_timer = self.create_timer(1.0/15, self.process_callback)
 
         self.get_logger().info("Vision Node has been started")
 
-    def publish_owner_size_and_xyz(self): # 100hz
+    def publish_owner_size_and_xyz(self):  # 100hz
         msg = Int16MultiArray()
         msg.data = [self.owner_w, self.owner_h]
         self.publisher_owner_size_.publish(msg)
@@ -79,13 +83,13 @@ class VisionNode(Node):
         msg = Int16MultiArray()
         msg.data = [self.owner_x, self.owner_y, self.owner_z]
         self.publisher_owner_xyz_.publish(msg)
-        self.get_logger().info("PUB: /owner_xyz: {}".format(msg.data))
+        # self.get_logger().info("PUB: /owner_xyz: {}".format(msg.data))
 
-    def publish_owner_fall(self): # event
+    def publish_owner_fall(self):  # event
         msg = Bool()
         msg.data = self.owner_fall
         self.publisher_owner_fall_.publish(msg)
-        self.get_logger().info("PUB: /owner_fall: {}".format(msg.data))
+        # self.get_logger().info("PUB: /owner_fall: {}".format(msg.data))
 
     def init_video(self, source):
         if source == "webcam":
@@ -221,15 +225,17 @@ class VisionNode(Node):
                     cv2.putText(self.img, "H {}".format(
                         self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
                 else:
-                    cv2.rectangle(self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
-                    cv2.putText(self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
+                    cv2.rectangle(
+                        self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
+                    cv2.putText(
+                        self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
         else:
             self.owner_exists = False
 
             self.owner_x = 0
             self.owner_y = 0
             self.owner_z = 0
-            
+
     def detect_fall(self):
         if self.owner_exists:
             self.owner_w_diff = (
@@ -282,6 +288,31 @@ class VisionNode(Node):
 
             csv_writer.writerow(info)
 
+    def process_callback(self):
+        start = dt.datetime.utcnow()
+
+        # node.read_video("webcam") # read and resize image
+        self.read_depth(False)
+        self.run_rknn()  # object detecting
+        self.run_sort()  # object tracking
+
+        duration = dt.datetime.utcnow() - start
+        self.fps = int(round(1000000 / duration.microseconds))
+        self.duration_sec = (duration.microseconds / 1000000)
+        self.runtime_sec += self.duration_sec
+        self.runtime_sec = round(self.runtime_sec, 3)
+
+        # self.run_csv_log()
+        self.detect_fall()
+
+        if self.owner_fall:
+            self.publish_owner_fall()
+
+        # # If the `q` key was pressed, exit the process
+        # key = cv2.waitKey(1) & 0xFF
+        # if key == ord("q"):
+        #     rclpy.shutdown()
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -293,44 +324,7 @@ def main(args=None):
     node.init_sort()
     # node.init_csv_log()
 
-    executor = MultiThreadedExecutor()  # 노드 내부의 콜백 함수를 스레드로 잘라서 실행
-    executor.add_node(node)
-    # 메인 함수에서 자식 스레드를 만들어서 Ros 코드를 돌림
-    executor_thread = threading.Thread(target=executor.spin)
-    executor_thread.start()
-
-    while True:
-        start = dt.datetime.utcnow()
-
-        # node.read_video("webcam") # read and resize image
-        node.read_depth(False)
-
-        node.run_rknn() # object detecting
-        node.run_sort() # object tracking
-
-
-        duration = dt.datetime.utcnow() - start
-        node.fps = int(round(1000000 / duration.microseconds))
-
-        node.duration_sec = (duration.microseconds / 1000000)
-        node.runtime_sec += node.duration_sec
-        node.runtime_sec = round(node.runtime_sec, 3)
-
-        # node.run_csv_log()
-        node.detect_fall()  
-
-
-        if node.owner_fall:
-            node.publish_owner_fall()
-
-            cv2.putText(node.img, f'fps: {node.fps}',
-                        (25, 50), 1, 2, (0, 255, 0), 2)
-            cv2.imshow("result", node.img)
-
-        # If the `q` key was pressed, break from the loop
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            break
+    rclpy.spin(node)  # This will keep your node running and process callbacks
 
     rclpy.shutdown()
     node.rknn_lite.release()
@@ -339,6 +333,5 @@ def main(args=None):
 
 
 #######################################################################################################################
-
 if __name__ == '__main__':
     main()

@@ -13,13 +13,13 @@ class RandomMoveRobot(Node):
 
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel_rand', 10)
         self.range_sub = self.create_subscription(
-            Range, '/range', self.range_callback, 10)
+            Range, '/distance1', self.range_callback, 10)
 
         # Subscribe to the mode topic
         self.subscription_mode = self.create_subscription(
             String, 'mode', self.mode_callback, 10)
 
-        self.safe_distance = 0.5  # Adjust as per your robot's requirement
+        self.safe_distance = 800  # Adjust as per your robot's requirement
         self.obstacle_detected = False
 
         self.last_turn = None
@@ -106,7 +106,7 @@ class RandomMoveRobot(Node):
                     self.last_turn = "right" if turn_direction == 1 else "left"
 
                 twist_msg.angular.z = turn_direction * \
-                    random.uniform(0.5, 1.0)  # adjust turn speed as desired
+                    random.uniform(0.1, 0.2)  # adjust turn speed as desired
 
             self.vel_pub.publish(twist_msg)
             rate.sleep()
