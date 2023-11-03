@@ -11,28 +11,32 @@ def clamp(value, min_value, max_value):
     """Clamp the value between min_value and max_value."""
     return float(max(min_value, min(max_value, value)))
 
+
 class NeckControllerPublisher(Node):
     IMAGE_WIDTH = 640
     IMAGE_HEIGHT = 480
+
     def __init__(self):
-        super().__init__('command_neck_node')
-        self.setup_publishers_and_subscriptions()
-        
-        self.neck_controller_publisher = NeckControllerPublisher()
+        super().__init__('neck_controller2')
+        self.setup_publishers()
+        self.initialize_properties()
+
         self.last_position = Quaternion(x=0.0, y=0.0, z=0.0, w=70.0)
         self.yaw_errors = [0] * 5  # Last 5 yaw errors
         self.pitch_errors = [0] * 5  # Last 5 pitch errors
-        self.current_state = self.STATE_DAILY
         self.rostimer = 0.1  # 10 Hz
-    
+
     def setup_publishers(self):
         self.RPYZpublisher = self.create_publisher(Quaternion, 'neck_rpyz', 10)
 
     def initialize_properties(self):
-        self.rostimer = 0.1  # 10 Hz
-        self.timer = self.create_timer(self.rostimer, self.publish_values)
+        self.timer_period = 0.1  # 10 Hz
+        self.timer = self.create_timer(self.timer_period, self.publish_values)
+        self.currentRPYZ = Quaternion()
         self.targetRPYZ = Quaternion()
-    
+        self.trajectory = None
+        self.start_time = self.get_clock().now()
+        self.duration = 0
 
     def generate_trajectory(self, t0, tf, p0, pf):
         p0, pf = float(p0), float(pf)
@@ -45,8 +49,9 @@ class NeckControllerPublisher(Node):
         a3 = (2 * (p0 - pf)) / tf_t0_3
 
         return a0, a1, a2, a3
+
     def interpolate(self, r, p, y, z, duration):
-        self.start_time = time.time()
+        self.start_time = self.get_clock().now()
         self.duration = duration
         self.trajectory = {
             'x': self.generate_trajectory(0, duration, self.currentRPYZ.x, r),
@@ -57,31 +62,41 @@ class NeckControllerPublisher(Node):
         self.targetRPYZ = Quaternion(x=r, y=p, z=y, w=z)
 
     def publish_values(self):
-        current_time = time.time()
-        if self.start_time is not None and current_time - self.start_time <= self.duration:
-            t = current_time - self.start_time
-            # Calculate the interpolated values
-            interpolated_x = sum(a * t**i for i, a in enumerate(self.trajectory['x']))
-            interpolated_y = sum(a * t**i for i, a in enumerate(self.trajectory['y']))
-            interpolated_z = sum(a * t**i for i, a in enumerate(self.trajectory['z']))
-            interpolated_w = sum(a * t**i for i, a in enumerate(self.trajectory['w']))
+        current_time = self.get_clock().now()
+        if self.start_time is not None:
+            # Calculate elapsed time as a float in seconds
+            elapsed_time = (current_time - self.start_time).nanoseconds / 1e9
+            if elapsed_time <= self.duration:
+                t = elapsed_time
+                # Calculate the interpolated values
+                interpolated_x = sum(
+                    a * t**i for i, a in enumerate(self.trajectory['x']))
+                interpolated_y = sum(
+                    a * t**i for i, a in enumerate(self.trajectory['y']))
+                interpolated_z = sum(
+                    a * t**i for i, a in enumerate(self.trajectory['z']))
+                interpolated_w = sum(
+                    a * t**i for i, a in enumerate(self.trajectory['w']))
 
-            # Clamping the interpolated values
-            clamped_x = clamp(interpolated_x, -5, 5)
-            clamped_y = clamp(interpolated_y, -5, 5)
-            clamped_z = clamp(interpolated_z, -5, 5)
-            clamped_w = clamp(interpolated_w, 60.0, 100.0)
+                # Clamping the interpolated values
+                clamped_x = clamp(interpolated_x, -5, 5)
+                clamped_y = clamp(interpolated_y, -5, 5)
+                clamped_z = clamp(interpolated_z, -5, 5)
+                clamped_w = clamp(interpolated_w, 60.0, 100.0)
 
-            # Publishing the clamped values
-            msg = Quaternion(x=clamped_x, y=clamped_y, z=clamped_z, w=clamped_w)
-            self.RPYZpublisher.publish(msg)
+                # Publishing the clamped values
+                msg = Quaternion(x=clamped_x, y=clamped_y,
+                                 z=clamped_z, w=clamped_w)
+                self.RPYZpublisher.publish(msg)
 
-            # Updating currentRPYZ
-            self.currentRPYZ = Quaternion(x=clamped_x, y=clamped_y, z=clamped_z, w=clamped_w)
+                # Updating currentRPYZ
+                self.currentRPYZ = Quaternion(
+                    x=clamped_x, y=clamped_y, z=clamped_z, w=clamped_w)
         else:
             # Resetting after the duration
             self.trajectory = None
             self.start_time = None
+
 
 class CommandNeck(Node):
     EMOTION_FUNCTIONS = {
@@ -95,18 +110,17 @@ class CommandNeck(Node):
     STATE_DAILY = "daily"
     STATE_EMOTION = "emotion"
 
-    def __init__(self):
-        super().__init__('command_neck_node')
-        self.setup_publishers_and_subscriptions()
-        
-        self.neck_controller_publisher = NeckControllerPublisher()
+    def __init__(self, neck_controller_publisher):
+        super().__init__('commands_neck_node')
+        self.neck_controller_publisher = neck_controller_publisher
+        self.setup_subscriptions()
+        self.setup_subscriptions()
         self.last_position = Quaternion(x=0.0, y=0.0, z=0.0, w=70.0)
         self.yaw_errors = [0] * 5  # Last 5 yaw errors
         self.pitch_errors = [0] * 5  # Last 5 pitch errors
         self.current_state = self.STATE_DAILY
 
-    def setup_publishers_and_subscriptions(self):
-        
+    def setup_subscriptions(self):
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
         self.owner_center_subscription = self.create_subscription(
@@ -118,7 +132,8 @@ class CommandNeck(Node):
         if emotion_function:
             getattr(self, emotion_function)()
         self.current_state = self.STATE_DAILY
-        self.get_logger().info(f'Received emo message: {msg.data}')  # Add a logging statement
+        # Add a logging statement
+        self.get_logger().info(f'Received emo message: {msg.data}')
 
     def daily(self):
         self.owner_center_callback()
@@ -143,6 +158,7 @@ class CommandNeck(Node):
             self.neck_controller_publisher.interpolate(
                 self.last_position.x, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_nod / 2)
             self.neck_controller_publisher.publish_values()
+
     def listening(self):
         total_duration = 3  # seconds
         num_nods = random.randint(0, 4)
@@ -221,6 +237,7 @@ class CommandNeck(Node):
             self.neck_controller_publisher.interpolate(
                 self.last_position.x, self.last_position.y, self.last_position.z, self.last_position.w, duration_per_shake)
             self.neck_controller_publisher.publish_values()
+
     def owner_center_callback(self, msg=None):
         if self.current_state != self.STATE_DAILY:
             return
@@ -260,11 +277,23 @@ class CommandNeck(Node):
             clamped_x, clamped_y, clamped_z, clamped_w, self.rostimer)
         self.neck_controller_publisher.publish_values()
 
+
 def main(args=None):
     rclpy.init(args=args)
-    node = CommandNeck()
-    rclpy.spin(node)
-    rclpy.shutdown()
+    neck_controller_node = NeckControllerPublisher()
+    command_neck_node = CommandNeck(neck_controller_node)
+
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(neck_controller_node)
+    executor.add_node(command_neck_node)
+
+    try:
+        executor.spin()
+    finally:
+        executor.shutdown()
+        neck_controller_node.destroy_node()
+        command_neck_node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
