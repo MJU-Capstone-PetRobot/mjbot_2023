@@ -89,14 +89,14 @@ class VoiceSuscriber(Node):
             speaking("할머니 배고파요")
 
 
-    def subscribe_callback_touch(self, msg):
-        '''
-        터치
-        '''
-        self.get_logger().info(f'Received: {msg.data}')
+    # def subscribe_callback_touch(self, msg):
+    #     '''
+    #     터치
+    #     '''
+    #     self.get_logger().info(f'Received: {msg.data}')
 
-        if msg.data == True:
-            speaking("깔깔깔")
+    #     if msg.data == True:
+    #         speaking("깔깔깔")
 
     def subscribe_callback_co(self, msg):
         '''
@@ -189,7 +189,7 @@ def main(args=None):
                 elif response == "따라와":  # 따라와
                     talking_node.publish_mode("tracking")
                 elif response == "멈춰":  # 멈춰
-                    talking_node.publish_arm_motions("idle")
+                    talking_node.publish_mode("idle")
                 elif response == "오른손":  # 오른손
                     talking_node.publish_arm_motions("give_right_hand")
                 elif response == "왼손":  # 왼손
