@@ -175,8 +175,11 @@ def receive_from_esp(SerialObj):
                         start_index = end_index + 1
                         distance2 = esp_packet[start_index:-1]
 
-                        node.publisher_ultrasonic(
-                            float(distance1), float(distance2))
+                        try:
+                                # Attempt to parse the distances as floats
+                            node.publisher_ultrasonic(float(distance1), float(distance2))
+                        except ValueError:
+                            node.get_logger().error("Invalid distance data received:")
                     elif esp_packet[1] == 'B' and esp_packet[2] == 'D':
                         bat_time = esp_packet[4:-1]
                         node.publish_bat_time(bat_time)
