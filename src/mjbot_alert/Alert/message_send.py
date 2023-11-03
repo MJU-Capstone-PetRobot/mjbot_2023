@@ -30,8 +30,8 @@ def googlemap_api():
     # latitude, longitude = gps_set()
 
     ## GPS가 잘 안 되어서, 학교 주소로 임의로 설정
-    latitude = 37.24278
-    longitude = 127.17889
+    latitude = 37.57940
+    longitude = 126.88975
     
     reverse_geocode_result = \
         gmaps.reverse_geocode((latitude, longitude), language='ko')
@@ -43,8 +43,8 @@ def send_message(problem):
     gps = googlemap_api()
     # Twilio
     # 계정 token 입력
-    account_sid = "AC9750ecd4335fbb71324acf4bd9b64857"
-    auth_token = "0b8f878c64425badea5a26bde51a4b80"
+    account_sid = "AC957a6e0d227e0a045846fc47c758f5e4"
+    auth_token = "487fb07c4964fc01986ea143728fa75c"
     client = Client(account_sid, auth_token)
     problem_thing = ""
 
@@ -56,8 +56,8 @@ def send_message(problem):
     message = client.messages \
         .create(
         body=f"명자 위험 알림. 종류 : {problem_thing}. 위치는 {gps}",
-        from_="+14437015330",
-        to="+821095560116"
+        from_="+18664707171",
+        to="+821066860215"
     )
     print("메세지 전송 완료")
 
