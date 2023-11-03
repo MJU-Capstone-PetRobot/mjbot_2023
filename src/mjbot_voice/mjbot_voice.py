@@ -194,7 +194,7 @@ def main(args=None):
                     talking_node.publish_arm_motions("give_right_hand")
                 elif response == "왼손":  # 왼손
                     talking_node.publish_arm_motions("give_left_hand")
-                elif response == "안기":  # 안기
+                elif response == "안아줘":  # 안기
                     talking_node.publish_arm_motions("hug")
                 elif response == "조용":
                     break
@@ -205,8 +205,8 @@ def main(args=None):
                     # close, moving, wink, angry, sad, daily
                     if emotion == "daily":
                         talking_node.publish_emotions("daily")
-                    elif emotion == "panic":
-                        talking_node.publish_emotions("panic")
+                    elif emotion == "surprise":
+                        talking_node.publish_emotions("moving")
                     elif emotion == "angry":
                         talking_node.publish_emotions("angry")
                     elif emotion == "sad":
