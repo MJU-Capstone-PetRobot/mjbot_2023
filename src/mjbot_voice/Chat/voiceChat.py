@@ -3,7 +3,11 @@ import time
 import openai
 
 ## ChatGPT
-openai.api_key = "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"
+# 3.5
+# openai.api_key = "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"
+
+# 4
+openai.api_key = "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"
 
 # NAVER CLOVA
 client_id_g = "5ezz7ibsqa"
@@ -37,7 +41,8 @@ class MYOUNGJA():
         self.gpt_standard_messages = [{"role": "user", "content" : question}]
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
+            #model="gpt-3.5-turbo",
             messages=self.gpt_standard_messages,
             temperature=0.8
         )
