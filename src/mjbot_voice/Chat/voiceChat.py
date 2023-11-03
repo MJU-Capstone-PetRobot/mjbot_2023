@@ -10,8 +10,8 @@ import openai
 openai.api_key = "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"
 
 # NAVER CLOVA
-client_id_g = "5ezz7ibsqa"
-client_secret_g = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
+client_id = "5ezz7ibsqa"
+client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
 
 
 class MYOUNGJA():
@@ -35,10 +35,6 @@ class MYOUNGJA():
         self.gpt_standard_messages = [{"role": "assistant",
                                    "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. please be a good friend to your patient. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use sad, daily, surprise, angry word when you analyze the emotion of answer. Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
                                       {"role": "user", "content" : question}]
-
-
-
-        self.gpt_standard_messages = [{"role": "user", "content" : question}]
 
         response = openai.ChatCompletion.create(
             model="gpt-4",
@@ -118,8 +114,6 @@ def speaking(anw_text):
     from playsound import playsound as pl
 
     # NAVER CLOVA
-    client_id = client_id_g
-    client_secret = client_secret_g
     encText = urllib.parse.quote(anw_text)
     data = f"speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
     urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
@@ -159,9 +153,6 @@ def mic(time):
     import sounddevice as sd
     from scipy.io.wavfile import write
 
-    ## NAVER CLOVA API
-    client_id = client_id_g
-    client_secret = client_secret_g
 
     # 음성 녹음
     fs = 44100
