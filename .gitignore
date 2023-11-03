@@ -7,3 +7,6 @@ src/log/
 src/mjbot_vision/__pycache__/
 src/mjbot_vision/vision/__pycache__/
 src/mjbot_vision2/vision/scripts/__pycache__/
+src/mjbot_voice/Chat/__pycache__/
+*.wav
+*.mp3
