@@ -60,6 +60,14 @@ def generate_launch_description():
             'rsp': 'True',
         }.items()
     )
+    include_mjbot_teleop = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_mjbot_bringup, 'launch',
+                         'teleop_joystick.launch.py'),
+        ),
+        launch_arguments={
+        }.items()
+    )
 
     twist_mux_params = os.path.join(
         pkg_mjbot_bringup, 'config', 'twist_mux.yaml')
@@ -75,11 +83,15 @@ def generate_launch_description():
 
     mjbot_voice_timer = TimerAction(
         period=7.0, actions=[node_mjbot_voice])
+    
+    mjbot_teleop_timer = TimerAction(
+        period=5.0, actions=[include_mjbot_teleop])
 
     nodes = [
 
         include_mjbot_description,
         mjbot_control_timer,
+        mjbot_teleop_timer,
         twist_mux,
         mjbot_voice_timer,
         node_mjbot_alert,
