@@ -208,7 +208,7 @@ class ArmCommander(Node):
             self.create_timer(
                 2.0, lambda: self.set_and_send_arm_position(self.poses['default']))
 
-    def arm_move_alert(self, msg):
+    def arm_move_alert(self):
         self.trajectory_msg.trajectory.points = []
         self.add_trajectory_point(self.poses['default'], 1)
         self.add_trajectory_point([0.0, 0.6, 0.1, 0.0, -0.6, -0.1], 2)

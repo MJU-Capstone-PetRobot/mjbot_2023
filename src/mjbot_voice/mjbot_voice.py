@@ -6,6 +6,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from std_msgs.msg import Int32, Bool
 import threading
+import time
 
 """
 Publisher : 감정(std_msgs.msg/String) , 팔 제어(std_msgs.msg/String)
@@ -184,6 +185,12 @@ def main(args=None):
 
             while response != "":
                 if response == "산책 가자":  # 산책 가자
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
                     talking_node.publish_arm_motions("holding_hand")
                 elif response == "따라와":  # 따라와
                     talking_node.publish_mode("tracking")
