@@ -172,7 +172,7 @@ class ArmCommander(Node):
     def post_action_check(self):
         # Exclude the 'walk' position from the joint effort check
         time.sleep(2)
-        if self.position_key != "holding_hand" or self.position_key != "alert" and self.current_mode != "idle":
+        if self.position_key != "holding_hand" or self.position_key != "alert" and self.current_mode == "idle":
 
             while True:
                 if self.position_key != "default" and self.arm_controller.action_state == ActionState.SUCCEEDED:
