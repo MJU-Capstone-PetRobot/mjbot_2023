@@ -68,7 +68,7 @@ class ArmCommander(Node):
         self.mode_subscription = self.create_subscription(
             String, 'mode', self.mode_callback, 10)
         self.fall_down_subscription = self.create_subscription(
-            Bool, 'fall_down', self.fall_down_callback, 10)
+            Bool, 'owner_fall', self.fall_down_callback, 10)
         self.co_ppm_subscription = self.create_subscription(
             Int32, 'co_ppm', self.co_ppm_callback, 10)
 
@@ -171,8 +171,8 @@ class ArmCommander(Node):
 
     def post_action_check(self):
         # Exclude the 'walk' position from the joint effort check
-        time.sleep(1)
-        if self.position_key != "holding_hand" or self.position_key != "alert" and self.current_mode != "holding_hand":
+        time.sleep(2)
+        if self.position_key != "holding_hand" or self.position_key != "alert" and self.current_mode != "idle":
 
             while True:
                 if self.position_key != "default" and self.arm_controller.action_state == ActionState.SUCCEEDED:
