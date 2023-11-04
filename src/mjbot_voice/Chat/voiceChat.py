@@ -4,10 +4,10 @@ import openai
 
 ## ChatGPT
 # 3.5
-# openai.api_key = "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"
+openai.api_key = "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"
 
 # 4
-openai.api_key = "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"
+# openai.api_key = "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"
 
 # NAVER CLOVA
 client_id = "5ezz7ibsqa"
@@ -33,12 +33,16 @@ class MYOUNGJA():
 
     def gpt_send_anw(self, question: str):
         self.gpt_standard_messages = [{"role": "assistant",
-                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. please be a good friend to your patient. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use sad, daily, surprise, angry word when you analyze the emotion of answer. Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
-                                      {"role": "user", "content" : question}]
+                                       "content": f"You're a assistant robot for senior in South Korea. "
+                                                  f"Your name is 명자. Your being purpose is support.  "
+                                                  f"So Please answer politely and when you analyze feeling of patient, use English and except of that, use Korean under 5 seconds. please be a good friend to your patient. "
+                                                  f"and also analyze feeling of patient's sentence in one word using 'sad', 'daily', 'surprise', 'angry' word in English. please add the result of feeling as a one word inside () on last word in English "
+                                                     f"Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
+                                        {"role": "user", "content": question}]
 
         response = openai.ChatCompletion.create(
-            model="gpt-4",
-            #model="gpt-3.5-turbo",
+            #model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=self.gpt_standard_messages,
             temperature=0.8
         )
@@ -57,7 +61,9 @@ class MYOUNGJA():
             ans_emo = []
             ans_re = []
 
-            for k in range(temp + 1, temp + 3):
+            for k in range(temp + 1, temp + 10):
+                if ans_list[k] == ')':
+                    break
                 ans_emo.append(ans_list[k])
             ans_emotion = "".join(ans_emo)
 
@@ -70,7 +76,9 @@ class MYOUNGJA():
 
         self.gpt_standard_messages.append({"role": "user", "content": question})
         self.gpt_standard_messages.append({"role": "assistant", "content": answer})
-
+        print(answer)
+        print(ans_emotion)
+        print(ans_real)
         return [ans_emotion, ans_real]
 
 
