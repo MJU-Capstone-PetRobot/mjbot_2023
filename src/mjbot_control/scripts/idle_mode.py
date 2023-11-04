@@ -292,7 +292,7 @@ if __name__ == '__main__':
 
     try:
         while rclpy.ok():
-            if arm_controller.action_done_event.is_set():
+            if arm_controller.action_done_event.is_set() and arm_commander.position_key != 'holding_hand':
                 arm_controller.action_done_event.clear()
                 arm_commander.post_action_check()
             rate.sleep()
