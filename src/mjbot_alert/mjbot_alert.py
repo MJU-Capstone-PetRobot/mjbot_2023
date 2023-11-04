@@ -12,7 +12,7 @@ class ListeningNode(Node):
     def __init__(self):
         super().__init__('Listening_node')
         self.subscription = self.create_subscription(
-            Bool, 'fall_down', self.subscribe_callback, 10)
+            Bool, 'owner_fall', self.subscribe_callback, 10)
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_fire, 10)
 

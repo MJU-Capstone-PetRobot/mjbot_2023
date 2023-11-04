@@ -6,6 +6,7 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from std_msgs.msg import Int32, Bool
 import threading
+import time
 
 """
 Publisher : 감정(std_msgs.msg/String) , 팔 제어(std_msgs.msg/String)
@@ -54,19 +55,19 @@ class VoiceSuscriber(Node):
     def __init__(self):
         super().__init__('hear_node')
         self.subscription = self.create_subscription(
-            Bool, 'fall_down', self.subscribe_callback_fall_down, 10)
+            Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
         self.subscription = self.create_subscription(
-            String, 'Bat_state', self.subscribe_callback_bat_state, 10)
+            String, 'bat_percent', self.subscribe_callback_bat_state, 10)
         # self.subscription = self.create_subscription(
         #     Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
-            Int32, 'co', self.subscribe_callback_co, 10)
+            Int32, 'co_ppm', self.subscribe_callback_co, 10)
 
     def subscribe_callback_fall_down(self, msg):
         '''
         낙상
         '''
-        self.get_logger().info(f'Received: {msg.dat}')
+        self.get_logger().info(f'Received: {msg.data}')
 
         if msg.data == True:
             speaking("할머니 괜찮으세요??")
@@ -185,7 +186,12 @@ def main(args=None):
             while response != "":
                 if response == "산책 가자":  # 산책 가자
                     talking_node.publish_arm_motions("holding_hand")
-                    talking_node.publish_mode("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
                 elif response == "따라와":  # 따라와
                     talking_node.publish_mode("tracking")
                 elif response == "멈춰":  # 멈춰
@@ -203,13 +209,13 @@ def main(args=None):
                     emotion = response_[0]
 
                     # close, moving, wink, angry, sad, daily
-                    if emotion == "daily":
+                    if emotion == "평범":
                         talking_node.publish_emotions("daily")
-                    elif emotion == "surprise":
+                    elif emotion == "당황":
                         talking_node.publish_emotions("moving")
-                    elif emotion == "angry":
+                    elif emotion == "분노":
                         talking_node.publish_emotions("angry")
-                    elif emotion == "sad":
+                    elif emotion == "슬픔":
                         talking_node.publish_emotions("sad")
                     else:
                         talking_node.publish_emotions("daily")
