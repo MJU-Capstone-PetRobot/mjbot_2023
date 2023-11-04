@@ -4,10 +4,10 @@ import openai
 
 ## ChatGPT
 # 3.5
-# openai.api_key = "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"
+openai.api_key = "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"
 
 # 4
-openai.api_key = "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"
+# openai.api_key = "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"
 
 # NAVER CLOVA
 client_id = "5ezz7ibsqa"
@@ -33,12 +33,12 @@ class MYOUNGJA():
 
     def gpt_send_anw(self, question: str):
         self.gpt_standard_messages = [{"role": "assistant",
-                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. please be a good friend to your patient. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use sad, daily, surprise, angry word when you analyze the emotion of answer. Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
+                                   "content": f"You're a assistant robot for senior in South Korea. Your name is 명자. Your being purpose is support.  So Please answer politely in korean and under 5 seconds. please be a good friend to your patient. and also analyze feeling of patient's sentence in one word. please add the result of feeling as a one word inside () on last sentence and answer korean. You can use 슬픔, 평범, 당황, 분노 word when you analyze the emotion of answer. Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
                                       {"role": "user", "content" : question}]
 
         response = openai.ChatCompletion.create(
-            model="gpt-4",
-            #model="gpt-3.5-turbo",
+            # model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=self.gpt_standard_messages,
             temperature=0.8
         )
