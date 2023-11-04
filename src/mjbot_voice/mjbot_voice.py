@@ -57,7 +57,7 @@ class VoiceSuscriber(Node):
         self.subscription = self.create_subscription(
             Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
         self.subscription = self.create_subscription(
-            String, 'Bat_state', self.subscribe_callback_bat_state, 10)
+            String, 'bat_percent', self.subscribe_callback_bat_state, 10)
         # self.subscription = self.create_subscription(
         #     Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
