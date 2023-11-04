@@ -54,18 +54,18 @@ class HoldingHandNode(Node):
         # Check r_shoulder_pitch effort and set linear.x
         if r_shoulder_pitch_effort is not None:
             if r_shoulder_pitch_effort > 220:
-                cmd_vel.linear.x = 0.05
+                cmd_vel.linear.x = 0.1
             elif r_shoulder_pitch_effort < -220:
-                cmd_vel.linear.x = -0.05
+                cmd_vel.linear.x = -0.1
 
         # Check r_shoulder_roll effort and set angular.z and modify linear.x
         if r_shoulder_roll_effort is not None:
             if r_shoulder_roll_effort > 300:
-                cmd_vel.angular.z = 0.15
-                cmd_vel.linear.x = 0.05 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
+                cmd_vel.angular.z = 0.2
+                cmd_vel.linear.x = 0.1 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
             elif r_shoulder_roll_effort < -50:
-                cmd_vel.angular.z = -0.15
-                cmd_vel.linear.x = -0.05 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
+                cmd_vel.angular.z = -0.2
+                cmd_vel.linear.x = -0.1 if cmd_vel.linear.x == 0 else cmd_vel.linear.x
 
         self.target_cmd_vel = cmd_vel
         self.ramp_cmd_vel()
