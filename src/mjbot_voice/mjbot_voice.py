@@ -55,19 +55,19 @@ class VoiceSuscriber(Node):
     def __init__(self):
         super().__init__('hear_node')
         self.subscription = self.create_subscription(
-            Bool, 'fall_down', self.subscribe_callback_fall_down, 10)
+            Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
         self.subscription = self.create_subscription(
             String, 'Bat_state', self.subscribe_callback_bat_state, 10)
         # self.subscription = self.create_subscription(
         #     Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
-            Int32, 'co', self.subscribe_callback_co, 10)
+            Int32, 'co_ppm', self.subscribe_callback_co, 10)
 
     def subscribe_callback_fall_down(self, msg):
         '''
         낙상
         '''
-        self.get_logger().info(f'Received: {msg.dat}')
+        self.get_logger().info(f'Received: {msg.data}')
 
         if msg.data == True:
             speaking("할머니 괜찮으세요??")
