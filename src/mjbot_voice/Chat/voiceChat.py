@@ -65,7 +65,7 @@ class MYOUNGJA():
                 ans_re.append(ans_list[m])
             ans_real = "".join(ans_re)
         else:
-            ans_emotion = "daily"
+            ans_emotion = "평범"
             ans_real = ""
 
         self.gpt_standard_messages.append({"role": "user", "content": question})
