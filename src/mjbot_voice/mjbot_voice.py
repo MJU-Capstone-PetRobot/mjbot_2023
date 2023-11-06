@@ -1,18 +1,10 @@
 #!/usr/bin/python3
-import os
 from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from std_msgs.msg import Int32, Bool
 import threading
-import time
-
-"""
-Publisher : 감정(std_msgs.msg/String) , 팔 제어(std_msgs.msg/String)
-Subscriber : 낙상(std_msgs.msg/Bool) , 잔량(std_msgs.msg/String) , 쓰담쓰담(std_msgs.msg/Bool) , 일산화탄소(exmaple_interfaces.msg/Int32)  
-"""
-
 
 class TalkingNode(Node):
     def __init__(self):
