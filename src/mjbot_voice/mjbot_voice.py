@@ -65,20 +65,33 @@ class VoiceSuscriber(Node):
             speaking("할머니 괜찮으세요??")
 
     def subscribe_callback_bat_state(self, msg):
-        '''
-        화재
-        '''
         self.get_logger().info('Received: %s' % msg.data)
 
+        bat_list = list(msg.data)
+        bat_state = []
+        bat_hour = []
+        bat_min = []
         import json
+        for i in range(0, len(bat_list)):
+            if i is 0 or 1:
+                bat_state.append(bat_list[i])
+            elif i is 4:
+                bat_hour.append(bat_list[i])
+            elif bat_list[i] is not "m":
+                bat_min.append(bat_list[i])
+        bat_state_real = "".join(bat_state)
+        bat_hour_real = "".join(bat_hour)
+        bat_min_real = "".join(bat_min)
 
         write_data = {
-            "bat_state" : msg.data
+            "bat_state" : bat_state_real,
+            "bat_hour" : bat_hour_real,
+            "bat_min" : bat_min_real
         }
         with open('./bat_value.json', 'w') as d:
             json.dump(write_data, d)
 
-        if msg.data <= 40:
+        if int(bat_state_real) <= 40:
             speaking("할머니 배고파요")
 
 
@@ -134,6 +147,8 @@ def main(args=None):
         with open('./bat_value.json', 'r') as f:
             data = json.load(f)
             bat_state = data["bat_state"]
+            bat_hour = data["bat_hour"]
+            bat_min = data["bat_min"]
 
         # modes : tracking, holding_hand, idle, random_move
         mj = MYOUNGJA()
@@ -172,7 +187,7 @@ def main(args=None):
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
             elif response == "배터리":
-                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다.")
+                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {bat_hour}시간 {bat_min}분 남았습니다.")
 
 
             while response != "":
