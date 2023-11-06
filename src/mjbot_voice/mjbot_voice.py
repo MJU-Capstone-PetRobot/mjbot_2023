@@ -1,18 +1,11 @@
 #!/usr/bin/python3
-import os
 from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Uint16
 from std_msgs.msg import Int32, Bool
+from geometry_msgs.msg import Vector3
 import threading
-import time
-
-"""
-Publisher : 감정(std_msgs.msg/String) , 팔 제어(std_msgs.msg/String)
-Subscriber : 낙상(std_msgs.msg/Bool) , 잔량(std_msgs.msg/String) , 쓰담쓰담(std_msgs.msg/Bool) , 일산화탄소(exmaple_interfaces.msg/Int32)  
-"""
-
 
 class TalkingNode(Node):
     def __init__(self):
@@ -21,16 +14,20 @@ class TalkingNode(Node):
         self.publisher_emotions = self.create_publisher(
             String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
-        self.publisher_mode = self.create_publisher(String, 'mode', 10)
+        self.publisher_neck_z = self.create_publisher(Uint16, 'neck_z', 10)
+        self.publisher_neck_rpy = self.create_publisher(Vector3, 'neck_rpy', 10)
 
-    def publish_mode(self, mode):
-        '''
-        모드 제어
-        '''
-        msg = String()
-        msg.data = str(mode)
-        self.publisher_mode.publish(msg)
-        self.get_logger().info('Published: %s' % msg.data)
+    # def publish_neck_rpy(self, neck_rpy):
+    #     msg = Vector3
+    #     msg.data = Vector3(neck_rpy)
+    #     self.publisher_mode.publish(x,y,z)
+    #     self.get_logger().info('Published: %d' % msg.data)
+
+    def publish_neck_z(self, neck_z):
+        msg = Uint16()
+        msg.data = Uint16(neck_z)
+        self.publisher_mode.publish(neck_z)
+        self.get_logger().info('Published: %d' % msg.data)
 
     def publish_arm_motions(self, Arm_motions):
         '''
@@ -58,8 +55,8 @@ class VoiceSuscriber(Node):
             Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
         self.subscription = self.create_subscription(
             String, 'bat_percent', self.subscribe_callback_bat_state, 10)
-        # self.subscription = self.create_subscription(
-        #     Bool, 'touch', self.subscribe_callback_touch, 10)
+        self.subscription = self.create_subscription(
+            Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_co, 10)
 
@@ -73,31 +70,44 @@ class VoiceSuscriber(Node):
             speaking("할머니 괜찮으세요??")
 
     def subscribe_callback_bat_state(self, msg):
-        '''
-        화재
-        '''
         self.get_logger().info('Received: %s' % msg.data)
 
+        bat_list = list(msg.data)
+        bat_state = []
+        bat_hour = []
+        bat_min = []
         import json
+        for i in range(0, len(bat_list)):
+            if i is 0 or 1:
+                bat_state.append(bat_list[i])
+            elif i is 4:
+                bat_hour.append(bat_list[i])
+            elif bat_list[i] is not "m":
+                bat_min.append(bat_list[i])
+        bat_state_real = "".join(bat_state)
+        bat_hour_real = "".join(bat_hour)
+        bat_min_real = "".join(bat_min)
 
         write_data = {
-            "bat_state" : msg.data
+            "bat_state" : bat_state_real,
+            "bat_hour" : bat_hour_real,
+            "bat_min" : bat_min_real
         }
         with open('./bat_value.json', 'w') as d:
             json.dump(write_data, d)
 
-        if msg.data <= 40:
+        if int(bat_state_real) <= 40:
             speaking("할머니 배고파요")
 
 
-    # def subscribe_callback_touch(self, msg):
-    #     '''
-    #     터치
-    #     '''
-    #     self.get_logger().info(f'Received: {msg.data}')
+    def subscribe_callback_touch(self, msg):
+        '''
+        터치
+        '''
+        self.get_logger().info(f'Received: {msg.data}')
 
-    #     if msg.data == True:
-    #         speaking("깔깔깔")
+        if msg.data == True:
+            speaking("깔깔깔")
 
     def subscribe_callback_co(self, msg):
         '''
@@ -142,6 +152,8 @@ def main(args=None):
         with open('./bat_value.json', 'r') as f:
             data = json.load(f)
             bat_state = data["bat_state"]
+            bat_hour = data["bat_hour"]
+            bat_min = data["bat_min"]
 
         # modes : tracking, holding_hand, idle, random_move
         mj = MYOUNGJA()
@@ -180,7 +192,7 @@ def main(args=None):
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
             elif response == "배터리":
-                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다.")
+                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {bat_hour}시간 {bat_min}분 남았습니다.")
 
 
             while response != "":
@@ -209,13 +221,13 @@ def main(args=None):
                     emotion = response_[0]
 
                     # close, moving, wink, angry, sad, daily
-                    if emotion == "평범":
-                        talking_node.publish_emotions("daily")
-                    elif emotion == "당황":
+                    if emotion == "close":
+                        talking_node.publish_emotions("close")
+                    elif emotion == "moving":
                         talking_node.publish_emotions("moving")
-                    elif emotion == "분노":
+                    elif emotion == "angry":
                         talking_node.publish_emotions("angry")
-                    elif emotion == "슬픔":
+                    elif emotion == "sad":
                         talking_node.publish_emotions("sad")
                     else:
                         talking_node.publish_emotions("daily")
