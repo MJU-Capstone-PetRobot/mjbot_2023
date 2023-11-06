@@ -50,8 +50,8 @@ class VoiceSuscriber(Node):
             Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
         self.subscription = self.create_subscription(
             String, 'bat_percent', self.subscribe_callback_bat_state, 10)
-        # self.subscription = self.create_subscription(
-        #     Bool, 'touch', self.subscribe_callback_touch, 10)
+        self.subscription = self.create_subscription(
+            Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_co, 10)
 
@@ -95,14 +95,14 @@ class VoiceSuscriber(Node):
             speaking("할머니 배고파요")
 
 
-    # def subscribe_callback_touch(self, msg):
-    #     '''
-    #     터치
-    #     '''
-    #     self.get_logger().info(f'Received: {msg.data}')
+    def subscribe_callback_touch(self, msg):
+        '''
+        터치
+        '''
+        self.get_logger().info(f'Received: {msg.data}')
 
-    #     if msg.data == True:
-    #         speaking("깔깔깔")
+        if msg.data == True:
+            speaking("깔깔깔")
 
     def subscribe_callback_co(self, msg):
         '''
