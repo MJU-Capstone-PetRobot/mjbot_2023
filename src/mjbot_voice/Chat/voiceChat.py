@@ -33,6 +33,7 @@ class MYOUNGJA():
 
     def gpt_send_anw(self, question: str):
         self.gpt_standard_messages = [{"role": "assistant",
+
                                        "content": f"You're a assistant robot for senior in South Korea. "
                                                   f"Your name is 명자. Your being purpose is support.  "
                                                   f"So Please answer politely and when you analyze feeling of patient, use English and except of that, use Korean under 5 seconds. please be a good friend to your patient. "
@@ -42,6 +43,7 @@ class MYOUNGJA():
 
         response = openai.ChatCompletion.create(
             #model="gpt-4",
+
             model="gpt-3.5-turbo",
             messages=self.gpt_standard_messages,
             temperature=0.8
@@ -71,7 +73,7 @@ class MYOUNGJA():
                 ans_re.append(ans_list[m])
             ans_real = "".join(ans_re)
         else:
-            ans_emotion = "daily"
+            ans_emotion = "평범"
             ans_real = ""
 
         self.gpt_standard_messages.append({"role": "user", "content": question})
