@@ -4,6 +4,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Uint16
 from std_msgs.msg import Int32, Bool
+from geometry_msgs.msg import Vector3
 import threading
 
 class TalkingNode(Node):
@@ -14,6 +15,13 @@ class TalkingNode(Node):
             String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
         self.publisher_neck_z = self.create_publisher(Uint16, 'neck_z', 10)
+        self.publisher_neck_rpy = self.create_publisher(Vector3, 'neck_rpy', 10)
+
+    # def publish_neck_rpy(self, neck_rpy):
+    #     msg = Vector3
+    #     msg.data = Vector3(neck_rpy)
+    #     self.publisher_mode.publish(x,y,z)
+    #     self.get_logger().info('Published: %d' % msg.data)
 
     def publish_neck_z(self, neck_z):
         msg = Uint16()
