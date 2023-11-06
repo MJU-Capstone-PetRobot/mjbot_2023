@@ -2,7 +2,7 @@
 from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Uint16
 from std_msgs.msg import Int32, Bool
 import threading
 
@@ -13,16 +13,13 @@ class TalkingNode(Node):
         self.publisher_emotions = self.create_publisher(
             String, 'emo', 10)  # Updated topic name and message type
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
-        self.publisher_mode = self.create_publisher(String, 'mode', 10)
+        self.publisher_neck_z = self.create_publisher(Uint16, 'neck_z', 10)
 
-    def publish_mode(self, mode):
-        '''
-        모드 제어
-        '''
-        msg = String()
-        msg.data = str(mode)
-        self.publisher_mode.publish(msg)
-        self.get_logger().info('Published: %s' % msg.data)
+    def publish_neck_z(self, neck_z):
+        msg = Uint16()
+        msg.data = Uint16(neck_z)
+        self.publisher_mode.publish(neck_z)
+        self.get_logger().info('Published: %d' % msg.data)
 
     def publish_arm_motions(self, Arm_motions):
         '''
