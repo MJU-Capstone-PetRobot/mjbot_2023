@@ -11,18 +11,11 @@ from Alert.message_send import *
 class ListeningNode(Node):
     def __init__(self):
         super().__init__('Listening_node')
-        self.subscription = self.create_subscription(
-            Bool, 'owner_fall', self.subscribe_callback, 10)
+
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_fire, 10)
 
-    def subscribe_callback(self, msg):
 
-        self.get_logger().info('Received: %d' % msg.data)
-
-        if msg.data == True:
-            send_message(1)  # 낙상 사고 발생 문자 발송
-            time.sleep(1000)
 
     def subscribe_callback_fire(self, msg):
 
