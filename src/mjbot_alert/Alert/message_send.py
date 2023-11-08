@@ -48,9 +48,9 @@ def send_message(problem):
     client = Client(account_sid, auth_token)
     problem_thing = ""
 
-    if problem == 1:
-        problem_thing = "낙상 사고"
-    elif problem == 2:
+    # if problem == 1:
+    #     problem_thing = "낙상 사고"
+    if problem == 2:
         problem_thing = "화재 발생"
 
     message = client.messages \
