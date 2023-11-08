@@ -6,10 +6,6 @@ def googlemap_api():
     # 위도 경도 -> 지번 주소로 변경 // 역지오코드
     gmaps = googlemaps.Client(key=API)  # api key
     # latitude, longitude = gps_set()
-
-    ## GPS가 잘 안 되어서, 학교 주소로 임의로 설정
-    latitude = 37.57940
-    longitude = 126.88975
     
     reverse_geocode_result = \
         gmaps.reverse_geocode((latitude, longitude), language='ko')
@@ -26,8 +22,6 @@ def send_message(problem):
     client = Client(account_sid, auth_token)
     problem_thing = ""
 
-    # if problem == 1:
-    #     problem_thing = "낙상 사고"
     if problem == 2:
         problem_thing = "화재 발생"
 
