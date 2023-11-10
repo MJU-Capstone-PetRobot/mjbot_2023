@@ -126,7 +126,7 @@ def main(args=None):
         with open('./user_danger.json', 'r') as d:
             data__ = json.load(d)
             if data__["danger"] == "on":
-                publish_node.publisher_danger(1)
+                publish_node.publisher_danger(True)
                 break
 
     executor_thread.join()
