@@ -42,4 +42,4 @@ def danger_check():
     with open('./user_danger.json', 'r') as f:
         data = json.load(f)
         if data["danger"] == "1":
-            return 1
+            return "1"
