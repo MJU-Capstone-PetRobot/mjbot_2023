@@ -39,7 +39,7 @@ def send_message(problem):
 
 def danger_check():
     import json
-    with open('./user_danger.json', 'r') as f:
-        data_ = json.load(f)
+    with open('./user_danger.json', encoding="UTF-8") as f:
+        data_ = json.loads(f.read())
         if data_["danger"] == "on":
             return 1
