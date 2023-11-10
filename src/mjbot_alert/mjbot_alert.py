@@ -127,6 +127,7 @@ def main(args=None):
             data__ = json.load(d)
             if data__["danger"] == "on":
                 publish_node.publisher_danger(1)
+                break
 
     executor_thread.join()
     publish_node.destroy_node()
