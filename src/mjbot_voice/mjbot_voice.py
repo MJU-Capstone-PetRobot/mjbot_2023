@@ -39,11 +39,13 @@ class VoiceSuscriber(Node):
         self.subscription = self.create_subscription(
             Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
         self.subscription = self.create_subscription(
-            String, 'bat_percent', self.subscribe_callback_bat_state, 10)
-        self.subscription = self.create_subscription(
             Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_co, 10)
+        self.subscription = self.create_subscription(
+            String, 'bat_percent', self.subscribe_callback_bat_state, 10)
+        self.subscription = self.create_subscription(
+            String, 'bat_time', self.subscribe_callback_bat_time, 10)
 
     def subscribe_callback_fall_down(self, msg):
         '''
@@ -55,34 +57,49 @@ class VoiceSuscriber(Node):
             speaking("할머니 괜찮으세요??")
 
     def subscribe_callback_bat_state(self, msg):
+        import json
         self.get_logger().info('Received: %s' % msg.data)
 
-        bat_list = list(msg.data)
-        bat_state = []
-        bat_hour = []
-        bat_min = []
-        import json
-        for i in range(0, len(bat_list)):
-            if i is 0 or 1:
-                bat_state.append(bat_list[i])
-            elif i is 4:
-                bat_hour.append(bat_list[i])
-            elif bat_list[i] is not "m":
-                bat_min.append(bat_list[i])
-        bat_state_real = "".join(bat_state)
-        bat_hour_real = "".join(bat_hour)
-        bat_min_real = "".join(bat_min)
-
+        bat_state = float(msg.data)
         write_data = {
-            "bat_state" : bat_state_real,
-            "bat_hour" : bat_hour_real,
-            "bat_min" : bat_min_real
+            "bat_state": bat_state,
         }
-        with open('./bat_value.json', 'w') as d:
+
+        with open('./bat_time.json', 'w') as d:
             json.dump(write_data, d)
 
-        if int(bat_state_real) <= 40:
+        if bat_state <= 40.0:
             speaking("할머니 배고파요")
+
+    def subscribe_callback_bat_time(self, msg):
+        import json
+        self.get_logger().info('Received: %s' % msg.data)
+
+        bat_time = list(msg.data)
+        hour = []
+        min = []
+        j = 0
+        for i in range(0, len(bat_time)):
+            if bat_time[i] == 'h':
+                j = i
+            hour.append(bat_time[i])
+        for k in range(j+1,len(bat_time)):
+            if bat_time[k] == ' ':
+                continue
+            elif bat_time[k] == 'm':
+                break
+            else:
+                min.append(bat_time[k])
+        hour_ = "".join(hour)
+        min_ = "".join(min)
+
+        write_data = {
+            "hour": hour_,
+            "min": min_
+        }
+
+        with open('./bat_time.json', 'w') as d:
+            json.dump(write_data, d)
 
 
     def subscribe_callback_touch(self, msg):
@@ -134,11 +151,15 @@ def main(args=None):
         name_check()
 
         # 배터리 잔량 체크
-        with open('./bat_value.json', 'r') as f:
+        with open('./bat_percent.json', 'r') as f:
             data = json.load(f)
             bat_state = data["bat_state"]
-            bat_hour = data["bat_hour"]
-            bat_min = data["bat_min"]
+
+        # 남은 사용 가능 시간 체크
+        with open('./bat_time.json', 'r') as f:
+            data = json.load(f)
+            use_hour = data["hour"]
+            use_min = data["min"]
 
         # modes : tracking, holding_hand, idle, random_move
         mj = MYOUNGJA()
@@ -177,7 +198,7 @@ def main(args=None):
                 use_sound("./mp3/quiet.wav")
                 call_num = - 1000000
             elif response == "배터리":
-                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {bat_hour}시간 {bat_min}분 남았습니다.")
+                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
 
 
             while response != "":
