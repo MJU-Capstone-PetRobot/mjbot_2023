@@ -15,7 +15,7 @@ class SpeakingNode(Node):
             Bool, 'danger', 10)
 
     def publish_danger(self, dangers):
-        msg = Bool()
+        msg = Int32()
         msg.data = dangers
         self.publisher_danger.publish(msg)
         self.get_logger().info(f'Published: {msg.data}')
@@ -126,7 +126,7 @@ def main(args=None):
         with open('./user_danger.json', 'r') as d:
             data__ = json.load(d)
             if data__["danger"] == "on":
-                publish_node.publisher_danger(True)
+                publish_node.publisher_danger(1)
                 break
 
     executor_thread.join()
