@@ -111,8 +111,8 @@ def main(args=None):
 
     while(1):
         with open('./user_danger.json', 'r') as f:
-            data = json.load(f)
-            if data["danger"] == "on":
+            data__ = json.load(f)
+            if data__["danger"] == "on":
                 publish_node.publisher_danger(1)
 
     executor_thread.join()
