@@ -18,7 +18,7 @@ class SpeakingNode(Node):
         msg = Bool()
         msg.data = dangers
         self.publisher_danger.publish(msg)
-        self.get_logger().info('Published: %s' % msg.data)
+        self.get_logger().info(f'Published: {msg.data}')
 
 class ListeningNode(Node):
     def __init__(self):
