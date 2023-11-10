@@ -12,7 +12,7 @@ class SpeakingNode(Node):
         super().__init__('speaking_node')
         self.get_logger().info("Speaking Node")
         self.publisher_danger = self.create_publisher(
-            Bool, 'danger', 10)
+            Int32, 'danger', 10)
 
     def publish_danger(self, dangers):
         msg = Int32()
