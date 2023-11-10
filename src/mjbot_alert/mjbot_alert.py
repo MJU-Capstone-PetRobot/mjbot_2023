@@ -57,16 +57,23 @@ class ListeningNode(Node):
     def subscribe_callback_fall(self, msg):
         import json
 
+        write_data = {
+            "danger": "on"
+        }
+        write_nodata = {
+            "danger": "off"
+        }
+
         with open('./user_danger.json', 'w') as f:
-            data = json.load(f)
             if msg.data == 1:
-                data["danger"] = 1
+                json.dump(write_data, f)
 
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data == 1:
             time.sleep(100)
-            data["danger"] = 0
+            with open('./user_danger.json', 'w') as f:
+                json.dump(write_nodata, f)
 
     def subscribe_callback_gps(self, msg):
         import json
