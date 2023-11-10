@@ -37,14 +37,14 @@ class ListeningNode(Node):
         with open('./user_danger.json', 'w') as f:
             data = json.load(f)
             if msg.data >= 200:
-                data["danger"] = "1"
+                data["danger"] = "on"
 
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data >= 200:
             send_message(2)  # 화재 사고 발생 문자 발송
             time.sleep(100)
-            data["danger"] = "0"
+            data["danger"] = "off"
 
     def subscribe_callback_fall(self, msg):
         import json
@@ -110,7 +110,7 @@ def main(args=None):
 
     while(1):
         danger = danger_check()
-        if danger == "1":
+        if danger == 1:
             publish_node.publisher_danger(1)
 
     executor_thread.join()
