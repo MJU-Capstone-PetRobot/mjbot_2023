@@ -107,7 +107,6 @@ def main(args=None):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
-
     while(1):
         danger = danger_check()
         if danger == 1:

@@ -40,6 +40,6 @@ def send_message(problem):
 def danger_check():
     import json
     with open('./user_danger.json', 'r') as f:
-        data = json.load(f)
-        if data["danger"] == "on":
+        data_ = json.load(f)
+        if data_["danger"] == "on":
             return 1
