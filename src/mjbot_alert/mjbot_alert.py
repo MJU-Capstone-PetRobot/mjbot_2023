@@ -27,6 +27,8 @@ class ListeningNode(Node):
             String, 'gps', self.subscribe_callback_gps, 10)
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_fire, 10)
+        self.subscription = self.create_subscription(
+            Bool, 'owner_fall', self.subscribe_callback_fall, 10)
 
 
     def subscribe_callback_fire(self, msg):
@@ -41,6 +43,20 @@ class ListeningNode(Node):
 
         if msg.data >= 200:
             send_message(2)  # 화재 사고 발생 문자 발송
+            time.sleep(100)
+            data["danger"] = 0
+
+    def subscribe_callback_fall(self, msg):
+        import json
+
+        with open('./user_danger.json', 'w') as f:
+            data = json.load(f)
+            if msg.data == 1:
+                data["danger"] = 1
+
+        self.get_logger().info('Received: %s' % msg.data)
+
+        if msg.data == 1:
             time.sleep(100)
             data["danger"] = 0
 
