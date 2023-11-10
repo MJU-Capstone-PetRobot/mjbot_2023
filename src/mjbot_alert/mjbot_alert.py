@@ -44,7 +44,9 @@ class ListeningNode(Node):
         if msg.data >= 200:
             send_message(2)  # 화재 사고 발생 문자 발송
             time.sleep(100)
-            data["danger"] = "off"
+            with open('./user_danger.json', 'w') as f:
+                data["danger"] = "off"
+
 
     def subscribe_callback_fall(self, msg):
         import json
