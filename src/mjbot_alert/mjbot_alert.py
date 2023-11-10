@@ -107,12 +107,15 @@ def main(args=None):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
-
-    while(1):
-        with open('./user_danger.json', 'r') as f:
-            data = json.load(f)
-            if data["danger"] == 1:
-                publish_node.publisher_danger(1)
+    try:
+        while True:
+            with open('./user_danger.json', 'r') as f:
+                data = json.load(f)
+                if data["danger"] == 1:
+                    publish_node.publish_danger(1)
+            time.sleep(1)  
+    except KeyboardInterrupt:
+        pass
 
     executor_thread.join()
     publish_node.destroy_node()
