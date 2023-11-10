@@ -12,13 +12,13 @@ class SpeakingNode(Node):
         super().__init__('speaking_node')
         self.get_logger().info("Speaking Node")
         self.publisher_danger = self.create_publisher(
-            Int32, 'danger', 10)
+            Bool, 'danger', 10)
 
     def publish_danger(self, dangers):
-        msg = Int32()
+        msg = Bool()
         msg.data = dangers
         self.publisher_danger.publish(msg)
-        self.get_logger().info(f'Published: {msg.data}')
+        self.get_logger().info("[PUB] /danger [{}]".format(msg.data))
 
 class ListeningNode(Node):
     def __init__(self):
@@ -126,7 +126,7 @@ def main(args=None):
         with open('./user_danger.json', 'r') as d:
             data__ = json.load(d)
             if data__["danger"] == "on":
-                publish_node.publisher_danger(1)
+                publish_node.publisher_danger(True)
                 break
 
     executor_thread.join()
