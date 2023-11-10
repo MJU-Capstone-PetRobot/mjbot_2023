@@ -108,9 +108,10 @@ def main(args=None):
     executor_thread.start()
 
     while(1):
-        danger = danger_check()
-        if danger == 1:
-            publish_node.publisher_danger(1)
+        with open('./user_danger.json', 'r') as f:
+            data = json.load(f)
+            if data == "on":
+                publish_node.publisher_danger(1)
 
     executor_thread.join()
     publish_node.destroy_node()

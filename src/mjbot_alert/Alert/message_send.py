@@ -36,10 +36,3 @@ def send_message(problem):
         to="+821066860215"
     )
     print("메세지 전송 완료")
-
-def danger_check():
-    import json
-    with open('./user_danger.json', encoding="UTF-8") as f:
-        data_ = json.loads(f.read())
-        if data_["danger"] == "on":
-            return 1
