@@ -6,6 +6,18 @@ from rclpy.node import Node
 from std_msgs.msg import Bool, Int32, String
 from Alert.message_send import *
 
+class SpeakingNode(Node):
+    def __init__(self):
+        super().__init__('speaking_node')
+        self.get_logger().info("Speaking Node")
+        self.publisher_danger = self.create_publisher(
+            Bool, 'danger', 10)
+
+    def publish_danger(self, dangers):
+        msg = Bool()
+        msg.data = dangers
+        self.publisher_danger.publish(msg)
+        self.get_logger().info('Published: %s' % msg.data)
 
 class ListeningNode(Node):
     def __init__(self):
@@ -62,6 +74,7 @@ def main(args=None):
     rclpy.init(args=args)
     Listening_node = ListeningNode()
     rclpy.spin(Listening_node)
+
 
     Listening_node.destroy_node()
     rclpy.shutdown()
