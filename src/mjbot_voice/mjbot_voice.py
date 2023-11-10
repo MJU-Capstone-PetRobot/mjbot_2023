@@ -2,7 +2,7 @@
 from Chat.voiceChat import *
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String, Uint16
+from std_msgs.msg import String
 from std_msgs.msg import Int32, Bool
 import threading
 
