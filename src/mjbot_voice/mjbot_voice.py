@@ -137,18 +137,78 @@ class TalkingNode(Node):
 class VoiceSubscriber(Node):
     def __init__(self):
         super().__init__('hear_node')
-        self.create_subscription(
-            Bool, 'owner_fall', self.callback_fall_down, 10)
-        self.create_subscription(
-            String, 'bat_percent', self.callback_bat_state, 10)
-        self.create_subscription(Bool, 'touch', self.callback_touch, 10)
-        self.create_subscription(Int32, 'co_ppm', self.callback_co, 10)
+        self.subscription = self.create_subscription(
+            Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
+        self.subscription = self.create_subscription(
+            Bool, 'touch', self.subscribe_callback_touch, 10)
+        self.subscription = self.create_subscription(
+            Int32, 'co_ppm', self.subscribe_callback_co, 10)
+        self.subscription = self.create_subscription(
+            String, 'bat_percent', self.subscribe_callback_bat_state, 10)
+        self.subscription = self.create_subscription(
+            String, 'bat_time', self.subscribe_callback_bat_time, 10)
 
-    def callback_fall_down(self, msg):
-        if msg.data:
+    def subscribe_callback_fall_down(self, msg):
+        '''
+        낙상
+        '''
+        self.get_logger().info(f'Received: {msg.data}')
+
+        if msg.data == True:
             speaking("할머니 괜찮으세요??")
 
-    def callback_bat_state(self, msg):
+    def subscribe_callback_bat_state(self, msg):
+        import json
+        self.get_logger().info('Received: %s' % msg.data)
+
+        bat_state = float(msg.data)
+        write_data = {
+            "bat_state": bat_state,
+        }
+
+        with open('./bat_time.json', 'w') as d:
+            json.dump(write_data, d)
+
+        if bat_state <= 40.0:
+            speaking("할머니 배고파요")
+
+    def subscribe_callback_bat_time(self, msg):
+        import json
+        self.get_logger().info('Received: %s' % msg.data)
+
+        bat_time = list(msg.data)
+        hour = []
+        min = []
+        j = 0
+        for i in range(0, len(bat_time)):
+            if bat_time[i] == 'h':
+                j = i
+            hour.append(bat_time[i])
+        for k in range(j+1,len(bat_time)):
+            if bat_time[k] == ' ':
+                continue
+            elif bat_time[k] == 'm':
+                break
+            else:
+                min.append(bat_time[k])
+        hour_ = "".join(hour)
+        min_ = "".join(min)
+
+        write_data = {
+            "hour": hour_,
+            "min": min_
+        }
+
+        with open('./bat_time.json', 'w') as d:
+            json.dump(write_data, d)
+
+
+    def subscribe_callback_touch(self, msg):
+        '''
+        터치
+        '''
+
+
         self.get_logger().info(f'Received: {msg.data}')
         bat_state, bat_hour, bat_min = parse_battery_status(msg.data)
         save_battery_status(bat_state, bat_hour, bat_min)
@@ -174,12 +234,17 @@ def conversation_loop(talking_node):
     while rclpy.ok():  # Use rclpy.ok() to check for shutdown signals
         name_check()
 
-        # Load battery status
-        with open('./bat_value.json', 'r') as f:
+        # 배터리 잔량 체크
+        with open('./bat_percent.json', 'r') as f:
             data = json.load(f)
-        bat_state = data["bat_state"]
-        bat_hour = data["bat_hour"]
-        bat_min = data["bat_min"]
+            bat_state = data["bat_state"]
+
+        # 남은 사용 가능 시간 체크
+        with open('./bat_time.json', 'r') as f:
+            data = json.load(f)
+            use_hour = data["hour"]
+            use_min = data["min"]
+
 
         # Experimental feature to initiate conversation
         if not common:
@@ -192,34 +257,46 @@ def conversation_loop(talking_node):
         response = mic(2)
         if response == "":
             call_num += 1
-            if call_num == 3:
-                use_sound("./mp3/say_my_name.wav")
-                call_num = 0
-        else:
-            if response == "로봇":
-                use_sound("./mp3/yes.wav")
-                talking_node.publish_emotions("mic_waiting")
-                response = mic(3)
-                talking_node.publish_emotions("daily")
 
-                # Process the response
-                if response == "초기화":
-                    use_sound("./mp3/reset.wav")
-                    name_ini()
-                elif response == "종료":
-                    use_sound("./mp3/off.wav")
-                    break  # Exit the loop to shutdown
-                elif response == "조용":
-                    use_sound("./mp3/quiet.wav")
-                    call_num = -1000000  # Effectively disables the call response
-                elif response == "배터리":
-                    speaking(
-                        f"배터리 잔량은 {bat_state}%입니다. 남은 사용 시간은 {bat_hour}시간 {bat_min}분입니다.")
-                elif response == "따라와":
-                    talking_node.publish_arm_motions("tracking")
-                elif response == "멈춰":
-                    talking_node.publish_arm_motions("idle")
-                elif response == "오른손":
+            print(call_num)
+        if call_num == 3:
+            use_sound("./mp3/say_my_name.wav")
+            call_num = 0
+        if response == "로봇":
+            use_sound("./mp3/yes.wav")
+            # 대답 기다리는 동안 표정 변화
+            talking_node.publish_emotions("mic_waiting")
+            response = mic(3)
+            talking_node.publish_emotions("daily")
+
+            if response == "초기화":
+                use_sound("./mp3/reset.wav")
+                name_ini()
+            elif response == "종료":
+                use_sound("./mp3/off.wav")
+                break
+            elif response == "조용":
+                use_sound("./mp3/quiet.wav")
+                call_num = - 1000000
+            elif response == "배터리":
+                speaking(f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
+
+
+            while response != "":
+                if response == "산책 가자":  # 산책 가자
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
+                    time.sleep(1)
+                    talking_node.publish_arm_motions("holding_hand")
+                elif response == "따라와":  # 따라와
+                    talking_node.publish_mode("tracking")
+                elif response == "멈춰":  # 멈춰
+                    talking_node.publish_mode("idle")
+                elif response == "오른손":  # 오른손
+
                     talking_node.publish_arm_motions("give_right_hand")
                 elif response == "왼손":
                     talking_node.publish_arm_motions("give_left_hand")
