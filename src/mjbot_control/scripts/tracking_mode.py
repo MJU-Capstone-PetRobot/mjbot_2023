@@ -78,7 +78,8 @@ class TrackingDriver(Node):
             linear_speed = 0.0
             angular_speed = 0.0
         elif person_distance >= 1200:
-            linear_speed = 0.05  # Max speed is 0.1 when person_distance is greater than or equal to 1200
+            # Max speed is 0.1 when person_distance is greater than or equal to 1200
+            linear_speed = 0.05
         else:
             # Linear interpolation between 0 and 0.1 based on the range of person_distance
             linear_speed = (person_distance - 800) * 0.1 / 400
