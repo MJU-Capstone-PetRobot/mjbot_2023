@@ -4,5 +4,5 @@
     },
     "python.formatting.provider": "none",
     "cmake.configureOnOpen": false,
-    "cmake.sourceDirectory": "/home/mju/Desktop/mjbot_2023/src/mjbot_alert"
+    "cmake.sourceDirectory": "/home/drcl/Desktop/dev/mjbot_2023/src/mjbot_alert"
 }

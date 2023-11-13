@@ -108,11 +108,12 @@ class ArmCommander(Node):
     def mode_callback(self, msg: String):
         self.current_mode = msg.data
         self.get_logger().info(f"Mode switched to: {self.current_mode}")
-
-        if self.current_mode == "idle":
-            # Here you can place any logic that should run when mode switches to "idle"
-            self.position_key = 'default'
-            self.set_and_send_arm_position(self.poses[self.position_key])
+        if self.current_mode == None:
+            self.current_mode = "idle"
+        # if self.current_mode == "idle":
+        #     # Here you can place any logic that should run when mode switches to "idle"
+        #     # self.position_key = 'default'
+        #     self.set_and_send_arm_position(self.poses[self.position_key])
 
     def joint_states_callback(self, msg: JointState):
         """Callback to handle incoming JointState messages."""
@@ -205,8 +206,8 @@ class ArmCommander(Node):
         if self.position_key:
             self.set_and_send_arm_position(self.poses[self.position_key])
             # Reset to default after the emotion
-            self.create_timer(
-                2.0, lambda: self.set_and_send_arm_position(self.poses['default']))
+            time.sleep(2)
+            self.set_and_send_arm_position(self.poses['default'])
 
     def arm_move_alert(self):
         self.trajectory_msg.trajectory.points = []
@@ -286,7 +287,7 @@ if __name__ == '__main__':
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
 
-    arm_commander.send_startup_sequence()
+    # arm_commander.send_startup_sequence()
 
     rate = arm_commander.create_rate(50)
 

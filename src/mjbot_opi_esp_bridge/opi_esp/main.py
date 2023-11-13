@@ -36,8 +36,6 @@ class OpiEspNode(Node):
 
         self.neck = [0, 0, 0, 0]
 
-
-
         # 발행
         self.publisher_ultrasonic_1_ = self.create_publisher(
             Range, "ultrasonic_1", 10)
@@ -135,18 +133,16 @@ class OpiEspNode(Node):
         self.get_logger().info(
             "[SUB] /neck_rpyz: [{}][{}][{}][{}]".format(sub_msg.x, sub_msg.y, sub_msg.z, sub_msg.w))
 
-
         self.neck[0] = sub_msg.x
         self.neck[1] = sub_msg.y
         self.neck[2] = sub_msg.z
-
         self.neck[3] = sub_msg.w
 
-        opi_packet = '(N^' + str(self.neck[0])+','+ str(self.neck[1])+','+str(self.neck[2])+','+str(self.neck[3])+ ')'
+        opi_packet = '(N^' + str(self.neck[0])+',' + str(
+            self.neck[1])+','+str(self.neck[2])+','+str(self.neck[3]) + ')'
         SerialObj.write(opi_packet.encode())
-        #opi_packet = '(N^' + ', '.join(map(str, self.neck)) + ')'
-        #SerialObj.write(opi_packet.encode())
         opi_packet = ''
+
 
 def receive_from_esp(SerialObj):
     global esp_packet
@@ -176,8 +172,9 @@ def receive_from_esp(SerialObj):
                         distance2 = esp_packet[start_index:-1]
 
                         try:
-                                # Attempt to parse the distances as floats
-                            node.publisher_ultrasonic(float(distance1), float(distance2))
+                            # Attempt to parse the distances as floats
+                            node.publisher_ultrasonic(
+                                float(distance1), float(distance2))
                         except ValueError:
                             node.get_logger().error("Invalid distance data received:")
                     elif esp_packet[1] == 'B' and esp_packet[2] == 'D':
