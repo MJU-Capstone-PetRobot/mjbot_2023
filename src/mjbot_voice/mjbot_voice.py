@@ -202,24 +202,11 @@ class VoiceSubscriber(Node):
         with open('./bat_time.json', 'w') as d:
             json.dump(write_data, d)
 
-
     def subscribe_callback_touch(self, msg):
-        '''
-        터치
-        '''
-
-
-        self.get_logger().info(f'Received: {msg.data}')
-        bat_state, bat_hour, bat_min = parse_battery_status(msg.data)
-        save_battery_status(bat_state, bat_hour, bat_min)
-        if int(bat_state) <= 40:
-            speaking("할머니 배고파요")
-
-    def callback_touch(self, msg):
         if msg.data:
             speaking("깔깔깔")
 
-    def callback_co(self, msg):
+    def subscribe_callback_co(self, msg):
         if msg.data >= 200:
             speaking("할머니 불이 났어요!!")
 
