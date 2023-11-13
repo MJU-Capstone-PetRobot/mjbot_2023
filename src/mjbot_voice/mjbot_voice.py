@@ -2,7 +2,9 @@
 import openwakeword
 import rclpy
 from rclpy.node import Node
+
 from std_msgs.msg import String, Bool, Int32
+
 import threading
 import json
 import os
@@ -110,8 +112,15 @@ class TalkingNode(Node):
         self.publisher_emotions = self.create_publisher(String, 'emo', 10)
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
 
-    def publish_arm_motions(self, arm_motions):
-        self._publish_message(arm_motions, self.publisher_arm_mode)
+    def publish_arm_motions(self, Arm_motions):
+        '''
+        모터 제어
+        '''
+        msg = String()
+        msg.data = str(Arm_motions)
+        self.publisher_arm_mode.publish(msg)
+        self.get_logger().info('Published: %s' % msg.data)
+
 
     def publish_emotions(self, emotions):
         self._publish_message(emotions, self.publisher_emotions)
