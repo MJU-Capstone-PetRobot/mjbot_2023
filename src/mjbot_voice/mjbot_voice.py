@@ -1,17 +1,115 @@
-#!/usr/bin/python3
-from Chat.voiceChat import *
+#!/usr/bin/env python3
+import openwakeword
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
-from std_msgs.msg import Int32, Bool
+
+from std_msgs.msg import String, Bool, Int32
+
 import threading
+import json
+import os
+import time
+import pyaudio
+
+# Assuming these functions are correctly implemented in the Chat.voiceChat module
+from Chat.voiceChat import speaking, use_sound, mic, name_check, name_ini
+
+# Global variables for file names
+SAMPLE_WAV = "./sampleWav.wav"
+RESULT_MP3 = "./ResultMP3.mp3"
+YES_WAV = "./yes.wav"
+BAT_VALUE_JSON = './bat_value.json'
+
+# Helper function to clean up audio files
+
+
+def init_wake_word():
+    wake_word_engine = openwakeword.create(
+        model_path="./src/mjbot_voice/models/openwakeword_model.pmdl",  # example model path
+        sensitivity=0.5  # example sensitivity setting
+    )
+    pa = pyaudio.PyAudio()
+    audio_stream = pa.open(
+        rate=wake_word_engine.sample_rate,
+        channels=1,
+        format=pyaudio.paInt16,
+        input=True,
+        frames_per_buffer=wake_word_engine.frame_length
+    )
+    return wake_word_engine, pa, audio_stream
+
+
+def cleanup_wake_word(wake_word_engine, pa, audio_stream):
+    if wake_word_engine is not None:
+        wake_word_engine.delete()
+    if audio_stream is not None:
+        audio_stream.close()
+    if pa is not None:
+        pa.terminate()
+
+
+def file_cleanup():
+    for file_path in [SAMPLE_WAV, RESULT_MP3, YES_WAV]:
+        remove_file_if_exists(file_path)
+
+
+# Helper function to parse the battery status
+
+def remove_file_if_exists(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+
+def parse_battery_status(bat_status):
+    bat_state, bat_hour, bat_min = bat_status[:
+                                              2], bat_status[3], bat_status[4:-1]
+    return {
+        "state": int(''.join(bat_state)),
+        "hour": ''.join(bat_hour),
+        "minute": ''.join(bat_min)
+    }
+
+# Helper function to save battery status to JSON
+
+
+def save_battery_status(bat_state, bat_hour, bat_min):
+    write_data = {
+        "bat_state": bat_state,
+        "bat_hour": bat_hour,
+        "bat_min": bat_min
+    }
+    with open(BAT_VALUE_JSON, 'w') as file:
+        json.dump(write_data, file)
+
+# Helper function for threaded execution of ROS nodes
+
+
+def start_executor_thread(executor):
+    executor_thread = threading.Thread(target=executor.spin)
+    executor_thread.start()
+    return executor_thread
+
+# Talking Node definition
+
+
+def wake_word_loop(talking_node, wake_word_engine, audio_stream):
+    print("Waiting for the wake word...")
+    while rclpy.ok():
+        pcm = audio_stream.read(
+            wake_word_engine.frame_length, exception_on_overflow=False)
+        is_wake_word_detected = wake_word_engine.process(pcm)
+
+        if is_wake_word_detected:
+            print("Wake word detected!")
+            conversation_loop(talking_node)
+            # If you want to continue listening for the wake word after a conversation, do not break here
+
 
 class TalkingNode(Node):
     def __init__(self):
         super().__init__('talking_node')
-        self.get_logger().info("Talking Node")
-        self.publisher_emotions = self.create_publisher(
-            String, 'emo', 10)  # Updated topic name and message type
+        self.get_logger().info("Talking Node initialized")
+        self.publisher_emotions = self.create_publisher(String, 'emo', 10)
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
 
     def publish_arm_motions(self, Arm_motions):
@@ -23,17 +121,20 @@ class TalkingNode(Node):
         self.publisher_arm_mode.publish(msg)
         self.get_logger().info('Published: %s' % msg.data)
 
+
     def publish_emotions(self, emotions):
-        '''
-        감정 제어
-        '''
+        self._publish_message(emotions, self.publisher_emotions)
+
+    def _publish_message(self, message, publisher):
         msg = String()
-        msg.data = str(emotions)
-        self.publisher_emotions.publish(msg)
-        self.get_logger().info('Published: %s' % msg.data)
+        msg.data = str(message)
+        publisher.publish(msg)
+        self.get_logger().info(f'Published: {msg.data}')
+
+# Voice Subscriber Node definition
 
 
-class VoiceSuscriber(Node):
+class VoiceSubscriber(Node):
     def __init__(self):
         super().__init__('hear_node')
         self.subscription = self.create_subscription(
@@ -106,48 +207,31 @@ class VoiceSuscriber(Node):
         '''
         터치
         '''
-        self.get_logger().info(f'Received: {msg.data}')
 
-        if msg.data == True:
+
+        self.get_logger().info(f'Received: {msg.data}')
+        bat_state, bat_hour, bat_min = parse_battery_status(msg.data)
+        save_battery_status(bat_state, bat_hour, bat_min)
+        if int(bat_state) <= 40:
+            speaking("할머니 배고파요")
+
+    def callback_touch(self, msg):
+        if msg.data:
             speaking("깔깔깔")
 
-    def subscribe_callback_co(self, msg):
-        '''
-        화재
-        '''
-        self.get_logger().info('Received: %d' % msg.data)
-
+    def callback_co(self, msg):
         if msg.data >= 200:
             speaking("할머니 불이 났어요!!")
 
 
-def main(args=None):
-    import json
-    import os
-    from os import path
-    global common
-    import time
-    common = 0
-    rclpy.init(args=args)
-    talking_node = TalkingNode()
-    hear_node = VoiceSuscriber()
-
-    executor = rclpy.executors.MultiThreadedExecutor()
-    executor.add_node(talking_node)
-    executor.add_node(hear_node)
-
-    executor_thread = threading.Thread(target=executor.spin)
-    executor_thread.start()
-
-    if path.exists("./sampleWav.wav"):
-        os.remove("./sampleWav.wav")
-    if path.exists("./ResultMP3.mp3"):
-        os.remove("./ResultMP3.mp3")
-    if path.exists("yes.wav"):
-        os.remove("./yes.wav")
-
+def conversation_loop(talking_node):
     call_num = 0
-    while 1:
+    common = False
+
+    # Clean up before starting the loop
+    file_cleanup()
+
+    while rclpy.ok():  # Use rclpy.ok() to check for shutdown signals
         name_check()
 
         # 배터리 잔량 체크
@@ -161,22 +245,19 @@ def main(args=None):
             use_hour = data["hour"]
             use_min = data["min"]
 
-        # modes : tracking, holding_hand, idle, random_move
-        mj = MYOUNGJA()
 
-        # 먼저 말 거는 기능 실험용
-        if common == 0:
+        # Experimental feature to initiate conversation
+        if not common:
             use_sound("./mp3/ex1.wav")
             time.sleep(2)
             use_sound("./mp3/ex_2.wav")
-        common = 1
-        # 먼저 말 거는 기능
-        # speak_first()
+            common = True
 
-        # 대화 시작
+        # Start of the conversation
         response = mic(2)
         if response == "":
             call_num += 1
+
             print(call_num)
         if call_num == 3:
             use_sound("./mp3/say_my_name.wav")
@@ -215,18 +296,20 @@ def main(args=None):
                 elif response == "멈춰":  # 멈춰
                     talking_node.publish_mode("idle")
                 elif response == "오른손":  # 오른손
+
                     talking_node.publish_arm_motions("give_right_hand")
-                elif response == "왼손":  # 왼손
+                elif response == "왼손":
                     talking_node.publish_arm_motions("give_left_hand")
-                elif response == "안아줘":  # 안기
+                elif response == "안아줘":
                     talking_node.publish_arm_motions("hug")
                 elif response == "조용":
                     break
                 else:
+                    # Assuming `mj.gpt_send_anw` is a function that returns a tuple (emotion, response)
                     response_ = mj.gpt_send_anw(response)
                     emotion = response_[0]
 
-                    # close, moving, wink, angry, sad, daily
+                    # React based on the emotion
                     if emotion == "close":
                         talking_node.publish_emotions("close")
                     elif emotion == "moving":
@@ -237,22 +320,45 @@ def main(args=None):
                         talking_node.publish_emotions("sad")
                     else:
                         talking_node.publish_emotions("daily")
-                    ans = response_[1]
 
+                    ans = response_[1]
                     speaking(ans)
                     talking_node.publish_emotions("daily")
-                os.remove("sampleWav.wav")
 
-                talking_node.publish_emotions("mic_wating")
-                response = mic(3)
+                # Remove temporary files after processing each response
+                file_cleanup()
 
-                if response == "":
-                    os.remove("sampleWav.wav")
-                    break
+        # If no response, clean up and prepare for the next iteration
+        if response == "":
+            file_cleanup()
 
-    executor_thread.join()
+    # Clean up and shutdown after breaking out of the loop
+    file_cleanup()
     talking_node.destroy_node()
     rclpy.shutdown()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    talking_node = TalkingNode()
+    hear_node = VoiceSubscriber()
+
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(talking_node)
+    executor.add_node(hear_node)
+
+    wake_word_engine, pa, audio_stream = init_wake_word()
+
+    executor_thread = start_executor_thread(executor)
+
+    try:
+        wake_word_loop(talking_node, wake_word_engine, audio_stream)
+    finally:
+        cleanup_wake_word(wake_word_engine, pa, audio_stream)
+        if executor_thread.is_alive():
+            executor_thread.join()
+        talking_node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
