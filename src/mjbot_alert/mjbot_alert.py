@@ -14,11 +14,11 @@ class SpeakingNode(Node):
         self.publisher_danger = self.create_publisher(
             Bool, 'danger', 10)
 
-    def publish_danger(self, dangers):
+    def publish_danger(self, danger):
         msg = Bool()
-        msg.data = dangers
+        msg.data = danger
         self.publisher_danger.publish(msg)
-        self.get_logger().info('Published: %s' % msg.data)
+        self.get_logger().info("[PUB] /danger [{}]".format(msg.data))
 
 class ListeningNode(Node):
     def __init__(self):
@@ -34,31 +34,46 @@ class ListeningNode(Node):
     def subscribe_callback_fire(self, msg):
         import json
 
+        write_data = {
+            "danger": "on"
+        }
+        write_nodata = {
+            "danger": "off"
+        }
+
         with open('./user_danger.json', 'w') as f:
-            data = json.load(f)
             if msg.data >= 200:
-                data["danger"] = 1
+                json.dump(write_data, f)
 
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data >= 200:
             send_message(2)  # 화재 사고 발생 문자 발송
             time.sleep(100)
-            data["danger"] = 0
+            with open('./user_danger.json', 'w') as f:
+                json.dump(write_nodata, f)
+
 
     def subscribe_callback_fall(self, msg):
         import json
 
+        write_data = {
+            "danger": "on"
+        }
+        write_nodata = {
+            "danger": "off"
+        }
+
         with open('./user_danger.json', 'w') as f:
-            data = json.load(f)
             if msg.data == 1:
-                data["danger"] = 1
+                json.dump(write_data, f)
 
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data == 1:
             time.sleep(100)
-            data["danger"] = 0
+            with open('./user_danger.json', 'w') as f:
+                json.dump(write_nodata, f)
 
     def subscribe_callback_gps(self, msg):
         import json
@@ -107,12 +122,12 @@ def main(args=None):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
 
-
     while(1):
-        with open('./user_danger.json', 'r') as f:
-            data = json.load(f)
-            if data["danger"] == 1:
-                publish_node.publisher_danger(1)
+        with open('./user_danger.json', 'r') as d:
+            data__ = json.load(d)
+            if data__["danger"] == "on":
+                publish_node.publish_danger(True)
+                break
 
     executor_thread.join()
     publish_node.destroy_node()
