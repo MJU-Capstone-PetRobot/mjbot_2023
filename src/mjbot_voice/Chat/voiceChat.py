@@ -4,7 +4,7 @@ import openai
 
 # ChatGPT
 # 3.5
-openai.api_key = "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"
+openai.api_key = "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"
 
 # 4
 # openai.api_key = "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"
