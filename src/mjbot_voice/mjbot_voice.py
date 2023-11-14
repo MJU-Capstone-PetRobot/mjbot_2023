@@ -236,6 +236,7 @@ def conversation_loop(talking_node):
             while True:
                 # 대답 기다리는 동안 표정 변화
                 talking_node.publish_emotions("mic_waiting")
+                print("마이크 작동")
                 response = mic(3)
                 talking_node.publish_emotions("daily")
 
@@ -289,13 +290,10 @@ def conversation_loop(talking_node):
                         speaking(ans)
                         talking_node.publish_emotions("daily")
                 elif response == "":
+                    print("대답 없음 종료")
                     break
-
-                # Remove temporary files after processing each response
-                file_cleanup()
+                print("while 문 종료")
                 break
-            break
-
 
 def start_executor_thread(executor):
     """Start a threaded execution of ROS nodes."""
@@ -320,6 +318,7 @@ def main():
     try:
         while True:
             shut_down = conversation_loop(talking_node)
+            file_cleanup()
             if not shut_down:
                 break
     finally:
