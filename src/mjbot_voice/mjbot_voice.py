@@ -210,7 +210,6 @@ def conversation_loop(talking_node):
 
     # Main loop for wake word detection
     while True:
-        print("wake word 시작")
         # Get audio
         audio_data, overflowed = stream.read(CHUNK)
         if overflowed:
@@ -290,7 +289,6 @@ def conversation_loop(talking_node):
                         speaking(ans)
                         talking_node.publish_emotions("daily")
                 elif response == "":
-                    print("대답 없음")
                     break
 
             return True
