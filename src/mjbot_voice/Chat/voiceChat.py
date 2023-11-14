@@ -2,9 +2,9 @@ import time
 
 import openai
 
-## ChatGPT
+# ChatGPT
 # 3.5
-openai.api_key = "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"
+openai.api_key = "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"
 
 # 4
 # openai.api_key = "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"
@@ -38,11 +38,11 @@ class MYOUNGJA():
                                                   f"Your name is 명자. Your being purpose is support.  "
                                                   f"So Please answer politely and when you analyze feeling of patient, use English and except of that, use Korean under 5 seconds. please be a good friend to your patient. "
                                                   f"and also analyze feeling of patient's sentence in one word using 'close','sad', 'daily', 'moving', 'angry' word in English. please add the result of feeling as a one word inside () on last word in English "
-                                                     f"Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
-                                        {"role": "user", "content": question}]
+                                       f"Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
+                                      {"role": "user", "content": question}]
 
         response = openai.ChatCompletion.create(
-            #model="gpt-4",
+            # model="gpt-4",
 
             model="gpt-3.5-turbo",
             messages=self.gpt_standard_messages,
@@ -76,8 +76,10 @@ class MYOUNGJA():
             ans_emotion = "평범"
             ans_real = ""
 
-        self.gpt_standard_messages.append({"role": "user", "content": question})
-        self.gpt_standard_messages.append({"role": "assistant", "content": answer})
+        self.gpt_standard_messages.append(
+            {"role": "user", "content": question})
+        self.gpt_standard_messages.append(
+            {"role": "assistant", "content": answer})
         print(answer)
         print(ans_emotion)
         print(ans_real)
@@ -94,7 +96,8 @@ def speak_first():
 
     tm = localtime()
 
-    question_list = ["오늘 몸 상태는 어때요?", "저는 오늘도 행복해요. 오늘 어떠세요??", "", "", "", "", "", "", "", ""]
+    question_list = ["오늘 몸 상태는 어때요?",
+                     "저는 오늘도 행복해요. 오늘 어떠세요??", "", "", "", "", "", "", "", ""]
 
     if tm.tm_hour == 7 and tm.tm_min == 00:
         speaking("좋은 아침이에요!! 오늘도 좋은 하루 되세요!!")
@@ -163,33 +166,33 @@ def mic(time):
     import sounddevice as sd
     from scipy.io.wavfile import write
 
-
     # 음성 녹음
     fs = 44100
     seconds = time
 
-    myRecording = sd.rec(int(seconds * fs), samplerate=fs, channels=4)  # channels는 마이크 장치 번호
+    myRecording = sd.rec(int(seconds * fs), samplerate=fs,
+                         channels=4)  # channels는 마이크 장치 번호
     print("녹음 시작")
     # 마이크 장치 번호 찾기 => python -m sounddevice
     sd.wait()
     write('sampleWav.wav', fs, myRecording)
 
     # Voice To Text => 목소리를 텍스트로 변환
-    ## 기본 설정
+    # 기본 설정
     lang = "Kor"  # 언어 코드 ( Kor, Jpn, Eng, Chn )
     url = "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=" + lang
 
-    ## 녹음된 Voice 파일
+    # 녹음된 Voice 파일
     data_voice = open('sampleWav.wav', 'rb')
 
-    ## 사용할 header
+    # 사용할 header
     headers = {
         "X-NCP-APIGW-API-KEY-ID": client_id,
         "X-NCP-APIGW-API-KEY": client_secret,
         "Content-Type": "application/octet-stream"
     }
 
-    ## VTT 출력
+    # VTT 출력
     response = requests.post(url, data=data_voice, headers=headers)
 
     result_man = str(response.text)
@@ -258,14 +261,16 @@ def name_check():
 
     return [name_, manWoman_]
 
+
 def name_ini():
     import json
     write_data = {
-            "user_name": "",
-            "user_value": ""
-        }
+        "user_name": "",
+        "user_value": ""
+    }
     with open('./user_value.json', 'w') as d:
-                json.dump(write_data, d)
+        json.dump(write_data, d)
+
 
 def use_sound(loc):
     from playsound import playsound as pl
