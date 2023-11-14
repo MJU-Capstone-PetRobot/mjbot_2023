@@ -15,7 +15,7 @@ from Chat.voiceChat import *
 SAMPLE_WAV = "./sampleWav.wav"
 RESULT_MP3 = "./ResultMP3.mp3"
 YES_WAV = "./yes.wav"
-BAT_VALUE_JSON = './bat_value.json'
+BAT_VALUE_JSON = 'user_data/bat_value.json'
 
 # Audio Configuration
 CHANNELS = 1
@@ -128,7 +128,7 @@ class VoiceSubscriber(Node):
             "bat_state": bat_state,
         }
 
-        with open('./bat_time.json', 'w') as d:
+        with open('user_data/bat_time.json', 'w') as d:
             json.dump(write_data, d)
 
         if bat_state <= 40.0:
@@ -161,7 +161,7 @@ class VoiceSubscriber(Node):
             "min": min_
         }
 
-        with open('./bat_time.json', 'w') as d:
+        with open('user_data/bat_time.json', 'w') as d:
             json.dump(write_data, d)
 
     def subscribe_callback_co(self, msg):
@@ -180,12 +180,12 @@ def conversation_loop(talking_node):
     name_check()
 
     # 배터리 잔량 체크
-    with open('./bat_percent.json', 'r') as f:
+    with open('user_data/bat_percent.json', 'r') as f:
         data = json.load(f)
         bat_state = data["bat_state"]
 
     # 남은 사용 가능 시간 체크
-    with open('./bat_time.json', 'r') as f:
+    with open('user_data/bat_time.json', 'r') as f:
         data = json.load(f)
         use_hour = data["hour"]
         use_min = data["min"]
