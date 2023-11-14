@@ -209,26 +209,29 @@ def conversation_loop(talking_node):
     n_models = len(owwModel.models.keys())
 
     # Main loop for wake word detection
-    while True:
+    try:
+        while True:
 
-        # Get audio
-        audio_data, overflowed = stream.read(CHUNK)
-        if overflowed:
-            print("Audio buffer has overflowed")
+            # Get audio
+            audio_data, overflowed = stream.read(CHUNK)
+            if overflowed:
+                print("Audio buffer has overflowed")
 
-        audio_data = np.frombuffer(audio_data, dtype=np.int16)
+            audio_data = np.frombuffer(audio_data, dtype=np.int16)
 
-        # Feed to openWakeWord model
-        prediction = owwModel.predict(audio_data)
-
-        # Process prediction results
-        for mdl in owwModel.prediction_buffer.keys():
-            scores = list(owwModel.prediction_buffer[mdl])
-            if scores[-1] > 0.4:  # Wake word detected
-                print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
-                mdl = ""
-                scores = [0] * n_models
-                audio_data = np.array([])
+            # Feed to openWakeWord model
+            prediction = owwModel.predict(audio_data)
+            common = False
+            # Process prediction results
+            for mdl in owwModel.prediction_buffer.keys():
+                scores = list(owwModel.prediction_buffer[mdl])
+                if scores[-1] > 0.4:  # Wake word detected
+                    print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
+                    mdl = ""
+                    scores = [0] * n_models
+                    audio_data = np.array([])
+                    common = True
+            if common:
                 use_sound("./mp3/yes.wav")
 
                 while True:
@@ -250,7 +253,7 @@ def conversation_loop(talking_node):
                         speaking(
                             f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
 
-                    if response != "":
+                    elif response != "":
                         if response == "산책 가자":  # 산책 가자
                             talking_node.publish_arm_motions("holding_hand")
                             time.sleep(1)
@@ -289,11 +292,12 @@ def conversation_loop(talking_node):
                     elif response == "":
                         break
 
-                # Remove temporary files after processing each response
-                file_cleanup()
+                    # Remove temporary files after processing each response
+                    file_cleanup()
+                    break
                 break
-            break
 
+    finally:
         # Clean up
         stream.stop()
         stream.close()
