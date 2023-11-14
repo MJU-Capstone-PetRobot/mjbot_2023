@@ -44,7 +44,6 @@ def parse_battery_status(bat_status):
         "minute": ''.join(bat_min)
     }
 
-
 # Helper function to save battery status to JSON
 
 
@@ -57,7 +56,6 @@ def save_battery_status(bat_state, bat_hour, bat_min):
     with open(BAT_VALUE_JSON, 'w') as file:
         json.dump(write_data, file)
 
-
 # Helper function for threaded execution of ROS nodes
 
 
@@ -65,7 +63,6 @@ def start_executor_thread(executor):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
     return executor_thread
-
 
 # Talking Node definition
 
@@ -94,7 +91,6 @@ class TalkingNode(Node):
         msg.data = str(message)
         publisher.publish(msg)
         self.get_logger().info(f'Published: {msg.data}')
-
 
 # Voice Subscriber Node definition
 
@@ -150,7 +146,7 @@ class VoiceSubscriber(Node):
             if bat_time[i] == 'h':
                 j = i
             hour.append(bat_time[i])
-        for k in range(j + 1, len(bat_time)):
+        for k in range(j+1, len(bat_time)):
             if bat_time[k] == ' ':
                 continue
             elif bat_time[k] == 'm':
@@ -175,6 +171,7 @@ class VoiceSubscriber(Node):
 
 def conversation_loop(talking_node):
     call_num = 0
+    common = False
     mj = MYOUNGJA()
 
     # Clean up before starting the loop
@@ -214,7 +211,7 @@ def conversation_loop(talking_node):
     # Main loop for wake word detection
     try:
         while True:
-            common = False
+
             # Get audio
             audio_data, overflowed = stream.read(CHUNK)
             if overflowed:
@@ -233,11 +230,8 @@ def conversation_loop(talking_node):
                     mdl = ""
                     scores = [0] * n_models
                     audio_data = np.array([])
-                    common = True
 
-            if common:
-                use_sound("./mp3/yes.wav")
-                while True:
+                    use_sound("./mp3/yes.wav")
                     # 대답 기다리는 동안 표정 변화
                     talking_node.publish_emotions("mic_waiting")
                     response = mic(3)
@@ -251,12 +245,12 @@ def conversation_loop(talking_node):
                         break
                     elif response == "조용":
                         use_sound("./mp3/quiet.wav")
-                        # call_num = - 1000000
-                        break
+                        call_num = - 1000000
                     elif response == "배터리":
                         speaking(
                             f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
-                    elif response != "":
+
+                    if response != "":
                         if response == "산책 가자":  # 산책 가자
                             talking_node.publish_arm_motions("holding_hand")
                             time.sleep(1)
@@ -273,6 +267,7 @@ def conversation_loop(talking_node):
                         elif response == "조용":
                             break
                         else:
+
                             response_ = mj.gpt_send_anw(response)
                             emotion = response_[0]
 
@@ -287,15 +282,16 @@ def conversation_loop(talking_node):
                                 talking_node.publish_emotions("sad")
                             else:
                                 talking_node.publish_emotions("daily")
+
                             ans = response_[1]
                             speaking(ans)
                             talking_node.publish_emotions("daily")
-                    elif response == "":
-                        break
+
                         # Remove temporary files after processing each response
-                file_cleanup()
+                    file_cleanup()
+                    response = ""
+                    break
                 break
-            break
 
     finally:
         # Clean up
