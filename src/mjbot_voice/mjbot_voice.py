@@ -292,7 +292,9 @@ def conversation_loop(talking_node):
                 elif response == "":
                     print("대답 없음")
                     break
-            break
+
+            return True
+
 
 def start_executor_thread(executor):
     """Start a threaded execution of ROS nodes."""
