@@ -170,8 +170,7 @@ class VoiceSubscriber(Node):
 
 
 def conversation_loop(talking_node):
-    call_num = 0
-    common = False
+    print("conversation_loop() 시작")
     mj = MYOUNGJA()
 
     # Clean up before starting the loop
