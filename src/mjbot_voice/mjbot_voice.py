@@ -9,7 +9,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Bool, Int32
 from openwakeword.model import Model
-from Chat.voiceChat import speaking, use_sound, mic, name_check, name_ini
+from Chat.voiceChat import *
 
 # File Paths
 SAMPLE_WAV = "./sampleWav.wav"
@@ -20,7 +20,7 @@ BAT_VALUE_JSON = './bat_value.json'
 # Audio Configuration
 CHANNELS = 1
 RATE = 16000
-CHUNK = 1280
+CHUNK = 120
 
 
 def file_cleanup():
@@ -101,8 +101,8 @@ class VoiceSubscriber(Node):
         self.get_logger().info("hear Node initialized")
         self.subscription = self.create_subscription(
             Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
-        self.subscription = self.create_subscription(
-            Bool, 'touch', self.subscribe_callback_touch, 10)
+        # self.subscription = self.create_subscription(
+        #     Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_co, 10)
         self.subscription = self.create_subscription(
@@ -164,345 +164,347 @@ class VoiceSubscriber(Node):
         with open('./bat_time.json', 'w') as d:
             json.dump(write_data, d)
 
-    def subscribe_callback_touch(self, msg):
-        if msg.data:
-            speaking("깔깔깔")
-
     def subscribe_callback_co(self, msg):
         if msg.data >= 200:
             speaking("할머니 불이 났어요!!")
 
 
+# def conversation_loop(talking_node):
+#     """Main loop for conversation and interaction handling."""
+#     initialize_conversation()
 
+#     while True:
+#         response = listen_for_wake_word()
+#         if response:
+#             user_response = handle_response(talking_node, response)
+#             process_user_response(talking_node, user_response)
+
+
+# def initialize_conversation():
+#     """Initialize conversation settings."""
+#     file_cleanup()
+#     name_check()
+#     play_initial_sounds()
+
+
+# def play_initial_sounds():
+#     """
+#     Play initial sounds as part of an experimental feature to initiate conversation.
+#     This function plays a sequence of sounds once when the system starts.
+#     """
+#     global common  # If 'common' is a global flag
+#     if not common:
+#         try:
+#             use_sound("./mp3/ex1.wav")  # Replace with the actual file path
+#             time.sleep(2)  # Wait for 2 seconds
+#             use_sound("./mp3/ex_2.wav")  # Replace with another sound file
+#             common = True
+#         except Exception as e:
+#             print(f"Error playing initial sounds: {e}")
+
+
+# def listen_for_wake_word():
+#     """Listen for a wake word and return the response."""
+#     stream = initialize_audio_stream()
+#     owwModel = initialize_wake_word_model()
+
+#     try:
+#         audio_data, overflowed = stream.read(CHUNK)
+#         if overflowed:
+#             print("Audio buffer has overflowed")
+#         return process_audio_data(owwModel, audio_data)
+#     finally:
+#         stream.stop()
+#         stream.close()
+
+
+# def initialize_audio_stream():
+#     """Initialize the audio stream."""
+#     stream = sd.InputStream(samplerate=RATE, channels=CHANNELS, dtype='int16')
+#     stream.start()
+#     return stream
+
+
+# def initialize_wake_word_model():
+#     """Initialize the wake word model."""
+#     return Model(
+#         wakeword_models=["./src/mjbot_voice/models/ro_bot.tflite"],
+#         inference_framework="tflite")
+
+
+# def process_audio_data(owwModel, audio_data):
+#     """Process audio data and check for wake word."""
+#     audio_data = np.frombuffer(audio_data, dtype=np.int16)
+#     prediction = owwModel.predict(audio_data)
+#     return handle_wake_word_prediction(owwModel, prediction)
+
+
+# def handle_wake_word_prediction(owwModel, prediction):
+#     """Handle prediction results from wake word model."""
+#     for mdl in owwModel.prediction_buffer.keys():
+#         if owwModel.prediction_buffer[mdl][-1] > 0.5:
+#             return mdl
+#     return None
+
+
+# def handle_response(talking_node, wake_word_model):
+#     """Handle user response after wake word detection."""
+#     use_sound(YES_WAV)
+#     talking_node.publish_emotions("mic_waiting")
+#     user_response = mic(3)
+#     talking_node.publish_emotions("daily")
+#     return user_response
+
+
+# def process_user_response(talking_node, response):
+#     """
+#     Process the user's response and perform corresponding actions.
+#     """
+#     if response == "초기화":
+#         handle_reset()
+#     elif response == "종료":
+#         handle_termination()
+#         return "exit"  # Indicate that the loop should break
+#     elif response == "조용":
+#         activate_quiet_mode()
+#     elif response == "배터리":
+#         report_battery_status(talking_node)
+#     elif response in ["산책 가자", "따라와", "멈춰", "오른손", "왼손", "안아줘"]:
+#         handle_predefined_commands(talking_node, response)
+#     else:
+#         handle_custom_response(talking_node, response)
+
+#     # Return None or a specific flag to continue the conversation loop
+#     return None
+
+
+# def handle_predefined_commands(talking_node, command):
+#     """
+#     Handle predefined commands like arm movements or tracking.
+#     """
+#     if command == "산책 가자":
+#         # Repeat the 'holding_hand' arm motion 4 times
+#         for _ in range(4):
+#             talking_node.publish_arm_motions("holding_hand")
+#             time.sleep(1)
+#     elif command == "따라와":
+#         talking_node.publish_mode("tracking")
+#     elif command == "멈춰":
+#         talking_node.publish_mode("idle")
+#     elif command == "오른손":
+#         talking_node.publish_arm_motions("give_right_hand")
+#     elif command == "왼손":
+#         talking_node.publish_arm_motions("give_left_hand")
+#     elif command == "안아줘":
+#         talking_node.publish_arm_motions("hug")
+
+
+# def handle_custom_response(talking_node, response):
+#     """
+#     Handle custom responses that are not part of predefined commands.
+#     """
+#     # Assuming `mj.gpt_send_anw` returns a tuple (emotion, response)
+#     response_ = mj.gpt_send_anw(response)
+#     emotion = response_[0]
+#     ans = response_[1]
+
+#     # Publish emotions based on the response
+#     if emotion in ["close", "moving", "angry", "sad"]:
+#         talking_node.publish_emotions(emotion)
+#     else:
+#         talking_node.publish_emotions("daily")
+
+#     speaking(ans)
+
+
+# def report_battery_status(talking_node):
+#     """Report the battery status."""
+#     # Example: Fetch battery status and speak out
+#     # This is a placeholder; actual implementation will depend on how you retrieve and report battery status.
+#     bat_status = get_battery_status()
+#     speaking(
+#         f"배터리 잔량은 {bat_status['percent']}%, 남은 사용 시간은 {bat_status['hours']}시간 {bat_status['minutes']}분입니다.")
+
+
+# def get_battery_status():
+#     """Get the battery status."""
+#     # Placeholder for battery status retrieval logic
+#     return {'percent': 75, 'hours': 2, 'minutes': 30}  # Example data
+
+
+# def handle_general_response(talking_node, response):
+#     """Handle general responses that are not specific commands."""
+#     # Example: Handle general conversation or commands
+#     # Placeholder for your general response handling logic
+#     # This could involve calling an AI model, executing commands, etc.
+#     # Example:
+#     # response_ = mj.gpt_send_anw(response)
+#     # talking_node.publish_emotions(response_[0])
+#     # speaking(response_[1])
+
+
+# def handle_exit_conditions(response):
+#     """Handle specific exit conditions based on the user's command."""
+#     if response == "종료":
+#         handle_termination()
+#     elif response == "조용":
+#         activate_quiet_mode()
+
+
+# def handle_termination():
+#     """Handle the termination of the program."""
+#     use_sound("./mp3/off.wav")
+#     # Add your logic here to safely terminate the program
+#     # This could include saving state, notifying other components, etc.
+
+
+# def activate_quiet_mode():
+#     """Activate a quiet mode."""
+#     use_sound("./mp3/quiet.wav")
+#     # Implement the logic for quiet mode
+#     # This could mean reducing the volume, limiting interactions, etc.
+
+
+# def handle_reset():
+#     """Handle reset command."""
+#     use_sound("./mp3/reset.wav")
+#     name_ini()
 
 def conversation_loop(talking_node):
-    """Main loop for conversation and interaction handling."""
-    initialize_conversation()
+    call_num = 0
+    common = False
+    mj = MYOUNGJA()
 
-    while True:
-        response = listen_for_wake_word()
-        if response:
-            user_response = handle_response(talking_node, response)
-            process_user_response(talking_node, user_response)
-
-
-def initialize_conversation():
-    """Initialize conversation settings."""
+    # Clean up before starting the loop
     file_cleanup()
+
     name_check()
-    play_initial_sounds()
 
-def play_initial_sounds():
-    """
-    Play initial sounds as part of an experimental feature to initiate conversation.
-    This function plays a sequence of sounds once when the system starts.
-    """
-    global common  # If 'common' is a global flag
-    if not common:
-        try:
-            use_sound("./mp3/ex1.wav")  # Replace with the actual file path
-            time.sleep(2)  # Wait for 2 seconds
-            use_sound("./mp3/ex_2.wav")  # Replace with another sound file
-            common = True
-        except Exception as e:
-            print(f"Error playing initial sounds: {e}")
+    # 배터리 잔량 체크
+    with open('./bat_percent.json', 'r') as f:
+        data = json.load(f)
+        bat_state = data["bat_state"]
 
+    # 남은 사용 가능 시간 체크
+    with open('./bat_time.json', 'r') as f:
+        data = json.load(f)
+        use_hour = data["hour"]
+        use_min = data["min"]
 
+    # Experimental feature to initiate conversation
+    # if not common:
+    #     use_sound("./mp3/ex1.wav")
+    #     time.sleep(2)
+    #     use_sound("./mp3/ex_2.wav")
+    #     common = True
 
-def listen_for_wake_word():
-    """Listen for a wake word and return the response."""
-    stream = initialize_audio_stream()
-    owwModel = initialize_wake_word_model()
+    # Start of the conversation
+    # Initialize the audio stream with sounddevice
+    stream = sd.InputStream(
+        samplerate=RATE, channels=CHANNELS, dtype='int16')
+    stream.start()
 
+    owwModel = Model(
+        wakeword_models=["./src/mjbot_voice/models/ro_bot.tflite"], inference_framework="tflite")
+
+    n_models = len(owwModel.models.keys())
+
+    # Main loop for wake word detection
     try:
-        audio_data, overflowed = stream.read(CHUNK)
-        if overflowed:
-            print("Audio buffer has overflowed")
-        return process_audio_data(owwModel, audio_data)
+        while True:
+
+            # Get audio
+            audio_data, overflowed = stream.read(CHUNK)
+            if overflowed:
+                print("Audio buffer has overflowed")
+
+            audio_data = np.frombuffer(audio_data, dtype=np.int16)
+
+            # Feed to openWakeWord model
+            prediction = owwModel.predict(audio_data)
+
+            # Process prediction results
+            for mdl in owwModel.prediction_buffer.keys():
+                scores = list(owwModel.prediction_buffer[mdl])
+                if scores[-1] > 0.4:  # Wake word detected
+                    print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
+                    mdl = ""
+                    scores = [0] * n_models
+                    audio_data = np.array([])
+
+                    use_sound("./mp3/yes.wav")
+                    # 대답 기다리는 동안 표정 변화
+                    talking_node.publish_emotions("mic_waiting")
+                    response = mic(3)
+                    talking_node.publish_emotions("daily")
+
+                    if response == "초기화":
+                        use_sound("./mp3/reset.wav")
+                        name_ini()
+                    elif response == "종료":
+                        use_sound("./mp3/off.wav")
+                        break
+                    elif response == "조용":
+                        use_sound("./mp3/quiet.wav")
+                        call_num = - 1000000
+                    elif response == "배터리":
+                        speaking(
+                            f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
+
+                    if response != "":
+                        if response == "산책 가자":  # 산책 가자
+                            talking_node.publish_arm_motions("holding_hand")
+                            time.sleep(1)
+                        elif response == "따라와":  # 따라와
+                            talking_node.publish_mode("tracking")
+                        elif response == "멈춰":  # 멈춰
+                            talking_node.publish_mode("idle")
+                        elif response == "오른손":  # 오른손
+                            talking_node.publish_arm_motions("give_right_hand")
+                        elif response == "왼손":
+                            talking_node.publish_arm_motions("give_left_hand")
+                        elif response == "안아줘":
+                            talking_node.publish_arm_motions("hug")
+                        elif response == "조용":
+                            break
+                        else:
+
+                            response_ = mj.gpt_send_anw(response)
+                            emotion = response_[0]
+
+                            # React based on the emotion
+                            if emotion == "close":
+                                talking_node.publish_emotions("close")
+                            elif emotion == "moving":
+                                talking_node.publish_emotions("moving")
+                            elif emotion == "angry":
+                                talking_node.publish_emotions("angry")
+                            elif emotion == "sad":
+                                talking_node.publish_emotions("sad")
+                            else:
+                                talking_node.publish_emotions("daily")
+
+                            ans = response_[1]
+                            speaking(ans)
+                            talking_node.publish_emotions("daily")
+
+                        # Remove temporary files after processing each response
+                    file_cleanup()
+                    response = ""
+                    break
+
     finally:
+        # Clean up
         stream.stop()
         stream.close()
 
-
-def initialize_audio_stream():
-    """Initialize the audio stream."""
-    stream = sd.InputStream(samplerate=RATE, channels=CHANNELS, dtype='int16')
-    stream.start()
-    return stream
-
-def initialize_wake_word_model():
-    """Initialize the wake word model."""
-    return Model(
-        wakeword_models=["./src/mjbot_voice/models/ro_bot.tflite"], 
-        inference_framework="tflite")
-
-def process_audio_data(owwModel, audio_data):
-    """Process audio data and check for wake word."""
-    audio_data = np.frombuffer(audio_data, dtype=np.int16)
-    prediction = owwModel.predict(audio_data)
-    return handle_wake_word_prediction(owwModel, prediction)
-
-def handle_wake_word_prediction(owwModel, prediction):
-    """Handle prediction results from wake word model."""
-    for mdl in owwModel.prediction_buffer.keys():
-        if owwModel.prediction_buffer[mdl][-1] > 0.5:
-            return mdl
-    return None
-
-def handle_response(talking_node, wake_word_model):
-    """Handle user response after wake word detection."""
-    use_sound(YES_WAV)
-    talking_node.publish_emotions("mic_waiting")
-    user_response = mic(3)
-    talking_node.publish_emotions("daily")
-    return user_response
-
-
-def process_user_response(talking_node, response):
-    """
-    Process the user's response and perform corresponding actions.
-    """
-    if response == "초기화":
-        handle_reset()
-    elif response == "종료":
-        handle_termination()
-        return "exit"  # Indicate that the loop should break
-    elif response == "조용":
-        activate_quiet_mode()
-    elif response == "배터리":
-        report_battery_status(talking_node)
-    elif response in ["산책 가자", "따라와", "멈춰", "오른손", "왼손", "안아줘"]:
-        handle_predefined_commands(talking_node, response)
-    else:
-        handle_custom_response(talking_node, response)
-
-    # Return None or a specific flag to continue the conversation loop
-    return None
-
-def handle_predefined_commands(talking_node, command):
-    """
-    Handle predefined commands like arm movements or tracking.
-    """
-    if command == "산책 가자":
-        # Repeat the 'holding_hand' arm motion 4 times
-        for _ in range(4):
-            talking_node.publish_arm_motions("holding_hand")
-            time.sleep(1)
-    elif command == "따라와":
-        talking_node.publish_mode("tracking")
-    elif command == "멈춰":
-        talking_node.publish_mode("idle")
-    elif command == "오른손":
-        talking_node.publish_arm_motions("give_right_hand")
-    elif command == "왼손":
-        talking_node.publish_arm_motions("give_left_hand")
-    elif command == "안아줘":
-        talking_node.publish_arm_motions("hug")
-
-def handle_custom_response(talking_node, response):
-    """
-    Handle custom responses that are not part of predefined commands.
-    """
-    # Assuming `mj.gpt_send_anw` returns a tuple (emotion, response)
-    response_ = mj.gpt_send_anw(response)
-    emotion = response_[0]
-    ans = response_[1]
-
-    # Publish emotions based on the response
-    if emotion in ["close", "moving", "angry", "sad"]:
-        talking_node.publish_emotions(emotion)
-    else:
-        talking_node.publish_emotions("daily")
-
-    speaking(ans)
-
-
-def report_battery_status(talking_node):
-    """Report the battery status."""
-    # Example: Fetch battery status and speak out
-    # This is a placeholder; actual implementation will depend on how you retrieve and report battery status.
-    bat_status = get_battery_status()
-    speaking(f"배터리 잔량은 {bat_status['percent']}%, 남은 사용 시간은 {bat_status['hours']}시간 {bat_status['minutes']}분입니다.")
-
-def get_battery_status():
-    """Get the battery status."""
-    # Placeholder for battery status retrieval logic
-    return {'percent': 75, 'hours': 2, 'minutes': 30}  # Example data
-
-def handle_general_response(talking_node, response):
-    """Handle general responses that are not specific commands."""
-    # Example: Handle general conversation or commands
-    # Placeholder for your general response handling logic
-    # This could involve calling an AI model, executing commands, etc.
-    # Example:
-    # response_ = mj.gpt_send_anw(response)
-    # talking_node.publish_emotions(response_[0])
-    # speaking(response_[1])
-
-
-def handle_exit_conditions(response):
-    """Handle specific exit conditions based on the user's command."""
-    if response == "종료":
-        handle_termination()
-    elif response == "조용":
-        activate_quiet_mode()
-
-def handle_termination():
-    """Handle the termination of the program."""
-    use_sound("./mp3/off.wav")
-    # Add your logic here to safely terminate the program
-    # This could include saving state, notifying other components, etc.
-
-def activate_quiet_mode():
-    """Activate a quiet mode."""
-    use_sound("./mp3/quiet.wav")
-    # Implement the logic for quiet mode
-    # This could mean reducing the volume, limiting interactions, etc.
-
-
-
-def handle_reset():
-    """Handle reset command."""
-    use_sound("./mp3/reset.wav")
-    name_ini()
-
-# def conversation_loop(talking_node):
-#     call_num = 0
-#     common = False
-
-#     # Clean up before starting the loop
-#     file_cleanup()
-
-#     name_check()
-
-#     # 배터리 잔량 체크
-#     with open('./bat_percent.json', 'r') as f:
-#         data = json.load(f)
-#         bat_state = data["bat_state"]
-
-#     # 남은 사용 가능 시간 체크
-#     with open('./bat_time.json', 'r') as f:
-#         data = json.load(f)
-#         use_hour = data["hour"]
-#         use_min = data["min"]
-
-#     # Experimental feature to initiate conversation
-#     if not common:
-#         use_sound("./mp3/ex1.wav")
-#         time.sleep(2)
-#         use_sound("./mp3/ex_2.wav")
-#         common = True
-
-#     # Start of the conversation
-#     # Initialize the audio stream with sounddevice
-#     stream = sd.InputStream(
-#         samplerate=RATE, channels=CHANNELS, dtype='int16')
-#     stream.start()
-
-#     owwModel = Model(
-#         wakeword_models=["./src/mjbot_voice/models/ro_bot.tflite"], inference_framework="tflite")
-
-#     n_models = len(owwModel.models.keys())
-
-#     # Main loop for wake word detection
-#     try:
-#         while True:
-
-#             # Get audio
-#             audio_data, overflowed = stream.read(CHUNK)
-#             if overflowed:
-#                 print("Audio buffer has overflowed")
-
-#             audio_data = np.frombuffer(audio_data, dtype=np.int16)
-
-#             # Feed to openWakeWord model
-#             prediction = owwModel.predict(audio_data)
-
-#             # Process prediction results
-#             for mdl in owwModel.prediction_buffer.keys():
-#                 scores = list(owwModel.prediction_buffer[mdl])
-#                 if scores[-1] > 0.5:  # Wake word detected
-#                     print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
-
-#                     use_sound("./mp3/yes.wav")
-#                     # 대답 기다리는 동안 표정 변화
-#                     talking_node.publish_emotions("mic_waiting")
-#                     response = mic(3)
-#                     talking_node.publish_emotions("daily")
-
-#                     if response == "초기화":
-#                         use_sound("./mp3/reset.wav")
-#                         name_ini()
-#                     elif response == "종료":
-#                         use_sound("./mp3/off.wav")
-#                         break
-#                     elif response == "조용":
-#                         use_sound("./mp3/quiet.wav")
-#                         call_num = - 1000000
-#                     elif response == "배터리":
-#                         speaking(
-#                             f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
-
-#                     while response != "":
-#                         if response == "산책 가자":  # 산책 가자
-#                             talking_node.publish_arm_motions("holding_hand")
-#                             time.sleep(1)
-#                             talking_node.publish_arm_motions("holding_hand")
-#                             time.sleep(1)
-#                             talking_node.publish_arm_motions("holding_hand")
-#                             time.sleep(1)
-#                             talking_node.publish_arm_motions("holding_hand")
-#                         elif response == "따라와":  # 따라와
-#                             talking_node.publish_mode("tracking")
-#                         elif response == "멈춰":  # 멈춰
-#                             talking_node.publish_mode("idle")
-#                         elif response == "오른손":  # 오른손
-
-#                             talking_node.publish_arm_motions("give_right_hand")
-#                         elif response == "왼손":
-#                             talking_node.publish_arm_motions("give_left_hand")
-#                         elif response == "안아줘":
-#                             talking_node.publish_arm_motions("hug")
-#                         elif response == "조용":
-#                             break
-#                         else:
-#                             # Assuming `mj.gpt_send_anw` is a function that returns a tuple (emotion, response)
-#                             response_ = mj.gpt_send_anw(response)
-#                             emotion = response_[0]
-
-#                             # React based on the emotion
-#                             if emotion == "close":
-#                                 talking_node.publish_emotions("close")
-#                             elif emotion == "moving":
-#                                 talking_node.publish_emotions("moving")
-#                             elif emotion == "angry":
-#                                 talking_node.publish_emotions("angry")
-#                             elif emotion == "sad":
-#                                 talking_node.publish_emotions("sad")
-#                             else:
-#                                 talking_node.publish_emotions("daily")
-
-#                             ans = response_[1]
-#                             speaking(ans)
-#                             talking_node.publish_emotions("daily")
-
-#                         # Remove temporary files after processing each response
-#                         file_cleanup()
-
-#                     # If no response, clean up and prepare for the next iteration
-#                         if response == "":
-#                             file_cleanup()
-
-#     finally:
-#         # Clean up
-#         stream.stop()
-#         stream.close()
 
 def start_executor_thread(executor):
     """Start a threaded execution of ROS nodes."""
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
     return executor_thread
+
 
 def main():
     """Main function to initialize and run the ROS nodes."""
@@ -526,6 +528,7 @@ def main():
         talking_node.destroy_node()
         hear_node.destroy_node()
         rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
