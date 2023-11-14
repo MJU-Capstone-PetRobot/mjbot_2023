@@ -209,29 +209,29 @@ def conversation_loop(talking_node):
     n_models = len(owwModel.models.keys())
 
     # Main loop for wake word detection
-    try:
-        while True:
+    while True:
 
-            # Get audio
-            audio_data, overflowed = stream.read(CHUNK)
-            if overflowed:
-                print("Audio buffer has overflowed")
+        # Get audio
+        audio_data, overflowed = stream.read(CHUNK)
+        if overflowed:
+            print("Audio buffer has overflowed")
 
-            audio_data = np.frombuffer(audio_data, dtype=np.int16)
+        audio_data = np.frombuffer(audio_data, dtype=np.int16)
 
-            # Feed to openWakeWord model
-            prediction = owwModel.predict(audio_data)
+        # Feed to openWakeWord model
+        prediction = owwModel.predict(audio_data)
 
-            # Process prediction results
-            for mdl in owwModel.prediction_buffer.keys():
-                scores = list(owwModel.prediction_buffer[mdl])
-                if scores[-1] > 0.4:  # Wake word detected
-                    print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
-                    mdl = ""
-                    scores = [0] * n_models
-                    audio_data = np.array([])
+        # Process prediction results
+        for mdl in owwModel.prediction_buffer.keys():
+            scores = list(owwModel.prediction_buffer[mdl])
+            if scores[-1] > 0.4:  # Wake word detected
+                print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
+                mdl = ""
+                scores = [0] * n_models
+                audio_data = np.array([])
+                use_sound("./mp3/yes.wav")
 
-                    use_sound("./mp3/yes.wav")
+                while True:
                     # 대답 기다리는 동안 표정 변화
                     talking_node.publish_emotions("mic_waiting")
                     response = mic(3)
@@ -242,10 +242,10 @@ def conversation_loop(talking_node):
                         name_ini()
                     elif response == "종료":
                         use_sound("./mp3/off.wav")
-                        break
+                        return False
                     elif response == "조용":
                         use_sound("./mp3/quiet.wav")
-                        call_num = - 1000000
+                        # call_num = - 1000000
                     elif response == "배터리":
                         speaking(
                             f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
@@ -286,14 +286,14 @@ def conversation_loop(talking_node):
                             ans = response_[1]
                             speaking(ans)
                             talking_node.publish_emotions("daily")
+                    elif response == "":
+                        break
 
-                        # Remove temporary files after processing each response
-                    file_cleanup()
-                    response = ""
-                    break
+                # Remove temporary files after processing each response
+                file_cleanup()
                 break
+            break
 
-    finally:
         # Clean up
         stream.stop()
         stream.close()
@@ -321,7 +321,9 @@ def main():
 
     try:
         while True:
-            conversation_loop(talking_node)
+            shut_down = conversation_loop(talking_node)
+            if not shut_down:
+                break
     finally:
         if executor_thread.is_alive():
             executor_thread.join()
