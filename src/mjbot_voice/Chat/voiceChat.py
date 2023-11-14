@@ -1,17 +1,18 @@
 import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 import openai
 
 # ChatGPT
 # 3.5
-openai.api_key = "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"
-
-# 4
-# openai.api_key = "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"
+openai.api_key = os.getenv("GPT_API")
 
 # NAVER CLOVA
-client_id = "5ezz7ibsqa"
-client_secret = "L5sJdJ281leLtB1pNXap5sFygAsTtC1jIysck4gW"
+client_id = os.getenv("CLIENT_ID")
+client_secret = os.getenv("CLIENT_SECRET")
 
 
 class MYOUNGJA():

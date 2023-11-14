@@ -10,3 +10,4 @@ src/mjbot_vision2/vision/scripts/__pycache__/
 src/mjbot_voice/Chat/__pycache__/
 *.wav
 *.mp3
+.env
