@@ -41,7 +41,7 @@ class ListeningNode(Node):
             "danger": "off"
         }
 
-        with open('./user_danger.json', 'w') as f:
+        with open('user_data/user_danger.json', 'w') as f:
             if msg.data >= 200:
                 json.dump(write_data, f)
 
@@ -50,7 +50,7 @@ class ListeningNode(Node):
         if msg.data >= 200:
             send_message(2)  # 화재 사고 발생 문자 발송
             time.sleep(100)
-            with open('./user_danger.json', 'w') as f:
+            with open('user_data/user_danger.json', 'w') as f:
                 json.dump(write_nodata, f)
 
 
@@ -64,7 +64,7 @@ class ListeningNode(Node):
             "danger": "off"
         }
 
-        with open('./user_danger.json', 'w') as f:
+        with open('user_data/user_danger.json', 'w') as f:
             if msg.data == 1:
                 json.dump(write_data, f)
 
@@ -72,7 +72,7 @@ class ListeningNode(Node):
 
         if msg.data == 1:
             time.sleep(100)
-            with open('./user_danger.json', 'w') as f:
+            with open('user_data/user_danger.json', 'w') as f:
                 json.dump(write_nodata, f)
 
     def subscribe_callback_gps(self, msg):
@@ -105,7 +105,7 @@ class ListeningNode(Node):
             "lat": f"{latitude_str}",
             "lon": f"{longitude_str}"
         }
-        with open('./user_gps.json', 'w') as d:
+        with open('user_data/user_gps.json', 'w') as d:
             json.dump(write_data, d)
 
 
@@ -123,7 +123,7 @@ def main(args=None):
     executor_thread.start()
 
     while(1):
-        with open('./user_danger.json', 'r') as d:
+        with open('user_data/user_danger.json', 'r') as d:
             data__ = json.load(d)
             if data__["danger"] == "on":
                 publish_node.publish_danger(True)

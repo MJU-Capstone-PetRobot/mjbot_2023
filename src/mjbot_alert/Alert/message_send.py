@@ -6,7 +6,7 @@ def googlemap_api():
     API = "AIzaSyD5fvkrnY2xbyp7DB9LK-bQbT1RzbgpvE8"  # API 값
     # 위도 경도 -> 지번 주소로 변경 // 역지오코드
     gmaps = googlemaps.Client(key=API)  # api key
-    with open('./user_gps.json', 'r') as f:
+    with open('user_data/user_gps.json', 'r') as f:
         data = json.load(f)
         latitude = data["lat"]
         longitude = data["lon"]
