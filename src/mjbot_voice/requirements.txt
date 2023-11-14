@@ -379,3 +379,6 @@ yarl==1.9.2
 zipp==1.0.0
 zope.interface==5.4.0
 python-dotenv==1.0.0
+
+
+pip install python-dotenv
