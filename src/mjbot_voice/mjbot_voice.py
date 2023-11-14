@@ -291,6 +291,7 @@ def conversation_loop(talking_node):
                     file_cleanup()
                     response = ""
                     break
+                break
 
     finally:
         # Clean up
