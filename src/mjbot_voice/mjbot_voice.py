@@ -168,33 +168,6 @@ class VoiceSubscriber(Node):
         if msg.data >= 200:
             speaking("할머니 불이 났어요!!")
 
-def wake_word():
-    stream = sd.InputStream(
-        samplerate=RATE, channels=CHANNELS, dtype='int16')
-    stream.start()
-
-    owwModel = Model(
-        wakeword_models=["./src/mjbot_voice/models/hey.tflite"], inference_framework="tflite")
-
-    n_models = len(owwModel.models.keys())
-
-    # Get audio
-    audio_data, overflowed = stream.read(CHUNK)
-    if overflowed:
-        print("Audio buffer has overflowed")
-
-    audio_data = np.frombuffer(audio_data, dtype=np.int16)
-
-    # Feed to openWakeWord model
-    prediction = owwModel.predict(audio_data)
-
-    # Process prediction results
-    for mdl in owwModel.prediction_buffer.keys():
-        scores = list(owwModel.prediction_buffer[mdl])
-        if scores[-1] > 0.4:  # Wake word detected
-            mdl = ""
-            return True
-
 
 def conversation_loop(talking_node):
     call_num = 0
@@ -224,73 +197,105 @@ def conversation_loop(talking_node):
     #     use_sound("./mp3/ex_2.wav")
     #     common = True
 
+    # Start of the conversation
+    # Initialize the audio stream with sounddevice
+    stream = sd.InputStream(
+        samplerate=RATE, channels=CHANNELS, dtype='int16')
+    stream.start()
+
+    owwModel = Model(
+        wakeword_models=["./src/mjbot_voice/models/hey.tflite"], inference_framework="tflite")
+
+    n_models = len(owwModel.models.keys())
+
     # Main loop for wake word detection
     try:
         while True:
-            if wake_word():
-                use_sound("./mp3/yes.wav")
-                # 대답 기다리는 동안 표정 변화
-                talking_node.publish_emotions("mic_waiting")
-                response = mic(3)
-                talking_node.publish_emotions("daily")
 
-                if response == "초기화":
-                    use_sound("./mp3/reset.wav")
-                    name_ini()
-                elif response == "종료":
-                    use_sound("./mp3/off.wav")
-                    break
-                elif response == "조용":
-                    use_sound("./mp3/quiet.wav")
-                    # call_num = - 1000000
-                elif response == "배터리":
-                    speaking(
-                        f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
+            # Get audio
+            audio_data, overflowed = stream.read(CHUNK)
+            if overflowed:
+                print("Audio buffer has overflowed")
 
-                if response != "":
-                    if response == "산책 가자":  # 산책 가자
-                        talking_node.publish_arm_motions("holding_hand")
-                        time.sleep(1)
-                    elif response == "따라와":  # 따라와
-                        talking_node.publish_mode("tracking")
-                    elif response == "멈춰":  # 멈춰
-                        talking_node.publish_mode("idle")
-                    elif response == "오른손":  # 오른손
-                        talking_node.publish_arm_motions("give_right_hand")
-                    elif response == "왼손":
-                        talking_node.publish_arm_motions("give_left_hand")
-                    elif response == "안아줘":
-                        talking_node.publish_arm_motions("hug")
-                    elif response == "조용":
+            audio_data = np.frombuffer(audio_data, dtype=np.int16)
+
+            # Feed to openWakeWord model
+            prediction = owwModel.predict(audio_data)
+
+            # Process prediction results
+            for mdl in owwModel.prediction_buffer.keys():
+                scores = list(owwModel.prediction_buffer[mdl])
+                if scores[-1] > 0.4:  # Wake word detected
+                    print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
+                    mdl = ""
+                    scores = [0] * n_models
+                    audio_data = np.array([])
+
+                    use_sound("./mp3/yes.wav")
+                    # 대답 기다리는 동안 표정 변화
+                    talking_node.publish_emotions("mic_waiting")
+                    response = mic(3)
+                    talking_node.publish_emotions("daily")
+
+                    if response == "초기화":
+                        use_sound("./mp3/reset.wav")
+                        name_ini()
+                    elif response == "종료":
+                        use_sound("./mp3/off.wav")
                         break
-                    else:
-                        response_ = mj.gpt_send_anw(response)
-                        emotion = response_[0]
+                    elif response == "조용":
+                        use_sound("./mp3/quiet.wav")
+                        call_num = - 1000000
+                    elif response == "배터리":
+                        speaking(
+                            f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
 
-                        # React based on the emotion
-                        if emotion == "close":
-                            talking_node.publish_emotions("close")
-                        elif emotion == "moving":
-                            talking_node.publish_emotions("moving")
-                        elif emotion == "angry":
-                            talking_node.publish_emotions("angry")
-                        elif emotion == "sad":
-                            talking_node.publish_emotions("sad")
+                    if response != "":
+                        if response == "산책 가자":  # 산책 가자
+                            talking_node.publish_arm_motions("holding_hand")
+                            time.sleep(1)
+                        elif response == "따라와":  # 따라와
+                            talking_node.publish_mode("tracking")
+                        elif response == "멈춰":  # 멈춰
+                            talking_node.publish_mode("idle")
+                        elif response == "오른손":  # 오른손
+                            talking_node.publish_arm_motions("give_right_hand")
+                        elif response == "왼손":
+                            talking_node.publish_arm_motions("give_left_hand")
+                        elif response == "안아줘":
+                            talking_node.publish_arm_motions("hug")
+                        elif response == "조용":
+                            break
                         else:
+                            response_ = mj.gpt_send_anw(response)
+                            emotion = response_[0]
+
+                            # React based on the emotion
+                            if emotion == "close":
+                                talking_node.publish_emotions("close")
+                            elif emotion == "moving":
+                                talking_node.publish_emotions("moving")
+                            elif emotion == "angry":
+                                talking_node.publish_emotions("angry")
+                            elif emotion == "sad":
+                                talking_node.publish_emotions("sad")
+                            else:
+                                talking_node.publish_emotions("daily")
+
+                            ans = response_[1]
+                            speaking(ans)
                             talking_node.publish_emotions("daily")
-
-                        ans = response_[1]
-                        speaking(ans)
-                        talking_node.publish_emotions("daily")
+                            break
+                        break
+                        # Remove temporary files after processing each response
+                    file_cleanup()
+                    break
+                break
+            break
     finally:
-
-        # Remove temporary files after processing each response
-        file_cleanup()
-
-    # finally:
-        # # Clean up
-        # stream.stop()
-        # stream.close()
+        # Clean up
+        stream.stop()
+        stream.close()
 
 
 def start_executor_thread(executor):
