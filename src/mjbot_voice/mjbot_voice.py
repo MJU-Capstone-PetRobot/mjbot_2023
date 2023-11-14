@@ -15,7 +15,6 @@ from Chat.voiceChat import *
 SAMPLE_WAV = "./sampleWav.wav"
 RESULT_MP3 = "./ResultMP3.mp3"
 YES_WAV = "./yes.wav"
-BAT_VALUE_JSON = 'user_data/bat_value.json'
 
 # Audio Configuration
 CHANNELS = 1
@@ -33,30 +32,6 @@ def file_cleanup():
 def remove_file_if_exists(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
-
-
-def parse_battery_status(bat_status):
-    bat_state, bat_hour, bat_min = bat_status[:
-                                              2], bat_status[3], bat_status[4:-1]
-    return {
-        "state": int(''.join(bat_state)),
-        "hour": ''.join(bat_hour),
-        "minute": ''.join(bat_min)
-    }
-
-# Helper function to save battery status to JSON
-
-
-def save_battery_status(bat_state, bat_hour, bat_min):
-    write_data = {
-        "bat_state": bat_state,
-        "bat_hour": bat_hour,
-        "bat_min": bat_min
-    }
-    with open(BAT_VALUE_JSON, 'w') as file:
-        json.dump(write_data, file)
-
-# Helper function for threaded execution of ROS nodes
 
 
 def start_executor_thread(executor):
