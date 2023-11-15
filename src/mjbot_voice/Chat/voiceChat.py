@@ -1,10 +1,10 @@
+import openai
 import time
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-import openai
 
 # ChatGPT
 # 3.5
@@ -37,9 +37,9 @@ class MYOUNGJA():
 
                                        "content": f"You're a assistant robot for senior in South Korea. "
                                                   f"Your name is 명자. Your being purpose is support.  "
-                                                  f"So Please answer politely and when you analyze feeling of patient, use English and except of that, use Korean under 5 seconds. please be a good friend to your patient. "
-                                                  f"and also analyze feeling of patient's sentence in one word using 'close','sad', 'daily', 'moving', 'angry' word in English. please add the result of feeling as a one word inside () on last word in English "
-                                       f"Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
+                                                  f"Each response from 명자 should end with a word representing (sad), (daily), (moving), (angry)"
+                                                  f"answer in less than 50 words."
+                                                  f"Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
                                       {"role": "user", "content": question}]
 
         response = openai.ChatCompletion.create(
