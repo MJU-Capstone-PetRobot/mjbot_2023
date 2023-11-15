@@ -44,3 +44,10 @@ colcon build --symlink-install
 ```shell
 source ~/mjbot_2023/install/setup.bash
 ```
+
+
+## Launch
+
+```shell
+ros2 launch mjbot_bringup mjbot_bringup.launch.py
+```
