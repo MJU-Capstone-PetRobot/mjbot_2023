@@ -12,25 +12,25 @@
 
 I used this script
 
-'''shell
+```shell
 https://github.com/Tiryoh/ros2_setup_scripts_ubuntu
-'''
+```
 
 ### download source code
-'''shell
+```shell
 git clone https://github.com/MJU-Capstone-PetRobot/mjbot_2023.git
-'''
+```
 
 ### pip install
-'''shell
+```shell
 pip install -r requirements.txt
-'''
+```
 
 ### run ./setup.sh
 
-'''shell
+```shell
 ./setup.sh
-'''
+```
 
 
 # Install ROS 2 packages
@@ -40,9 +40,6 @@ sudo apt install ros-humble-ros2-control
 sudo apt install ros-humble-ros2-controllers
 sudo apt install ros-humble-xacro
 
-
-# Make the USB device accessible
-sudo chmod a+rw /dev/ttyUSB0
 
 
 # Install additional ROS 2 packages and dependencies
