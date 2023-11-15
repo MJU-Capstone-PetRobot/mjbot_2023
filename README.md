@@ -1,45 +1,53 @@
-# Installation
+
+
+  
+## Environment
 
 - ROS2: Humble Hawksbill
 - OS:
     - Ubuntu 22.04 Jammy Jellyfish(Orange Pi Plus)
 
-
-## Environment
-
+# Installation
 ### ROS2 Humble
 
-https://docs.ros.org/en/humble/Installation.html
+I used this script
+
+```shell
+https://github.com/Tiryoh/ros2_setup_scripts_ubuntu
+```
+
+## Mjbot Workspace
+
+### Create dir & download source code
+```shell
+mkdir ~/mjbot_ws && cd ~/mjbot_ws
+mkdir src && cd src
+git clone https://github.com/MJU-Capstone-PetRobot/mjbot_2023.git
+```
 
 
-# TODO
+### install dependencies
 
-Team Commit message Rule?
+```shell
+cd ~/mjbot_ws
+./src/mjbot_2023/setup.sh
+pip install -r ./src/mjbot_2023/requirements.txt
+```
 
+### build
+```shell
+colcon build --symlink-install
+```
 
-Don't upload build files
+### sourcing
 
-
-# Install ROS 2 packages
-sudo apt-get install ros-humble-dynamixel-sdk
-sudo apt install ros-humble-dynamixel-workbench-toolbox
-sudo apt install ros-humble-ros2-control
-sudo apt install ros-humble-ros2-controllers
-sudo apt install ros-humble-xacro
-
-# Install setuptools version 58.2.0 using pip
-pip install setuptools==58.2.0
-
-# Make the USB device accessible
-sudo chmod a+rw /dev/ttyUSB0
+```shell
+source ~/mjbot_2023/install/setup.bash
+```
 
 
-# Install additional ROS 2 packages and dependencies
-sudo apt install ros-humble-joy-linux
-sudo apt install ros-humble-twist-mux
-sudo -H apt-get install -y ros-humble-joint-state-publisher
-sudo -H apt-get install -y python3-serial
+## Launch
 
-sudo apt-get install ffmpeg
-sudo apt-get install libasound-dev
-sudo apt-get install portaudio19-dev
+```shell
+ros2 launch mjbot_bringup mjbot_bringup.launch.py
+```
