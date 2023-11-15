@@ -35,11 +35,11 @@ class MYOUNGJA():
     def gpt_send_anw(self, question: str):
         self.gpt_standard_messages = [{"role": "assistant",
 
-                                       "content": f"You're a assistant robot for senior in South Korea. "
+                                       "content": f"You're a assistant robot for senior."
                                                   f"Your name is 명자. Your being purpose is support.  "
                                                   f"Each response from 명자 should end with a word representing (sad), (daily), (moving), (angry)"
                                                   f"answer in less than 50 words."
-                                                  f"Your patient's name is {self.nameValue} and {self.manWomanValue} is an old korean."},
+                                                  f"Your patient's name is {self.nameValue} and {self.manWomanValue} ."},
                                       {"role": "user", "content": question}]
 
         response = openai.ChatCompletion.create(
