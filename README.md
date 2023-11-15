@@ -1,25 +1,36 @@
-# Installation
+
+
+  
+## Environment
 
 - ROS2: Humble Hawksbill
 - OS:
     - Ubuntu 22.04 Jammy Jellyfish(Orange Pi Plus)
- 
-'''https://github.com/Tiryoh/ros2_setup_scripts_ubuntu'''
 
-
-## Environment
-
+# Installation
 ### ROS2 Humble
 
-https://docs.ros.org/en/humble/Installation.html
+I used this script
 
+'''shell
+https://github.com/Tiryoh/ros2_setup_scripts_ubuntu
+'''
 
-# TODO
+### download source code
+'''shell
+git clone https://github.com/MJU-Capstone-PetRobot/mjbot_2023.git
+'''
 
-Team Commit message Rule?
+### pip install
+'''shell
+pip install -r requirements.txt
+'''
 
+### run ./setup.sh
 
-Don't upload build files
+'''shell
+./setup.sh
+'''
 
 
 # Install ROS 2 packages
@@ -29,8 +40,6 @@ sudo apt install ros-humble-ros2-control
 sudo apt install ros-humble-ros2-controllers
 sudo apt install ros-humble-xacro
 
-# Install setuptools version 58.2.0 using pip
-pip install setuptools==58.2.0
 
 # Make the USB device accessible
 sudo chmod a+rw /dev/ttyUSB0
