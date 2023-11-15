@@ -103,7 +103,7 @@ class VoiceSubscriber(Node):
             "bat_state": bat_state,
         }
 
-        with open('user_data/bat_time.json', 'w') as d:
+        with open('user_data/bat_percent.json', 'w') as d:
             json.dump(write_data, d)
 
         if bat_state <= 40.0:
@@ -113,31 +113,20 @@ class VoiceSubscriber(Node):
         import json
         self.get_logger().info('Received: %s' % msg.data)
 
-        bat_time = list(msg.data)
-        hour = []
-        min = []
-        j = 0
-        for i in range(0, len(bat_time)):
-            if bat_time[i] == 'h':
-                j = i
-            hour.append(bat_time[i])
-        for k in range(j+1, len(bat_time)):
-            if bat_time[k] == ' ':
-                continue
-            elif bat_time[k] == 'm':
-                break
-            else:
-                min.append(bat_time[k])
-        hour_ = "".join(hour)
-        min_ = "".join(min)
+        try:
+            hours, minutes = msg.data.split('h')
+            minutes = minutes.strip().split('m')[0]
+            hours = hours.strip()
 
-        write_data = {
-            "hour": hour_,
-            "min": min_
-        }
+            write_data = {
+                "hour": hours,
+                "min": minutes
+            }
 
-        with open('user_data/bat_time.json', 'w') as d:
-            json.dump(write_data, d)
+            with open('user_data/bat_time.json', 'w') as d:
+                json.dump(write_data, d)
+        except ValueError:
+            pass
 
     def subscribe_callback_co(self, msg):
         if msg.data >= 200:
@@ -154,15 +143,6 @@ def conversation_loop(talking_node):
     name_check()
 
     # 배터리 잔량 체크
-    with open('user_data/bat_percent.json', 'r') as f:
-        data = json.load(f)
-        bat_state = data["bat_state"]
-
-    # 남은 사용 가능 시간 체크
-    with open('user_data/bat_time.json', 'r') as f:
-        data = json.load(f)
-        use_hour = data["hour"]
-        use_min = data["min"]
 
     # Experimental feature to initiate conversation
     # if not common:
@@ -223,6 +203,15 @@ def conversation_loop(talking_node):
                     use_sound("./mp3/quiet.wav")
                     # call_num = - 1000000
                 elif response == "배터리":
+                    with open('user_data/bat_percent.json', 'r') as f:
+                        data = json.load(f)
+                        bat_state = data["bat_state"]
+
+                    # 남은 사용 가능 시간 체크
+                    with open('user_data/bat_time.json', 'r') as f:
+                        data = json.load(f)
+                        use_hour = data["hour"]
+                        use_min = data["min"]
                     speaking(
                         f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
 
