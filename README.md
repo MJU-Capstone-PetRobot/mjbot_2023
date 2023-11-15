@@ -3,6 +3,8 @@
 - ROS2: Humble Hawksbill
 - OS:
     - Ubuntu 22.04 Jammy Jellyfish(Orange Pi Plus)
+ 
+'''https://github.com/Tiryoh/ros2_setup_scripts_ubuntu'''
 
 
 ## Environment
