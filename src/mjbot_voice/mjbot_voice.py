@@ -92,7 +92,7 @@ class VoiceSubscriber(Node):
         self.get_logger().info(f'Received: {msg.data}')
 
         if msg.data == True:
-            speaking("할머니 괜찮으세요??")
+            speaking("괜찮으세요??")
 
     def subscribe_callback_bat_state(self, msg):
         import json
@@ -107,7 +107,7 @@ class VoiceSubscriber(Node):
             json.dump(write_data, d)
 
         if bat_state <= 40.0:
-            speaking("할머니 배고파요")
+            speaking("배고파요")
 
     def subscribe_callback_bat_time(self, msg):
         import json
@@ -130,7 +130,7 @@ class VoiceSubscriber(Node):
 
     def subscribe_callback_co(self, msg):
         if msg.data >= 200:
-            speaking("할머니 불이 났어요!!")
+            speaking("불이 났어요!!")
 
 
 def conversation_loop(talking_node):
