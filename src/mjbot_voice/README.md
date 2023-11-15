@@ -1,3 +1,0 @@
-git key
-
-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
