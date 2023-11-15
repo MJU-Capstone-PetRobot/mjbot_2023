@@ -19,7 +19,7 @@ class MYOUNGJA():
     import json
     memory_size = 100
 
-    with open('./user_value.json', 'r') as f:
+    with open('user_data/user_value.json', 'r') as f:
         data = json.load(f)
         nameValue = data["user_name"]
         manWomanValue = data["user_value"]
@@ -222,7 +222,7 @@ def name_check():
     import json
     global common
     common = 0
-    with open('./user_value.json', 'r') as f:
+    with open('user_data/user_value.json', 'r') as f:
         data = json.load(f)
         if data["user_name"] == "":
             use_sound("./mp3/first_0.wav")
@@ -257,7 +257,7 @@ def name_check():
         }
 
         if common == 1:
-            with open('./user_value.json', 'w') as d:
+            with open('user_data/user_value.json', 'w') as d:
                 json.dump(write_data, d)
 
     return [name_, manWoman_]
@@ -269,7 +269,7 @@ def name_ini():
         "user_name": "",
         "user_value": ""
     }
-    with open('./user_value.json', 'w') as d:
+    with open('user_data/user_value.json', 'w') as d:
         json.dump(write_data, d)
 
 
