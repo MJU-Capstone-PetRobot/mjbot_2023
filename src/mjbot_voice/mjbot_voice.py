@@ -177,7 +177,7 @@ def conversation_loop(talking_node):
         # Process prediction results
         for mdl in owwModel.prediction_buffer.keys():
             scores = list(owwModel.prediction_buffer[mdl])
-            if scores[-1] > 0.3:  # Wake word detected
+            if scores[-1] > 0.2:  # Wake word detected
                 print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
                 mdl = ""
                 scores = [0] * n_models
