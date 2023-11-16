@@ -42,7 +42,7 @@ colcon build --symlink-install
 ### sourcing
 
 ```shell
-source ~/mjbot_2023/install/setup.bash
+source ~/mjbot_ws/install/setup.bash
 ```
 
 
