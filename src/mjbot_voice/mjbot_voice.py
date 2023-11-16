@@ -15,6 +15,7 @@ from Chat.voiceChat import *
 SAMPLE_WAV = "./sampleWav.wav"
 RESULT_MP3 = "./ResultMP3.mp3"
 YES_WAV = "./yes.wav"
+LANGUAGE = "user_data/language_select.json"
 
 # Audio Configuration
 CHANNELS = 1
@@ -38,6 +39,7 @@ def start_executor_thread(executor):
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
     return executor_thread
+
 
 # Talking Node definition
 
@@ -67,6 +69,7 @@ class TalkingNode(Node):
         publisher.publish(msg)
         self.get_logger().info(f'Published: {msg.data}')
 
+
 # Voice Subscriber Node definition
 
 
@@ -90,9 +93,12 @@ class VoiceSubscriber(Node):
         낙상
         '''
         self.get_logger().info(f'Received: {msg.data}')
-
-        if msg.data == True:
+        lang = language_check()
+        if msg.data == True and lang == 1:
             speaking("괜찮으세요??")
+        elif msg.data == True and lang == 0:
+            speaking_en("Are you ok??")
+
 
     def subscribe_callback_bat_state(self, msg):
         import json
@@ -106,8 +112,11 @@ class VoiceSubscriber(Node):
         with open('user_data/bat_percent.json', 'w') as d:
             json.dump(write_data, d)
 
-        if bat_state <= 40.0:
+        lang = language_check()
+        if bat_state <= 40.0 and lang == 1:
             speaking("배고파요")
+        elif bat_state <= 40.0 and lang == 0:
+            speaking_en("I'm hungry")
 
     def subscribe_callback_bat_time(self, msg):
         import json
@@ -129,8 +138,11 @@ class VoiceSubscriber(Node):
             pass
 
     def subscribe_callback_co(self, msg):
-        if msg.data >= 200:
+        lang = language_check()
+        if msg.data >= 200 and lang == 1:
             speaking("불이 났어요!!")
+        elif msg.data >= 200 and lang == 0:
+            speaking_en("Fire!!!")
 
 
 def conversation_loop(talking_node):
@@ -198,10 +210,14 @@ def conversation_loop(talking_node):
                     name_ini()
                 elif response == "종료":
                     use_sound("./mp3/off.wav")
-                    return False
+                    return 3
                 elif response == "조용":
                     use_sound("./mp3/quiet.wav")
                     # call_num = - 1000000
+                elif response == "영어":
+                    speaking_en("English mode")
+                    langugage_change(False)
+                    return 2
                 elif response == "배터리":
                     with open('user_data/bat_percent.json', 'r') as f:
                         data = json.load(f)
@@ -254,7 +270,134 @@ def conversation_loop(talking_node):
                 elif response == "":
                     break
 
-            return True
+            return 1
+
+def conversation_loop_en(talking_node):
+    print("conversation_loop() 시작")
+    mj = MYOUNGJA()
+
+    # Clean up before starting the loop
+    file_cleanup()
+
+    name_check()
+
+    # 배터리 잔량 체크
+
+    # Experimental feature to initiate conversation
+    # if not common:
+    #     use_sound("./mp3/ex1.wav")
+    #     time.sleep(2)
+    #     use_sound("./mp3/ex_2.wav")
+    #     common = True
+
+    # Start of the conversation
+    # Initialize the audio stream with sounddevice
+    stream = sd.InputStream(
+        samplerate=RATE, channels=CHANNELS, dtype='int16')
+    stream.start()
+
+    owwModel = Model(
+        wakeword_models=["./src/mjbot_voice/models/hey.tflite"], inference_framework="tflite")
+
+    n_models = len(owwModel.models.keys())
+
+    # Main loop for wake word detection
+    while True:
+        # Get audio
+        audio_data, overflowed = stream.read(CHUNK)
+        if overflowed:
+            print("Audio buffer has overflowed")
+
+        audio_data = np.frombuffer(audio_data, dtype=np.int16)
+
+        # Feed to openWakeWord model
+        prediction = owwModel.predict(audio_data)
+        common = False
+        # Process prediction results
+        for mdl in owwModel.prediction_buffer.keys():
+            scores = list(owwModel.prediction_buffer[mdl])
+            if scores[-1] > 0.2:  # Wake word detected
+                print(f"Wake word detected !!!!!!!!!!!!!!!!1 {mdl}!")
+                mdl = ""
+                scores = [0] * n_models
+                audio_data = np.array([])
+                common = True
+        if common:
+            speaking_en("Yes sir!!")
+            common = False
+
+            while True:
+                # 대답 기다리는 동안 표정 변화
+                talking_node.publish_emotions("mic_waiting")
+                response = mic(3)
+                talking_node.publish_emotions("daily")
+
+                if response == "reset":
+                    speaking_en("Ok reset mode")
+                    name_ini()
+                elif response == "turn off":
+                    speaking_en("ok turn off mode")
+                    return 3
+                elif response == "silent":
+                    speaking_en("ok silent mode")
+                    # call_num = - 1000000
+                elif response == "한국어":
+                    speaking("한국어 모드로 전환합니다")
+                    langugage_change(True)
+                    return 1
+                elif response == "battery":
+                    with open('user_data/bat_percent.json', 'r') as f:
+                        data = json.load(f)
+                        bat_state = data["bat_state"]
+
+                    # 남은 사용 가능 시간 체크
+                    with open('user_data/bat_time.json', 'r') as f:
+                        data = json.load(f)
+                        use_hour = data["hour"]
+                        use_min = data["min"]
+                    speaking_en(
+                        f"The battery level is {bat_state} percent. The remaining usage time is {use_hour} hours and {use_min} minutes.")
+
+                elif response != "":
+                    if response == "산책 가자":  # 산책 가자
+                        talking_node.publish_arm_motions("holding_hand")
+                        time.sleep(1)
+                    elif response == "따라와":  # 따라와
+                        talking_node.publish_mode("tracking")
+                    elif response == "멈춰":  # 멈춰
+                        talking_node.publish_mode("idle")
+                    elif response == "오른손":  # 오른손
+                        talking_node.publish_arm_motions("give_right_hand")
+                    elif response == "왼손":
+                        talking_node.publish_arm_motions("give_left_hand")
+                    elif response == "안아줘":
+                        talking_node.publish_arm_motions("hug")
+                    elif response == "조용":
+                        break
+                    else:
+
+                        response_ = mj.gpt_send_anw(response)
+                        emotion = response_[0]
+
+                        # React based on the emotion
+                        if emotion == "close":
+                            talking_node.publish_emotions("close")
+                        elif emotion == "moving":
+                            talking_node.publish_emotions("moving")
+                        elif emotion == "angry":
+                            talking_node.publish_emotions("angry")
+                        elif emotion == "sad":
+                            talking_node.publish_emotions("sad")
+                        else:
+                            talking_node.publish_emotions("daily")
+
+                        ans = response_[1]
+                        speaking(ans)
+                        talking_node.publish_emotions("daily")
+                elif response == "":
+                    break
+
+            return 2
 
 
 def start_executor_thread(executor):
@@ -277,12 +420,22 @@ def main():
 
     executor_thread = start_executor_thread(executor)
 
+    mode = 1
     try:
         while True:
-            shut_down = conversation_loop(talking_node)
-            file_cleanup()
-            if not shut_down:
+            if mode == 1:
+                KR = conversation_loop(talking_node)
+                file_cleanup()
+                if KR == 2:
+                    mode = 2
+            elif mode == 2:
+                EN = conversation_loop(talking_node)
+                file_cleanup()
+                if EN == 1:
+                    mode = 1
+            else:
                 break
+
     finally:
         if executor_thread.is_alive():
             executor_thread.join()

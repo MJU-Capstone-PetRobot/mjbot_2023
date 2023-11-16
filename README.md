@@ -1,6 +1,6 @@
+## Document
+[User Guide](User_Guide.md)
 
-
-  
 ## Environment
 
 - ROS2: Humble Hawksbill
@@ -50,4 +50,26 @@ source ~/mjbot_ws/install/setup.bash
 
 ```shell
 ros2 launch mjbot_bringup mjbot_bringup.launch.py
+```
+
+## .ENV for API KEY
+
+### Install 
+
+```python
+pip3 install python-dotenv
+```
+
+### Create
+```shell
+cd ~/mjbot_ws
+vim .ENV
+```
+
+### Write
+
+```shell
+GPT_API = "API KEY"
+CLIENT_ID = "API KEY"
+CLIENT_SECRET = "API KEY"
 ```
