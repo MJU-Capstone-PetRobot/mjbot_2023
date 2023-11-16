@@ -10,3 +10,4 @@ sounddevice==0.4.6
 twilio==8.10.1
 googlemaps==4.10.0
 setuptools==58.2.0
+odrive==0.5.3.post0
