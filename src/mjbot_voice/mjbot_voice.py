@@ -359,20 +359,20 @@ def conversation_loop_en(talking_node):
                         f"The battery level is {bat_state} percent. The remaining usage time is {use_hour} hours and {use_min} minutes.")
 
                 elif response != "":
-                    if response == "산책 가자":  # 산책 가자
+                    if response == "Let's take a walk":  # 산책 가자
                         talking_node.publish_arm_motions("holding_hand")
                         time.sleep(1)
-                    elif response == "따라와":  # 따라와
+                    elif response == "follow me":  # 따라와
                         talking_node.publish_mode("tracking")
-                    elif response == "멈춰":  # 멈춰
+                    elif response == "stop":  # 멈춰
                         talking_node.publish_mode("idle")
-                    elif response == "오른손":  # 오른손
+                    elif response == "right hand":  # 오른손
                         talking_node.publish_arm_motions("give_right_hand")
-                    elif response == "왼손":
+                    elif response == "left hand":
                         talking_node.publish_arm_motions("give_left_hand")
-                    elif response == "안아줘":
+                    elif response == "hug me":
                         talking_node.publish_arm_motions("hug")
-                    elif response == "조용":
+                    elif response == "silent":
                         break
                     else:
 
