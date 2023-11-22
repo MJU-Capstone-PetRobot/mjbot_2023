@@ -149,41 +149,40 @@ def speak_first():
     time.sleep(3)
 
 def speaking_en(anw_text):
-    def speaking(anw_text):
-        import os
-        import urllib.request
-        from pydub import AudioSegment
-        from playsound import playsound as pl
+    import os
+    import urllib.request
+    from pydub import AudioSegment
+    from playsound import playsound as pl
 
-        # NAVER CLOVA
-        encText = urllib.parse.quote(anw_text)
-        data = f"speaker=djoey&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
-        urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
-        requests = urllib.request.Request(urls)
-        requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
-        requests.add_header("X-NCP-APIGW-API-KEY", client_secret)
-        response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
-        rescodes = response.getcode()
-        if (rescodes == 200):
-            print("mp3 저장 완료")
-            response_body = response.read()
-            with open('./ResultMP3.mp3', 'wb') as f:
-                f.write(response_body)
+    # NAVER CLOVA
+    encText = urllib.parse.quote(anw_text)
+    data = f"speaker=djoey&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
+    urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
+    requests = urllib.request.Request(urls)
+    requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
+    requests.add_header("X-NCP-APIGW-API-KEY", client_secret)
+    response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
+    rescodes = response.getcode()
+    if (rescodes == 200):
+        print("mp3 저장 완료")
+        response_body = response.read()
+        with open('./ResultMP3.mp3', 'wb') as f:
+            f.write(response_body)
 
-            # 스피커 출력
-            filename = "ResultMP3.mp3"
-            dst = "test.wav"
-            sound = AudioSegment.from_mp3(filename)
-            sound.export(dst, format="wav")
+        # 스피커 출력
+        filename = "ResultMP3.mp3"
+        dst = "test.wav"
+        sound = AudioSegment.from_mp3(filename)
+        sound.export(dst, format="wav")
 
-            # data, fs = sf.read(filename, dtype='')
-            pl("test.wav")
-        else:
-            print("404 error")
+        # data, fs = sf.read(filename, dtype='')
+        pl("test.wav")
+    else:
+        print("404 error")
 
-            # 제작된 음성 파일 삭제
-            os.remove("ResultMP3.mp3")
-            os.remove("test.wav")
+        # 제작된 음성 파일 삭제
+        os.remove("ResultMP3.mp3")
+        os.remove("test.wav")
 
 def speaking(anw_text):
     import os
@@ -343,11 +342,11 @@ def name_check_en():
     with open('user_data/user_value.json', 'r') as f:
         data = json.load(f)
         if data["user_name"] == "":
-            speaking("Hello sir. I have no data.so I ask you something.")
-            speaking("What's your name?")
+            speaking_en("Hello sir. I have no data.so I ask you something.")
+            speaking_en("What's your name?")
             name_ = mic(2)
-            speaking(f"Hi! {name_}")
-            speaking("What's your gender. please speak he or she.")
+            speaking_en(f"Hi! {name_}")
+            speaking_en("What's your gender. please speak he or she.")
             manWoman = mic(2)
             if manWoman == "he":
                 manWoman_ = "he"
@@ -355,7 +354,7 @@ def name_check_en():
                 manWoman_ = "she"
             else:
                 while manWoman != "he" or "she":
-                    speaking("I'm sorry. could you repeat please?")
+                    speaking_en("I'm sorry. could you repeat please?")
                     manWoman = mic(2)
                     if manWoman == "he":
                         manWoman_ = "he"
@@ -364,7 +363,7 @@ def name_check_en():
                         manWoman_ = "she"
                         break
             common = 1
-            speaking("Thank you. setting is over")
+            speaking_en("Thank you. setting is over")
         else:
             name_ = data["user_name"]
             manWoman_ = data["user_value"]
@@ -466,3 +465,4 @@ def language_check():
             return 1
         else:
             return 0
+        

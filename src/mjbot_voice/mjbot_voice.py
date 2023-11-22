@@ -146,7 +146,7 @@ class VoiceSubscriber(Node):
 
 
 def conversation_loop(talking_node):
-    print("conversation_loop() 시작")
+    print("conversation_loop() korean 시작")
     mj = MYOUNGJA()
 
     # Clean up before starting the loop
@@ -214,9 +214,10 @@ def conversation_loop(talking_node):
                 elif response == "조용":
                     use_sound("./mp3/quiet.wav")
                     # call_num = - 1000000
-                elif response == "영어":
+                elif response == "외국어":
                     speaking_en("English mode")
                     langugage_change(False)
+                    print("english change")
                     return 2
                 elif response == "배터리":
                     with open('user_data/bat_percent.json', 'r') as f:
@@ -273,7 +274,7 @@ def conversation_loop(talking_node):
             return 1
 
 def conversation_loop_en(talking_node):
-    print("conversation_loop() 시작")
+    print("conversation_loop() english 시작")
     mj = MYOUNGJA()
 
     # Clean up before starting the loop
@@ -329,7 +330,7 @@ def conversation_loop_en(talking_node):
             while True:
                 # 대답 기다리는 동안 표정 변화
                 talking_node.publish_emotions("mic_waiting")
-                response = mic(3)
+                response = mic_en(3)
                 talking_node.publish_emotions("daily")
 
                 if response == "reset":
@@ -392,7 +393,7 @@ def conversation_loop_en(talking_node):
                             talking_node.publish_emotions("daily")
 
                         ans = response_[1]
-                        speaking(ans)
+                        speaking_en(ans)
                         talking_node.publish_emotions("daily")
                 elif response == "":
                     break
@@ -423,13 +424,15 @@ def main():
     mode = 1
     try:
         while True:
+            print(f"mode is {mode}")
             if mode == 1:
                 KR = conversation_loop(talking_node)
                 file_cleanup()
                 if KR == 2:
                     mode = 2
+                    print("mode 2")
             elif mode == 2:
-                EN = conversation_loop(talking_node)
+                EN = conversation_loop_en(talking_node)
                 file_cleanup()
                 if EN == 1:
                     mode = 1
