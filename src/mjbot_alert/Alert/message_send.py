@@ -1,9 +1,12 @@
 import googlemaps
 from twilio.rest import Client
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 def googlemap_api():
     import json
-    API = "AIzaSyD5fvkrnY2xbyp7DB9LK-bQbT1RzbgpvE8"  # API 값
+    API = os.getenv("GOOGLE_API") # API 값
     # 위도 경도 -> 지번 주소로 변경 // 역지오코드
     gmaps = googlemaps.Client(key=API)  # api key
     with open('user_data/user_gps.json', 'r') as f:
@@ -21,8 +24,8 @@ def send_message(problem):
     gps = googlemap_api()
     # Twilio
     # 계정 token 입력
-    account_sid = "AC957a6e0d227e0a045846fc47c758f5e4"
-    auth_token = "487fb07c4964fc01986ea143728fa75c"
+    account_sid = os.getenv("TWILIO_SID")
+    auth_token =  os.getenv("TWILIO_TOKEN")
     client = Client(account_sid, auth_token)
     problem_thing = ""
 
@@ -32,7 +35,7 @@ def send_message(problem):
     message = client.messages \
         .create(
         body=f"명자 위험 알림. 종류 : {problem_thing}. 위치는 {gps}",
-        from_="+18664707171",
-        to="+821066860215"
+        from_= os.getenv("FROM_TWILIO"),
+        to= os.getenv("TO_TWILIO")
     )
     print("메세지 전송 완료")
