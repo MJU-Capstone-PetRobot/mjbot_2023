@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import rclpy
 from geometry_msgs.msg import Quaternion
-from std_msgs.msg import UInt16, Int16MultiArray, String
+from std_msgs.msg import UInt16, Int16MultiArray, String, Bool
 from rclpy.node import Node
 import time
 import random
@@ -100,7 +100,7 @@ class CommandNeck(Node):
     EMOTION_FUNCTIONS = {
         "daily": "daily",
         "wink": "tilt",
-        "sad": "sad",
+        "sad": "nod",
         "angry": "angry",
         "moving": "moving",
         "mic_waiting": "listening"
@@ -112,17 +112,39 @@ class CommandNeck(Node):
         super().__init__('commands_neck_node')
         self.neck_controller_publisher = neck_controller_publisher
         self.setup_subscriptions()
-        self.setup_subscriptions()
         self.last_position = Quaternion(x=0.0, y=0.0, z=0.0, w=70.0)
         self.yaw_errors = [0] * 5  # Last 5 yaw errors
         self.pitch_errors = [0] * 5  # Last 5 pitch errors
         self.current_state = self.STATE_DAILY
+        self.publish_arm_mode = self.create_publisher(String, 'arm_mode', 10)
+
+    def publish_arm_motions(self, Arm_motions):
+        '''
+        모터 제어
+        '''
+        msg = String()
+        msg.data = str(Arm_motions)
+        self.publisher_arm_mode.publish(msg)
+        self.get_logger().info('Published: %s' % msg.data)
 
     def setup_subscriptions(self):
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
         self.owner_center_subscription = self.create_subscription(
             Int16MultiArray, 'owner_xyz', self.owner_center_callback, 10)
+        self.subscription = self.create_subscription(
+            Bool, 'touch', self.subscribe_callback_touch, 10)
+
+    def subscribe_callback_touch(self, msg):
+        touch_count = 0
+        if msg.data == True:
+            touch_count += 1
+            if touch_count == 5:
+                self.angry()
+            elif touch_count == 10:
+                self.nod()
+                self.publish_arm_motions("cute")
+                touch_count = 0
 
     def callback_emo(self, msg):
         self.current_state = self.STATE_EMOTION
@@ -197,7 +219,7 @@ class CommandNeck(Node):
         self.neck_controller_publisher.start_time = start_time
         self.neck_controller_publisher.duration = total_duration
 
-    def sad(self, duration=3):
+    def nod(self, duration=3):
         num_nods = random.randint(1, 3)
         duration_per_nod = duration / (3 * num_nods)
         trajectory_steps = {'x': [], 'y': [], 'z': [], 'w': []}

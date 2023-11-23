@@ -83,8 +83,7 @@ class VoiceSubscriber(Node):
         self.get_logger().info("hear Node initialized")
         self.subscription = self.create_subscription(
             Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
-        # self.subscription = self.create_subscription(
-        #     Bool, 'touch', self.subscribe_callback_touch, 10)
+
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_co, 10)
         self.subscription = self.create_subscription(

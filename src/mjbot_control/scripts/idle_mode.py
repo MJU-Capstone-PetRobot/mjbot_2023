@@ -167,6 +167,9 @@ class ArmCommander(Node):
         elif msg.data == "hug":
             self.position_key = 'hug'
             self.set_and_send_hug_sequence()
+        elif msg.data == "cute":
+            self.position_key = 'cute'
+            self.set_and_send_cute_sequence()
 
         self.set_and_send_arm_position(self.poses[self.position_key])
 
@@ -247,7 +250,24 @@ class ArmCommander(Node):
         self.add_trajectory_point([0.0, 1.0, 0.5, 0.0, 1.5, 0.0], 4.5)
 
         self.add_trajectory_point(self.poses['default'], 6)
-        self.get_logger().info('Sending hug sequence...')
+        self.get_logger().info('Sending hello sequence...')
+
+        if self.arm_controller.action_state in [ActionState.NONE, ActionState.SUCCEEDED]:
+            self.arm_controller.send_goal(
+                self.trajectory_msg, self.arm_controller.goal_response_callback)
+
+    def set_and_send_cute_sequence(self):
+        self.trajectory_msg.trajectory.points = []
+        self.add_trajectory_point(self.poses['default'], 1)
+        self.add_trajectory_point([0.3, -1.5, 0.0, -0.3, 1.5, 0.0], 2)
+        self.add_trajectory_point([0.3, -1.5, 0.0, -0.6, 1.5, 0.0], 2.5)
+        self.add_trajectory_point([0.6, -1.5, 0.0, -0.3, 1.5, 0.0], 3)
+        self.add_trajectory_point([0.3, -1.5, 0.0, -0.6, 1.5, 0.0], 3.5)
+        self.add_trajectory_point([0.6, -1.5, 0.0, -0.3, 1.5, 0.0], 4)
+        self.add_trajectory_point([0.3, -1.5, 0.0, -0.6, 1.5, 0.0], 4.5)
+
+        self.add_trajectory_point(self.poses['default'], 6)
+        self.get_logger().info('Sending cute sequence...')
 
         if self.arm_controller.action_state in [ActionState.NONE, ActionState.SUCCEEDED]:
             self.arm_controller.send_goal(
