@@ -22,3 +22,4 @@ sudo -H apt-get install -y ros-humble-joint-state-publisher
 sudo -H apt-get install -y python3-serial
 sudo apt-get install python3-pip
 sudo apt install -y cmake
+sudo apt install ros-humble-hardware-interface
