@@ -10,6 +10,8 @@ class TrackingDriver(Node):
     def __init__(self):
         super().__init__('tracking_driver_node')
         self.publisher = self.create_publisher(Twist, 'cmd_vel_tracker', 10)
+        self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
+        self.timer = self.create_timer(10, self.publish_arm_mode)
         self.subscription = self.create_subscription(
             Int16MultiArray,
             'owner_xyz',
@@ -31,6 +33,15 @@ class TrackingDriver(Node):
         self.filter_length = 5
         self.data_queue = deque(maxlen=self.filter_length)
         self.current_mode = None
+
+    def publish_arm_mode(self):
+        '''
+        Publish "peng" every 10 seconds.
+        '''
+        arm_mode_msg = String()
+        arm_mode_msg.data = "peng"
+        self.publisher_arm_mode.publish(arm_mode_msg)
+        self.get_logger().info('Published arm mode: %s' % arm_mode_msg.data)
 
     def mode_callback(self, msg: String):
         # Update the current mode with the incoming message
