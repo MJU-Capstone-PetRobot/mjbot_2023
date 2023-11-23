@@ -197,7 +197,7 @@ class CommandNeck(Node):
         self.neck_controller_publisher.start_time = start_time
         self.neck_controller_publisher.duration = total_duration
 
-    def sad(self, duration=2):
+    def sad(self, duration=3):
         num_nods = random.randint(1, 3)
         duration_per_nod = duration / (3 * num_nods)
         trajectory_steps = {'x': [], 'y': [], 'z': [], 'w': []}

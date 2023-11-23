@@ -50,6 +50,7 @@ class TalkingNode(Node):
         self.get_logger().info("Talking Node initialized")
         self.publisher_emotions = self.create_publisher(String, 'emo', 10)
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
+        self.publisher_mode = self.create_publisher(String, 'mode', 10)
 
     def publish_arm_motions(self, Arm_motions):
         '''
@@ -68,6 +69,9 @@ class TalkingNode(Node):
         msg.data = str(message)
         publisher.publish(msg)
         self.get_logger().info(f'Published: {msg.data}')
+
+    def publish_mode(self, mode):
+        self._publish_message(mode, self.publisher_mode)
 
 
 # Voice Subscriber Node definition
@@ -99,7 +103,6 @@ class VoiceSubscriber(Node):
             time.sleep(20)
         elif msg.data == True and lang == 0:
             speaking_en("Are you ok??")
-
 
     def subscribe_callback_bat_state(self, msg):
         import json
@@ -239,7 +242,7 @@ def conversation_loop(talking_node):
                         talking_node.publish_arm_motions("holding_hand")
                         use_sound("./mp3/yes.wav")
                         time.sleep(1)
-                    elif response == "따라와" |"다나와"| "이리와":  # 따라와
+                    elif response == "따라와" | "다나와" | "이리와":  # 따라와
                         talking_node.publish_mode("tracking")
                         use_sound("./mp3/yes.wav")
                     elif response == "멈춰":  # 멈춰
@@ -278,6 +281,7 @@ def conversation_loop(talking_node):
                         talking_node.publish_emotions("daily")
                 elif response == "":
                     break
+
 
 def conversation_loop_en(talking_node):
     print("conversation_loop() english 시작")
