@@ -1,5 +1,6 @@
 ## Document
-[User Guide](User_Guide.md)
+[User Guide](User_Guide.md)  
+[User GUIDE English.ver](User_Guide_en.md)
 
 ## Environment
 
@@ -52,7 +53,7 @@ source ~/mjbot_ws/install/setup.bash
 ros2 launch mjbot_bringup mjbot_bringup.launch.py
 ```
 
-## .ENV for API KEY
+## .env for API KEY
 
 ### Install 
 
@@ -69,6 +70,13 @@ vim .ENV
 ### Write
 
 ```shell
+# 위험 알림 API KEY
+GOOGLE_API = "API KEY"
+TWILIO_SID = "API KEY"
+TWILIO_TOKEN = "API KEY"
+FROM_TWILIO = "API KEY"
+TO_TWILIO = "API KEY"
+# 대화 API KEY
 GPT_API = "API KEY"
 CLIENT_ID = "API KEY"
 CLIENT_SECRET = "API KEY"
