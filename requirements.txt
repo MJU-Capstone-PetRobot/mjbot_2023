@@ -1,13 +1,13 @@
 # 터미널에서 pip install -r requirements.txt 커맨드로 모듈 다운로드!!
-numpy==1.26.1
-openai==1.2.4
-openwakeword==0.5.1
+numpy
+openai==0.28
+openwakeword
 playsound==1.3.0
 pydub==0.25.1
 python-dotenv==1.0.0
 Requests==2.31.0
 sounddevice==0.4.6
-twilio==8.10.1
+twilio
 googlemaps==4.10.0
 setuptools==58.2.0
 odrive==0.5.3.post0

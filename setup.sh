@@ -23,3 +23,5 @@ sudo -H apt-get install -y python3-serial
 sudo apt-get install python3-pip
 sudo apt install -y cmake
 sudo apt install ros-humble-hardware-interface
+sudo apt-get install libportaudio2
+sudo apt-get install libasound-dev

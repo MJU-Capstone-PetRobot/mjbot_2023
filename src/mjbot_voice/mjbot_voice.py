@@ -170,7 +170,7 @@ def conversation_loop(talking_node):
     stream.start()
 
     owwModel = Model(
-        wakeword_models=["./src/mjbot_voice/models/hey.tflite"], inference_framework="tflite")
+        wakeword_models=["./src/mjbot_voice/models/hi.tflite"], inference_framework="tflite")
 
     n_models = len(owwModel.models.keys())
 
