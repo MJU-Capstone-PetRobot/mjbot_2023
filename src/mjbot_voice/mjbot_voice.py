@@ -235,17 +235,23 @@ def conversation_loop(talking_node):
                 elif response != "":
                     if response == "산책 가자":  # 산책 가자
                         talking_node.publish_arm_motions("holding_hand")
+                        use_sound("./mp3/yes.wav")
                         time.sleep(1)
                     elif response == "따라와":  # 따라와
                         talking_node.publish_mode("tracking")
+                        use_sound("./mp3/yes.wav")
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
+                        use_sound("./mp3/yes.wav")
                     elif response == "오른손":  # 오른손
                         talking_node.publish_arm_motions("give_right_hand")
+                        use_sound("./mp3/yes.wav")
                     elif response == "왼손":
                         talking_node.publish_arm_motions("give_left_hand")
+                        use_sound("./mp3/yes.wav")
                     elif response == "안아줘":
                         talking_node.publish_arm_motions("hug")
+                        use_sound("./mp3/yes.wav")
                     elif response == "조용":
                         break
                     else:
@@ -360,17 +366,23 @@ def conversation_loop_en(talking_node):
                 elif response != "":
                     if response == "Let's take a walk":  # 산책 가자
                         talking_node.publish_arm_motions("holding_hand")
+                        speaking_en("Yes sir!!")
                         time.sleep(1)
                     elif response == "follow me":  # 따라와
                         talking_node.publish_mode("tracking")
+                        speaking_en("Yes sir!!")
                     elif response == "stop":  # 멈춰
                         talking_node.publish_mode("idle")
+                        speaking_en("Yes sir!!")
                     elif response == "right hand":  # 오른손
                         talking_node.publish_arm_motions("give_right_hand")
+                        speaking_en("Yes sir!!")
                     elif response == "left hand":
                         talking_node.publish_arm_motions("give_left_hand")
+                        speaking_en("Yes sir!!")
                     elif response == "hug me":
                         talking_node.publish_arm_motions("hug")
+                        speaking_en("Yes sir!!")
                     elif response == "silent":
                         break
                     else:
