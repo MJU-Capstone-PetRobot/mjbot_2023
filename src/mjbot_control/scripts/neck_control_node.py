@@ -144,6 +144,17 @@ class CommandNeck(Node):
                 self.publish_arm_motions("cute")
                 touch_count = 0
 
+    # def subscribe_callback_touch(self, msg):
+    #     if msg.data == True:
+    #         self.touch_count += 1
+    #         self.get_logger().info(f'Touch count: {self.touch_count}')  # Logging for debugging
+    #         if self.touch_count == 5:
+    #             self.angry()
+    #         elif self.touch_count == 10:
+    #             self.nod()
+    #             self.publish_arm_motions("cute")
+    #             self.touch_count = 0  # Reset touch_count after reaching 10
+
     def callback_emo(self, msg):
         self.current_state = self.STATE_EMOTION
         emotion_function = self.EMOTION_FUNCTIONS.get(msg.data)
