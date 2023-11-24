@@ -96,6 +96,7 @@ class VoiceSubscriber(Node):
         lang = language_check()
         if msg.data == True and lang == 1:
             speaking("괜찮으세요??")
+            time.sleep(20)
         elif msg.data == True and lang == 0:
             speaking_en("Are you ok??")
 
