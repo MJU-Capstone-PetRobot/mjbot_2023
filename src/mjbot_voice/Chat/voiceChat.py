@@ -115,6 +115,11 @@ def speak_first_en():
 
     time.sleep(3)
 
+def time_alarm():
+    from time import localtime
+    tm = localtime()
+    speaking(f"현재 시각 {tm.tm_hour}시 {tm.tm_min}분 입니다")
+
 def disease_alarm():
     '''
     복약 알림 테스트용
