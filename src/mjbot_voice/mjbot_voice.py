@@ -215,6 +215,8 @@ def conversation_loop(talking_node):
                 # 복약 기능 추가
                 elif response == "복약":
                     disease_alarm()
+                elif response == "시간":
+                    time_alarm()
                 elif response == "배터리":
                     with open('user_data/bat_percent.json', 'r') as f:
                         data = json.load(f)
