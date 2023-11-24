@@ -130,8 +130,6 @@ class CommandNeck(Node):
     def setup_subscriptions(self):
         self.subscriber_emo = self.create_subscription(
             String, "emo", self.callback_emo, 10)
-        self.owner_center_subscription = self.create_subscription(
-            Int16MultiArray, 'owner_xyz', self.owner_center_callback, 10)
         self.subscription = self.create_subscription(
             Bool, 'touch', self.subscribe_callback_touch, 10)
 
@@ -295,31 +293,6 @@ class CommandNeck(Node):
         self.neck_controller_publisher.trajectory_steps = trajectory_steps
         self.neck_controller_publisher.start_time = start_time
         self.neck_controller_publisher.duration = duration
-
-    def owner_center_callback(self, msg=None):
-        if self.current_state != self.STATE_DAILY:
-            return
-        if msg is None or msg.data[0] == 0:
-            msg = Int16MultiArray(data=[320, 160])  # default center values
-
-        yaw_error = (msg.data[0] - NeckControllerPublisher.IMAGE_WIDTH /
-                     2) / NeckControllerPublisher.IMAGE_WIDTH
-        pitch_error = (msg.data[1] - NeckControllerPublisher.IMAGE_HEIGHT /
-                       2) / NeckControllerPublisher.IMAGE_HEIGHT
-
-        # Update and calculate the moving average for yaw
-        self.yaw_errors.append(yaw_error)
-        self.yaw_errors.pop(0)
-        avg_yaw_error = sum(self.yaw_errors) / len(self.yaw_errors)
-        target_yaw = 0.1 * avg_yaw_error
-
-        # Update and calculate the moving average for pitch
-        self.pitch_errors.append(pitch_error)
-        self.pitch_errors.pop(0)
-        avg_pitch_error = sum(self.pitch_errors) / len(self.pitch_errors)
-        target_pitch = 0.1 * avg_pitch_error
-
-        self.neck_controller_publisher.publish_values()
 
 
 def main(args=None):
