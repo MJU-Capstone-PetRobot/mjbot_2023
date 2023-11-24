@@ -287,7 +287,7 @@ if __name__ == '__main__':
     executor_thread = threading.Thread(target=executor.spin, daemon=True)
     executor_thread.start()
 
-    # arm_commander.send_startup_sequence()
+    arm_commander.send_startup_sequence()
 
     rate = arm_commander.create_rate(50)
 

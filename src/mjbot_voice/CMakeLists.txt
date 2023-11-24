@@ -27,6 +27,7 @@ install(
 install(
   PROGRAMS
     mjbot_voice.py
+    .env
   DESTINATION lib/${PROJECT_NAME}
 )
 
