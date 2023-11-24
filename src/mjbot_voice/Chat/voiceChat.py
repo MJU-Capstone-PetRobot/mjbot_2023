@@ -115,6 +115,19 @@ def speak_first_en():
 
     time.sleep(3)
 
+def disease_alarm():
+    '''
+    복약 알림 테스트용
+    '''
+    import json
+
+    with open('user_data/user_disease.json', 'r') as f:
+        data = json.load(f)
+        disease_name = data["disease"]
+        disease_hour = data["time_hour"]
+        disease_min = data["time_min"]
+    speaking(f"현재 시각 {disease_hour}시 {disease_min}분, {disease_name}약 드실 시간이예요!")
+
 def speak_first():
     '''
     먼저 말 거는 함수
@@ -122,7 +135,13 @@ def speak_first():
     '''
     from time import localtime
     import random
+    import json
 
+    with open('user_data/user_disease.json', 'r') as f:
+        data = json.load(f)
+        disease_name = data["disease"]
+        disease_hour = data["time_hour"]
+        disease_min = data["time_min"]
     tm = localtime()
 
     question_list = ["오늘 몸 상태는 어때요?",
@@ -132,8 +151,8 @@ def speak_first():
         speaking("좋은 아침이에요!! 오늘도 좋은 하루 되세요!!")
     elif tm.tm_hour == 22 and tm.tm_min == 00:
         speaking("이제 잘 시간이에요!! 편안한 밤 되세요!!")
-    elif tm.tm_hour == 12 and tm.tm_min == 00:
-        speaking("혈압약 드실 시간이에요!")
+    elif tm.tm_hour == disease_hour and tm.tm_min == disease_min:
+        speaking(f"{disease_name}약 드실 시간이에요!")
     elif 7 < tm.tm_hour < 22 and tm.tm_min == 00:
         random_ans = random.randrange(0, 9)
         if tm.tm_min == 30:
