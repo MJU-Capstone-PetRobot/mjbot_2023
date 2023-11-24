@@ -17,7 +17,7 @@
 
 ## Main Text
 ### 1. Robot
-Myoung-ja is always in ***standby mode*** and activates when the user calls out ***Hey*** Additionally, while active,    
+Myoung-ja is always in ***standby mode*** and activates when the user calls out ***Hi*** Additionally, while active,    
 Myoung-ja will randomly ***initiate a conversation with the user***
 
 ### 2. Battery
