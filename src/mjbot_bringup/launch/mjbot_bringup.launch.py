@@ -86,6 +86,10 @@ def generate_launch_description():
 
     mjbot_teleop_timer = TimerAction(
         period=5.0, actions=[include_mjbot_teleop])
+    
+    mjbot_vision_timer = TimerAction(
+        period=10.0, actions=[node_mjbot_vision]
+    )
 
     nodes = [
 
@@ -95,7 +99,7 @@ def generate_launch_description():
         twist_mux,
         mjbot_voice_timer,
         node_mjbot_alert,
-        #node_mjbot_vision,
+        mjbot_vision_timer,
         #node_esp_ros,
 
     ]

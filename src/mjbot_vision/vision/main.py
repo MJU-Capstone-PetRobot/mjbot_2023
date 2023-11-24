@@ -243,7 +243,7 @@ class VisionNode(Node):
             self.owner_h_diff = (
                 self.owner_h - self.owner_h_prev) / self.duration_sec
 
-            if self.owner_h_diff <= -500:
+            if -1000 <= self.owner_h_diff <= -500:
                 self.owner_fall = True
             else:
                 self.owner_fall = False

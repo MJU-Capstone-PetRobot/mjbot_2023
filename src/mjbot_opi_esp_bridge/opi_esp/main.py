@@ -14,7 +14,7 @@ import serial
 import threading
 from rclpy.executors import MultiThreadedExecutor
 
-port = '/dev/esp'
+port = '/dev/USB1'
 baud = 1000000
 
 SerialObj = serial.Serial(port, baud, timeout=3)
