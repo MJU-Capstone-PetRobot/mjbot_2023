@@ -150,7 +150,7 @@ def conversation_loop(talking_node):
     print("conversation_loop() korean 시작")
     mj = MYOUNGJA()
     speaking("안녕하세요!!")
-
+    
     # Clean up before starting the loop
     file_cleanup()
 
@@ -191,7 +191,6 @@ def conversation_loop(talking_node):
         if common:
             use_sound("./mp3/yes.wav")
             common = False
-            owwModel = 0
 
             while True:
                 # 대답 기다리는 동안 표정 변화
@@ -330,7 +329,6 @@ def conversation_loop_en(talking_node):
         if common:
             speaking_en("Yes sir!!")
             common = False
-            owwModel = 0
 
             while True:
                 # 대답 기다리는 동안 표정 변화
