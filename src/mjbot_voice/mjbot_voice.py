@@ -149,7 +149,6 @@ class VoiceSubscriber(Node):
 def conversation_loop(talking_node):
     print("conversation_loop() korean 시작")
     mj = MYOUNGJA()
-    speaking("안녕하세요!!")
     
     # Clean up before starting the loop
     file_cleanup()
@@ -275,12 +274,12 @@ def conversation_loop(talking_node):
                         speaking(ans)
                         talking_node.publish_emotions("daily")
                 elif response == "":
-                    break
+                    return 1
+            
 
 def conversation_loop_en(talking_node):
     print("conversation_loop() english 시작")
     mj = MYOUNGJA()
-    speaking_en("Hello! sir!!")
 
     # Clean up before starting the loop
     file_cleanup()
@@ -303,7 +302,7 @@ def conversation_loop_en(talking_node):
     stream.start()
 
     owwModel = Model(
-        wakeword_models=["./src/mjbot_voice/models/hey.tflite"], inference_framework="tflite")
+        wakeword_models=["./src/mjbot_voice/models/hi.tflite"], inference_framework="tflite")
 
     n_models = len(owwModel.models.keys())
 
@@ -347,7 +346,7 @@ def conversation_loop_en(talking_node):
                 elif response == "silent":
                     speaking_en("ok silent mode")
                     # call_num = - 1000000
-                elif response == "korean":
+                elif response == "change":
                     speaking("한국어 모드로 전환합니다")
                     langugage_change(True)
                     return 1
@@ -407,7 +406,7 @@ def conversation_loop_en(talking_node):
                         speaking_en(ans)
                         talking_node.publish_emotions("daily")
                 elif response == "":
-                    break
+                    return 1
 
 
 def start_executor_thread(executor):
@@ -433,20 +432,26 @@ def main():
     mode = 1
     try:
         while True:
-            print(f"mode is {mode}")
             if mode == 1:
-                KR = conversation_loop(talking_node)
-                file_cleanup()
-                if KR == 2:
-                    mode = 2
-                    print("mode 2")
+                speaking("안녕하세요!!")
             elif mode == 2:
-                EN = conversation_loop_en(talking_node)
-                file_cleanup()
-                if EN == 1:
-                    mode = 1
-            else:
-                break
+                speaking_en("Hello! sir!!")
+            while True:
+                print(f"mode is {mode}")
+                if mode == 1:
+                    KR = conversation_loop(talking_node)
+                    file_cleanup()
+                    if KR == 2:
+                        mode = 2
+                        break
+                elif mode == 2:
+                    EN = conversation_loop_en(talking_node)
+                    file_cleanup()
+                    if EN == 1:
+                        mode = 1
+                        break
+                else:
+                    break
 
     finally:
         if executor_thread.is_alive():
