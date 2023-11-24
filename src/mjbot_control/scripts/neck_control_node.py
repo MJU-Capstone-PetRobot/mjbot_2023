@@ -117,6 +117,7 @@ class CommandNeck(Node):
         self.pitch_errors = [0] * 5  # Last 5 pitch errors
         self.current_state = self.STATE_DAILY
         self.publish_arm_mode = self.create_publisher(String, 'arm_mode', 10)
+        self.touch_count = 0
 
     def publish_arm_motions(self, Arm_motions):
         '''
@@ -134,15 +135,18 @@ class CommandNeck(Node):
             Bool, 'touch', self.subscribe_callback_touch, 10)
 
     def subscribe_callback_touch(self, msg):
-        touch_count = 0
+        
         if msg.data == True:
-            touch_count += 1
-            if touch_count == 5:
+            self.touch_count += 1
+            self.get_logger().info(f'msg {self.touch_count}')
+            if self.touch_count == 5:
                 self.angry()
-            elif touch_count == 10:
+                self.publish_arm_motions("peng")
+            elif self.touch_count == 10:
                 self.nod()
                 self.publish_arm_motions("cute")
-                touch_count = 0
+                self.touch_count = 0
+
 
     # def subscribe_callback_touch(self, msg):
     #     if msg.data == True:

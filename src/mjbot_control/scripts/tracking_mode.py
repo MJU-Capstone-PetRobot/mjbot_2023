@@ -35,6 +35,8 @@ class TrackingDriver(Node):
         self.current_mode = None
 
     def publish_arm_mode(self):
+        if self.current_mode != "tracking":
+            return
         '''
         Publish "peng" every 10 seconds.
         '''

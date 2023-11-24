@@ -168,10 +168,10 @@ class ArmCommander(Node):
             self.position_key = 'hug'
             self.set_and_send_hug_sequence()
         elif msg.data == "cute":
-            self.position_key = 'cute'
+            self.position_key = 'default'
             self.set_and_send_cute_sequence()
         elif msg.data == "peng":
-            self.position_key = 'peng'
+            self.position_key = 'default'
             self.set_and_send_peng_sequence()
 
         self.set_and_send_arm_position(self.poses[self.position_key])
