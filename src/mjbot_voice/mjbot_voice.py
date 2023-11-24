@@ -50,7 +50,6 @@ class TalkingNode(Node):
         self.get_logger().info("Talking Node initialized")
         self.publisher_emotions = self.create_publisher(String, 'emo', 10)
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
-        self.publisher_mode = self.create_publisher(String, 'mode', 10)
 
     def publish_arm_motions(self, Arm_motions):
         '''
@@ -70,9 +69,6 @@ class TalkingNode(Node):
         publisher.publish(msg)
         self.get_logger().info(f'Published: {msg.data}')
 
-    def publish_mode(self, mode):
-        self._publish_message(mode, self.publisher_mode)
-
 
 # Voice Subscriber Node definition
 
@@ -83,7 +79,8 @@ class VoiceSubscriber(Node):
         self.get_logger().info("hear Node initialized")
         self.subscription = self.create_subscription(
             Bool, 'owner_fall', self.subscribe_callback_fall_down, 10)
-
+        # self.subscription = self.create_subscription(
+        #     Bool, 'touch', self.subscribe_callback_touch, 10)
         self.subscription = self.create_subscription(
             Int32, 'co_ppm', self.subscribe_callback_co, 10)
         self.subscription = self.create_subscription(
@@ -102,6 +99,7 @@ class VoiceSubscriber(Node):
             time.sleep(20)
         elif msg.data == True and lang == 0:
             speaking_en("Are you ok??")
+
 
     def subscribe_callback_bat_state(self, msg):
         import json
@@ -158,15 +156,6 @@ def conversation_loop(talking_node):
 
     name_check()
 
-    # 배터리 잔량 체크
-
-    # Experimental feature to initiate conversation
-    # if not common:
-    #     use_sound("./mp3/ex1.wav")
-    #     time.sleep(2)
-    #     use_sound("./mp3/ex_2.wav")
-    #     common = True
-
     # Start of the conversation
     # Initialize the audio stream with sounddevice
     stream = sd.InputStream(
@@ -202,6 +191,7 @@ def conversation_loop(talking_node):
         if common:
             use_sound("./mp3/yes.wav")
             common = False
+            owwModel = 0
 
             while True:
                 # 대답 기다리는 동안 표정 변화
@@ -223,6 +213,9 @@ def conversation_loop(talking_node):
                     langugage_change(False)
                     print("english change")
                     return 2
+                # 복약 기능 추가
+                elif response == "복약":
+                    disease_alarm()
                 elif response == "배터리":
                     with open('user_data/bat_percent.json', 'r') as f:
                         data = json.load(f)
@@ -237,12 +230,13 @@ def conversation_loop(talking_node):
                         f"배터리 잔량은 {bat_state} 퍼센트 입니다. 남은 사용 시간은 {use_hour}시간 {use_min}분 남았습니다.")
 
                 elif response != "":
+                    print("other response")
                     if response == "산책 가자":  # 산책 가자
                         talking_node.publish_arm_motions("holding_hand")
                         use_sound("./mp3/yes.wav")
                         time.sleep(1)
-                    elif response == "따라와":  # 따라와
-                        talking_node.publish_mode("tracking")
+                    # elif response == "따라와" | "다나와" | "이리와":  # 따라와
+                    #     talking_node.publish_mode("tracking")
                         use_sound("./mp3/yes.wav")
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
@@ -259,8 +253,9 @@ def conversation_loop(talking_node):
                     elif response == "조용":
                         break
                     else:
-
+                        print("Chat gpt start")
                         response_ = mj.gpt_send_anw(response)
+                        print(response_)
                         emotion = response_[0]
 
                         # React based on the emotion
@@ -280,7 +275,6 @@ def conversation_loop(talking_node):
                         talking_node.publish_emotions("daily")
                 elif response == "":
                     break
-
 
 def conversation_loop_en(talking_node):
     print("conversation_loop() english 시작")
@@ -336,6 +330,7 @@ def conversation_loop_en(talking_node):
         if common:
             speaking_en("Yes sir!!")
             common = False
+            owwModel = 0
 
             while True:
                 # 대답 기다리는 동안 표정 변화
@@ -352,7 +347,7 @@ def conversation_loop_en(talking_node):
                 elif response == "silent":
                     speaking_en("ok silent mode")
                     # call_num = - 1000000
-                elif response == "한국어":
+                elif response == "korean":
                     speaking("한국어 모드로 전환합니다")
                     langugage_change(True)
                     return 1
