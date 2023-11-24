@@ -271,8 +271,6 @@ def conversation_loop(talking_node):
                 elif response == "":
                     break
 
-            return 1
-
 def conversation_loop_en(talking_node):
     print("conversation_loop() english 시작")
     mj = MYOUNGJA()
@@ -397,8 +395,6 @@ def conversation_loop_en(talking_node):
                         talking_node.publish_emotions("daily")
                 elif response == "":
                     break
-
-            return 2
 
 
 def start_executor_thread(executor):
