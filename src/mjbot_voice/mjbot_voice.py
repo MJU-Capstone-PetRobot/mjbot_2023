@@ -148,6 +148,7 @@ class VoiceSubscriber(Node):
 def conversation_loop(talking_node):
     print("conversation_loop() korean 시작")
     mj = MYOUNGJA()
+    speaking("안녕하세요!!")
 
     # Clean up before starting the loop
     file_cleanup()
@@ -280,6 +281,7 @@ def conversation_loop(talking_node):
 def conversation_loop_en(talking_node):
     print("conversation_loop() english 시작")
     mj = MYOUNGJA()
+    speaking_en("Hello! sir!!")
 
     # Clean up before starting the loop
     file_cleanup()
