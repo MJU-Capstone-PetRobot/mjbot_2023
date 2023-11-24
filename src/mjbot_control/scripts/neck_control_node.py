@@ -98,7 +98,7 @@ class NeckControllerPublisher(Node):
 
 class CommandNeck(Node):
     EMOTION_FUNCTIONS = {
-        "daily": "daily",
+        # "daily": "daily",
         "wink": "tilt",
         "sad": "nod",
         "angry": "angry",
@@ -125,7 +125,7 @@ class CommandNeck(Node):
         '''
         msg = String()
         msg.data = str(Arm_motions)
-        self.publisher_arm_mode.publish(msg)
+        self.publish_arm_mode.publish(msg)
         self.get_logger().info('Published: %s' % msg.data)
 
     def setup_subscriptions(self):
@@ -138,7 +138,7 @@ class CommandNeck(Node):
         
         if msg.data == True:
             self.touch_count += 1
-            self.get_logger().info(f'msg {self.touch_count}')
+            self.get_logger().info(f'Touch count: {self.touch_count}') 
             if self.touch_count == 5:
                 self.angry()
                 self.publish_arm_motions("peng")
@@ -168,8 +168,9 @@ class CommandNeck(Node):
         # Add a logging statement
         self.get_logger().info(f'Received emo message: {msg.data}')
 
-    def daily(self):
-        self.owner_center_callback()
+    # def daily(self):
+        
+        
 
     def tilt(self):
         total_duration = 2

@@ -99,7 +99,7 @@ def generate_launch_description():
         twist_mux,
         mjbot_voice_timer,
         node_mjbot_alert,
-        mjbot_vision_timer,
+        #mjbot_vision_timer,
         #node_esp_ros,
 
     ]

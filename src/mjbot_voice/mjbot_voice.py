@@ -241,7 +241,7 @@ def conversation_loop(talking_node):
                         talking_node.publish_arm_motions("holding_hand")
                         use_sound("./mp3/yes.wav")
                         time.sleep(1)
-                    elif response == "따라와" | "다나와" | "이리와":  # 따라와
+                    elif response == "따라와":  # 따라와
                         talking_node.publish_mode("tracking")
                         use_sound("./mp3/yes.wav")
                     elif response == "멈춰":  # 멈춰
