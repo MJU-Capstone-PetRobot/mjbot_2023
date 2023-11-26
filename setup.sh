@@ -7,6 +7,7 @@ rosdep update
 
 # Install dependencies for ROS and other required packages
 sudo apt-get install -y \
+    gstreamer-1.0 \
     python3 \
     python3-venv \
     python3-pyaudio \

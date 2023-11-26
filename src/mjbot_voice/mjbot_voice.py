@@ -453,6 +453,8 @@ def main():
                 else:
                     break
 
+    except KeyboardInterrupt:
+        pass
     finally:
         if executor_thread.is_alive():
             executor_thread.join()

@@ -1,7 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler
+from launch.actions import RegisterEventHandler, TimerAction
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command
 from launch_ros.actions import Node
@@ -32,17 +32,13 @@ def generate_launch_description():
                              executable='holding_hand_mode.py', output='screen')
     tracking_mode = Node(package='mjbot_control',
                          executable='tracking_mode.py', output='screen')
-    idle_mode = Node(package='mjbot_control',
-                     executable='idle_mode.py', output='screen')
-    random_move_mode = Node(package='mjbot_control',
-                            executable='random_move_mode.py', output='screen')
     # Define event handlers for delayed starts
     delay_diff_drive_after_joint_state = create_delay_handler(
         joint_state_broadcaster_spawner, diff_drive_controller_spawner)
     delay_trajectory_after_diff_drive = create_delay_handler(
         diff_drive_controller_spawner, load_trajectory_controller)
-    delay_arm_after_joint_state = create_delay_handler(
-        joint_state_broadcaster_spawner, arm_control_node)
+    idle_mode_timer = TimerAction(
+        period=5.0, actions=[arm_control_node])
 
     # Return the merged launch description
     return LaunchDescription([
@@ -50,11 +46,10 @@ def generate_launch_description():
         joint_state_broadcaster_spawner,
         delay_diff_drive_after_joint_state,
         delay_trajectory_after_diff_drive,
-        delay_arm_after_joint_state,
+        idle_mode_timer,
         holding_hand_mode,
         tracking_mode,
         neck_control_node,
-        idle_mode
 
     ])
 
