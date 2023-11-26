@@ -21,8 +21,6 @@ https://github.com/Tiryoh/ros2_setup_scripts_ubuntu
 
 ### Create dir & download source code
 ```shell
-mkdir ~/mjbot_ws && cd ~/mjbot_ws
-mkdir src && cd src
 git clone https://github.com/MJU-Capstone-PetRobot/mjbot_2023.git
 ```
 
@@ -30,9 +28,8 @@ git clone https://github.com/MJU-Capstone-PetRobot/mjbot_2023.git
 ### install dependencies
 
 ```shell
-cd ~/mjbot_ws
-./src/mjbot_2023/setup.sh
-pip install -r ./src/mjbot_2023/requirements.txt
+./setup.sh
+pip install -r ./requirements.txt
 ```
 
 ### build
@@ -43,7 +40,7 @@ colcon build --symlink-install
 ### sourcing
 
 ```shell
-source ~/mjbot_ws/install/setup.bash
+source ./install/setup.bash
 ```
 
 
