@@ -2,6 +2,9 @@ import openai
 import time
 import os
 from dotenv import load_dotenv
+import pygame
+from pydub import AudioSegment
+import urllib.request
 
 load_dotenv()
 LANGUAGE = "user_data/language_select.json"
@@ -172,48 +175,7 @@ def speak_first():
 
     time.sleep(3)
 
-def speaking_en(anw_text):
-    import os
-    import urllib.request
-    from pydub import AudioSegment
-    from playsound import playsound as pl
-
-    # NAVER CLOVA
-    encText = urllib.parse.quote(anw_text)
-    data = f"speaker=djoey&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
-    urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
-    requests = urllib.request.Request(urls)
-    requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
-    requests.add_header("X-NCP-APIGW-API-KEY", client_secret)
-    response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
-    rescodes = response.getcode()
-    if (rescodes == 200):
-        print("mp3 저장 완료")
-        response_body = response.read()
-        with open('./ResultMP3.mp3', 'wb') as f:
-            f.write(response_body)
-
-        # 스피커 출력
-        filename = "ResultMP3.mp3"
-        dst = "test.wav"
-        sound = AudioSegment.from_mp3(filename)
-        sound.export(dst, format="wav")
-
-        # data, fs = sf.read(filename, dtype='')
-        pl("test.wav")
-    else:
-        print("404 error")
-
-        # 제작된 음성 파일 삭제
-        os.remove("ResultMP3.mp3")
-        os.remove("test.wav")
-
 def speaking(anw_text):
-    import os
-    import urllib.request
-    from pydub import AudioSegment
-    from playsound import playsound as pl
-
     # NAVER CLOVA
     encText = urllib.parse.quote(anw_text)
     data = f"speaker=ndain&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
@@ -221,28 +183,89 @@ def speaking(anw_text):
     requests = urllib.request.Request(urls)
     requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
     requests.add_header("X-NCP-APIGW-API-KEY", client_secret)
-    response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
-    rescodes = response.getcode()
-    if (rescodes == 200):
-        print("mp3 저장 완료")
-        response_body = response.read()
-        with open('./ResultMP3.mp3', 'wb') as f:
-            f.write(response_body)
+    
+    try:
+        response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
+        rescodes = response.getcode()
+        if rescodes == 200:
+            print("mp3 저장 완료")
+            response_body = response.read()
+            with open('./ResultMP3.mp3', 'wb') as f:
+                f.write(response_body)
 
-        # 스피커 출력
-        filename = "ResultMP3.mp3"
-        dst = "test.wav"
-        sound = AudioSegment.from_mp3(filename)
-        sound.export(dst, format="wav")
+            # Convert MP3 to WAV
+            filename = "ResultMP3.mp3"
+            dst = "test.wav"
+            sound = AudioSegment.from_mp3(filename)
+            sound.export(dst, format="wav")
 
-        # data, fs = sf.read(filename, dtype='')
-        pl("test.wav")
-    else:
-        print("404 error")
+            # Play the WAV file using pygame
+            pygame.mixer.init()
+            pygame.mixer.music.load(dst)
+            pygame.mixer.music.play()
 
-        # 제작된 음성 파일 삭제
-        os.remove("ResultMP3.mp3")
-        os.remove("test.wav")
+            # Wait for the music to finish playing
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)
+        else:
+            print("Error in audio retrieval: HTTP Response Code", rescodes)
+
+    except Exception as e:
+        print("Error occurred while processing audio: ", e)
+
+    finally:
+        # Clean up: remove created audio files
+        if os.path.exists("ResultMP3.mp3"):
+            os.remove("ResultMP3.mp3")
+        if os.path.exists("test.wav"):
+            os.remove("test.wav")
+
+def speaking_en(anw_text):
+    # NAVER CLOVA
+    encText = urllib.parse.quote(anw_text)
+    data = f"speaker=djoey&volume=0&speed=0&pitch=0&format=mp3&text=" + encText
+    urls = "https://naveropenapi.apigw.ntruss.com/tts-premium/v1/tts"
+    requests = urllib.request.Request(urls)
+    requests.add_header("X-NCP-APIGW-API-KEY-ID", client_id)
+    requests.add_header("X-NCP-APIGW-API-KEY", client_secret)
+    
+    try:
+        response = urllib.request.urlopen(requests, data=data.encode('utf-8'))
+        rescodes = response.getcode()
+        if rescodes == 200:
+            print("mp3 저장 완료")
+            response_body = response.read()
+            with open('./ResultMP3.mp3', 'wb') as f:
+                f.write(response_body)
+
+            # Convert MP3 to WAV
+            filename = "ResultMP3.mp3"
+            dst = "test.wav"
+            sound = AudioSegment.from_mp3(filename)
+            sound.export(dst, format="wav")
+
+            # Play the WAV file using pygame
+            pygame.mixer.init()
+            pygame.mixer.music.load(dst)
+            pygame.mixer.music.play()
+
+            # Wait for the music to finish playing
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)
+        else:
+            print("Error in audio retrieval: HTTP Response Code", rescodes)
+
+    except Exception as e:
+        print("Error occurred while processing audio: ", e)
+
+    finally:
+        # Clean up: remove created audio files
+        if os.path.exists("ResultMP3.mp3"):
+            os.remove("ResultMP3.mp3")
+        if os.path.exists("test.wav"):
+            os.remove("test.wav")
+
+
 
 def mic_en(time):
     import requests
@@ -459,9 +482,16 @@ def name_ini():
 
 
 def use_sound(loc):
-    from playsound import playsound as pl
+    try:
+        pygame.mixer.init()
+        pygame.mixer.music.load(loc)
+        pygame.mixer.music.play()
 
-    pl(loc)
+        # Wait for the music to play before exiting
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
+    except Exception as e:
+        print(f"Error occurred while playing sound: {e}")
 
 
 def langugage_change(kr):

@@ -157,7 +157,7 @@ def conversation_loop(talking_node):
 
     # Start of the conversation
     # Initialize the audio stream with sounddevice
-    stream = sd.InputStream(
+    stream = sd.InputStream(device=5,
         samplerate=RATE, channels=CHANNELS, dtype='int16')
     stream.start()
 

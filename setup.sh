@@ -35,7 +35,8 @@ sudo apt-get install -y \
     libglu1-mesa-dev \
     cmake \
     libasound-dev \
-    python3-serial
+    python3-serial \
+    libavcodec-extra
 
 # Install ROS 2 packages
 sudo apt-get install -y \

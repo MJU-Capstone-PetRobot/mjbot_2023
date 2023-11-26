@@ -2,7 +2,7 @@
 numpy
 openai==0.28
 openwakeword
-playsound==1.3.0
+pygame
 pydub==0.25.1
 python-dotenv==1.0.0
 Requests==2.31.0
@@ -14,3 +14,5 @@ odrive==0.5.3.post0
 scikit-image
 filterpy
 pandas
+ffmpeg-python
+lap
