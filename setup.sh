@@ -1,27 +1,52 @@
 #!/bin/bash
 set -e
 
+# Update package lists
 sudo apt-get update
 rosdep update
+
+# Install dependencies for ROS and other required packages
+sudo apt-get install -y \
+    python3 \
+    python3-venv \
+    python3-pyaudio \
+    libportaudio2 \
+    libportaudiocpp0 \
+    portaudio19-dev \
+    libatlas-base-dev \
+    ffmpeg \
+    flac \
+    sense-hat \
+    python3-dev \
+    python3-pip \
+    gcc \
+    python3-opencv \
+    python3-numpy \
+    python3-setuptools \
+    python3-dev \
+    git \
+    libssl-dev \
+    libusb-1.0-0-dev \
+    pkg-config \
+    libgtk-3-dev \
+    libglfw3-dev \
+    libgl1-mesa-dev \
+    libglu1-mesa-dev \
+    cmake \
+    libasound-dev \
+    python3-serial
+
+# Install ROS 2 packages
+sudo apt-get install -y \
+    ros-humble-dynamixel-sdk \
+    ros-humble-dynamixel-workbench-toolbox \
+    ros-humble-ros2-control \
+    ros-humble-ros2-controllers \
+    ros-humble-xacro \
+    ros-humble-joy-linux \
+    ros-humble-twist-mux \
+    ros-humble-joint-state-publisher \
+    ros-humble-hardware-interface
+
+# Install dependencies from rosdep
 rosdep install --from-paths src --ignore-src -y
-
-# Install initial dependencies
-sudo apt-get install -y python3 python3-venv python3-pyaudio libportaudio2 libportaudiocpp0 portaudio19-dev libatlas-base-dev ffmpeg flac sense-hat
-
-# Install additional ROS 2 packages for Dynamixel, control, and xacro
-sudo apt-get install ros-humble-dynamixel-sdk
-sudo apt install ros-humble-dynamixel-workbench-toolbox
-sudo apt install ros-humble-ros2-control
-sudo apt install ros-humble-ros2-controllers
-sudo apt install ros-humble-xacro
-
-# Install more ROS 2 packages and dependencies
-sudo apt install ros-humble-joy-linux
-sudo apt install ros-humble-twist-mux
-sudo -H apt-get install -y ros-humble-joint-state-publisher
-sudo -H apt-get install -y python3-serial
-sudo apt-get install python3-pip
-sudo apt install -y cmake
-sudo apt install ros-humble-hardware-interface
-sudo apt-get install libportaudio2
-sudo apt-get install libasound-dev
