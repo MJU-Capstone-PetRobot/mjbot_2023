@@ -33,7 +33,6 @@ git clone https://github.com/MJU-Capstone-PetRobot/mjbot_2023.git
 cd ~/mjbot_ws
 ./src/mjbot_2023/setup.sh
 pip install -r ./src/mjbot_2023/requirements.txt
-rosdep install --from-paths src --ignore-src -r -y
 ```
 
 ### build
