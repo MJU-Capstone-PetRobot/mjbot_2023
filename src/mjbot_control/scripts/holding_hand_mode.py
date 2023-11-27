@@ -48,8 +48,8 @@ class HoldingHandNode(Node):
 
         r_shoulder_pitch_effort = self.get_joint_effort('r_shoulder_pitch')
         r_shoulder_roll_effort = self.get_joint_effort('r_shoulder_roll')
-        self.get_logger().info(
-            "r_shoulder_pitch_effort: {}, r_shoulder_roll_effort: {}".format(r_shoulder_pitch_effort, r_shoulder_roll_effort))
+        # self.get_logger().info(
+        #     "r_shoulder_pitch_effort: {}, r_shoulder_roll_effort: {}".format(r_shoulder_pitch_effort, r_shoulder_roll_effort))
 
         cmd_vel = Twist()
 

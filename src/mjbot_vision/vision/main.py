@@ -4,7 +4,7 @@ import datetime as dt
 import numpy as np
 import cv2
 from rknnlite.api import RKNNLite
-
+from hide_warnings import hide_warnings
 from vision.depth import *
 from vision.sort import Sort
 from vision import yolov5
@@ -153,10 +153,11 @@ class VisionNode(Node):
             self.get_logger().info('RKNN: Fail to init runtime environment')
             exit(ret)
         self.get_logger().info('RKNN: Done')
-
+    @hide_warnings
     def run_rknn(self):
         # Inference
         # self.get_logger().info('RKNN: Inference')
+       
         outputs = self.rknn_lite.inference(inputs=[self.img])
         # self.get_logger().info('RKNN: Done')
 

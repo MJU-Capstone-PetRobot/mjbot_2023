@@ -16,3 +16,4 @@ filterpy
 pandas
 ffmpeg-python
 lap
+hide_warnings

@@ -243,7 +243,7 @@ def conversation_loop(talking_node):
                     print("other response")
                     if response == "산책 가자":  # 산책 가자
                         talking_node.publish_arm_motions("holding_hand")
-                        speaking("좋아요!!")
+                        speaking("좋아요 산책 가요")
                         time.sleep(1)
                     elif response == "다나와":  # 따라와
                         talking_node.publish_mode("tracking")
@@ -255,6 +255,7 @@ def conversation_loop(talking_node):
                         speaking("따라가기 모드 시작합니다")
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
+                        talking_node.publish_arm_motions("default")
                         use_sound("./mp3/yes.wav")
                     elif response == "오른손":  # 오른손
                         talking_node.publish_arm_motions("give_right_hand")
@@ -267,6 +268,7 @@ def conversation_loop(talking_node):
                     elif response == "안아줘":
                         talking_node.publish_arm_motions("hug")
                         use_sound("./mp3/yes.wav")
+                        speaking("안아드릴께요")
                     elif response == "조용":
                         break
                     else:

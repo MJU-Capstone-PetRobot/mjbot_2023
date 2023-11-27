@@ -85,8 +85,8 @@ class OpiEspNode(Node):
         self.publisher_ultrasonic_1_.publish(msg_1)
         self.publisher_ultrasonic_2_.publish(msg_2)
 
-        self.get_logger().info(
-            "[PUB] /ultrasonic_1, 2 [{}] [{}]".format(msg_1.range, msg_2.range))
+        # self.get_logger().info(
+        #     "[PUB] /ultrasonic_1, 2 [{}] [{}]".format(msg_1.range, msg_2.range))
 
     def publish_bat_percent(self, bat_percent):
         msg = String()

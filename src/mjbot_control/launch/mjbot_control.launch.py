@@ -38,7 +38,7 @@ def generate_launch_description():
     delay_trajectory_after_diff_drive = create_delay_handler(
         diff_drive_controller_spawner, load_trajectory_controller)
     idle_mode_timer = TimerAction(
-        period=5.0, actions=[arm_control_node])
+        period=6.0, actions=[arm_control_node])
 
     # Return the merged launch description
     return LaunchDescription([

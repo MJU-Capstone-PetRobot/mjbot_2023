@@ -118,6 +118,7 @@ class CommandNeck(Node):
         self.current_state = self.STATE_DAILY
         self.publish_arm_mode = self.create_publisher(String, 'arm_mode', 10)
         self.touch_count = 0
+        self.current_mode = "idle"
 
     def publish_arm_motions(self, Arm_motions):
         '''
@@ -143,6 +144,10 @@ class CommandNeck(Node):
             self.current_mode = "idle"
 
     def subscribe_callback_touch(self, msg):
+        if self.current_mode != "idle":
+            return
+
+        self.get_logger().info(f"currnet mode: {self.current_mode}")
         
         if msg.data == True:
             self.touch_count += 1
@@ -156,16 +161,7 @@ class CommandNeck(Node):
                 self.touch_count = 0
 
 
-    # def subscribe_callback_touch(self, msg):
-    #     if msg.data == True:
-    #         self.touch_count += 1
-    #         self.get_logger().info(f'Touch count: {self.touch_count}')  # Logging for debugging
-    #         if self.touch_count == 5:
-    #             self.angry()
-    #         elif self.touch_count == 10:
-    #             self.nod()
-    #             self.publish_arm_motions("cute")
-    #             self.touch_count = 0  # Reset touch_count after reaching 10
+
 
     def callback_emo(self, msg):
         self.current_state = self.STATE_EMOTION
