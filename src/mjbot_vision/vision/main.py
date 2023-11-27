@@ -9,6 +9,7 @@ from vision.depth import *
 from vision.sort import Sort
 from vision import yolov5
 from vision import yolov7
+import time
 
 import csv
 import random
@@ -244,8 +245,9 @@ class VisionNode(Node):
             self.owner_h_diff = (
                 self.owner_h - self.owner_h_prev) / self.duration_sec
 
-            if -700 <= self.owner_h_diff <= -500:
-                self.owner_fall = False
+            if -700 <= self.owner_h_diff <= -600:
+                self.owner_fall = True
+                time.sleep(0.5)
                 ### 바꿀예정 너무 튐
             else:
                 self.owner_fall = False
