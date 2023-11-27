@@ -133,6 +133,14 @@ class CommandNeck(Node):
             String, "emo", self.callback_emo, 10)
         self.subscription = self.create_subscription(
             Bool, 'touch', self.subscribe_callback_touch, 10)
+        self.subscription_mode = self.create_subscription(
+            String, 'mode', self.subscribe_callback_mode, 10)
+        
+    def subscribe_callback_mode(self, msg):
+        self.current_mode = msg.data
+        self.get_logger().info(f"Mode switched to: {self.current_mode}")
+        if self.current_mode == None:
+            self.current_mode = "idle"
 
     def subscribe_callback_touch(self, msg):
         

@@ -43,6 +43,8 @@ class HoldingHandNode(Node):
         return self.joint_efforts.get(joint_name, None)
 
     def holding_hand(self):
+        if self.should_continue == False:
+            return
 
         r_shoulder_pitch_effort = self.get_joint_effort('r_shoulder_pitch')
         r_shoulder_roll_effort = self.get_joint_effort('r_shoulder_roll')
