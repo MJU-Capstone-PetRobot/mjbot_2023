@@ -244,7 +244,8 @@ class VisionNode(Node):
                 self.owner_h - self.owner_h_prev) / self.duration_sec
 
             if -700 <= self.owner_h_diff <= -500:
-                self.owner_fall = True
+                self.owner_fall = False
+                ### 바꿀예정 너무 튐
             else:
                 self.owner_fall = False
 

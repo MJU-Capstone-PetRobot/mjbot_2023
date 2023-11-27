@@ -167,7 +167,7 @@ def conversation_loop(talking_node):
 
     # Start of the conversation
     # Initialize the audio stream with sounddevice
-    stream = sd.InputStream(device=5,
+    stream = sd.InputStream(
         samplerate=RATE, channels=CHANNELS, dtype='int16')
     stream.start()
 
@@ -243,23 +243,27 @@ def conversation_loop(talking_node):
                     print("other response")
                     if response == "산책 가자":  # 산책 가자
                         talking_node.publish_arm_motions("holding_hand")
-                        use_sound("./mp3/yes.wav")
+                        speaking("좋아요!!")
                         time.sleep(1)
                     elif response == "다나와":  # 따라와
                         talking_node.publish_mode("tracking")
                         use_sound("./mp3/yes.wav")
+                        speaking("따라가기 모드 시작합니다")
                     elif response == "따라와":  # 따라와
                         talking_node.publish_mode("tracking")
                         use_sound("./mp3/yes.wav")
+                        speaking("따라가기 모드 시작합니다")
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
                         use_sound("./mp3/yes.wav")
                     elif response == "오른손":  # 오른손
                         talking_node.publish_arm_motions("give_right_hand")
                         use_sound("./mp3/yes.wav")
+                        speaking("오른손")
                     elif response == "왼손":
                         talking_node.publish_arm_motions("give_left_hand")
                         use_sound("./mp3/yes.wav")
+                        speaking("왼손")
                     elif response == "안아줘":
                         talking_node.publish_arm_motions("hug")
                         use_sound("./mp3/yes.wav")
