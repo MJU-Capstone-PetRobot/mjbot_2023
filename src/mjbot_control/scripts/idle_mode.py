@@ -143,7 +143,7 @@ class ArmCommander(Node):
             self.arm_move_alert()
 
     def arm_mode_callback(self, msg):
-        if not (self.current_mode == "idle" or self.current_mode == "tracking"): 
+        if not (self.current_mode == "idle" or self.current_mode == "tracking" or self.current_mode == None): 
             return
         self.new_arm_mode_received = True
         self.position_key = 'default'  # Default position key

@@ -3,10 +3,12 @@ import json
 import os
 import threading
 import time
+from typing import Iterator
 import numpy as np
 import sounddevice as sd
 import rclpy
 from rclpy.node import Node
+from rclpy.publisher import Publisher
 from std_msgs.msg import String, Bool, Int32
 from openwakeword.model import Model
 from Chat.voiceChat import *
@@ -97,6 +99,17 @@ class VoiceSubscriber(Node):
             String, 'bat_percent', self.subscribe_callback_bat_state, 10)
         self.subscription = self.create_subscription(
             String, 'bat_time', self.subscribe_callback_bat_time, 10)
+        self.pulish_emotions = self.create_publisher(String, 'emo', 10)
+
+    def publish_emotions(self, emotions):
+        self._publish_message(emotions, self.pulish_emotions)
+
+    def _publish_message(self, message, publisher):
+        msg = String()
+        msg.data = str(message)
+        publisher.publish(msg)
+        self.get_logger().info(f'Published: {msg.data}')
+        
 
     def subscribe_callback_fall_down(self, msg):
         '''
@@ -149,11 +162,12 @@ class VoiceSubscriber(Node):
             pass
 
     def subscribe_callback_co(self, msg):
-        lang = language_check()
-        if msg.data >= 200 and lang == 1:
+        # lang = language_check()
+        if msg.data >= 200:
             speaking("불이 났어요!!")
-        elif msg.data >= 200 and lang == 0:
-            speaking_en("Fire!!!")
+            self.publish_emotions("danger")
+        # elif msg.data >= 200 and lang == 0:
+        #     speaking_en("Fire!!!")
 
 
 def conversation_loop(talking_node):
@@ -256,16 +270,23 @@ def conversation_loop(talking_node):
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
                         talking_node.publish_arm_motions("default")
+                        talking_node.publish_arm_motions("default")
                         use_sound("./mp3/yes.wav")
                     elif response == "오른손":  # 오른손
+                        talking_node.publish_mode("idle")
+                        talking_node.publish_arm_motions("give_right_hand")
                         talking_node.publish_arm_motions("give_right_hand")
                         use_sound("./mp3/yes.wav")
                         speaking("오른손")
                     elif response == "왼손":
+                        talking_node.publish_mode("idle")
+                        talking_node.publish_arm_motions("give_left_hand")
                         talking_node.publish_arm_motions("give_left_hand")
                         use_sound("./mp3/yes.wav")
                         speaking("왼손")
                     elif response == "안아줘":
+                        talking_node.publish_mode("idle")
+                        talking_node.publish_arm_motions("hug")
                         talking_node.publish_arm_motions("hug")
                         use_sound("./mp3/yes.wav")
                         speaking("안아드릴께요")
