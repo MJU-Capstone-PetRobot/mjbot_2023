@@ -209,6 +209,8 @@ class ArmCommander(Node):
             self.position_key = 'angry'
         elif msg.data == "default":
             self.position_key = 'default'
+        elif msg.data == "daily":
+            self.position_key = 'default'
 
         if self.position_key:
             self.set_and_send_arm_position(self.poses[self.position_key])
