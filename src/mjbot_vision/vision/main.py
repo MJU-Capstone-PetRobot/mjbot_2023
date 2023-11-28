@@ -246,8 +246,8 @@ class VisionNode(Node):
                 self.owner_h - self.owner_h_prev) / self.duration_sec
 
             if -700 <= self.owner_h_diff <= -600:
-                self.owner_fall = True
-                time.sleep(0.5)
+                self.owner_fall = False
+                # time.sleep(0.5)
                 ### 바꿀예정 너무 튐
             else:
                 self.owner_fall = False
@@ -307,7 +307,7 @@ class VisionNode(Node):
         self.runtime_sec = round(self.runtime_sec, 3)
 
         # self.run_csv_log()
-        self.detect_fall()
+        # self.detect_fall()
 
         if self.owner_fall:
             self.publish_owner_fall()
