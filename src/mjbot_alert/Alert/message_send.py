@@ -20,7 +20,7 @@ def googlemap_api():
     
     reverse_geocode_result = \
         gmaps.reverse_geocode((latitude, longitude), language='ko')
-    gps = reverse_geocode_result[1]["formatted_address"]
+    gps = reverse_geocode_result[0]["formatted_address"]
     return gps
 
 
