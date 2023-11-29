@@ -25,6 +25,7 @@ def googlemap_api():
 
 
 def send_message(problem):
+    import json
     gps = googlemap_api()
     # Twilio
     # 계정 token 입력
@@ -43,3 +44,11 @@ def send_message(problem):
         to= os.getenv("TO_TWILIO")
     )
     print("메세지 전송 완료")
+
+    write_data = {
+            "danger": "off"
+        }
+    
+    with open('user_data/user_danger.json', 'w') as f:
+            json.dump(write_data, f)
+    

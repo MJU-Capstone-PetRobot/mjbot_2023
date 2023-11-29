@@ -37,21 +37,16 @@ class ListeningNode(Node):
         write_data = {
             "danger": "on"
         }
-        write_nodata = {
-            "danger": "off"
-        }
+
+        self.get_logger().info('Received: %s' % msg.data)
 
         with open('user_data/user_danger.json', 'w') as f:
             if msg.data >= 200:
                 json.dump(write_data, f)
 
-        self.get_logger().info('Received: %s' % msg.data)
-
         if msg.data >= 200:
             send_message(2)  # 화재 사고 발생 문자 발송
             time.sleep(100)
-            with open('user_data/user_danger.json', 'w') as f:
-                json.dump(write_nodata, f)
 
 
     def subscribe_callback_fall(self, msg):
