@@ -106,7 +106,7 @@ class ListeningNode(Node):
 
 def danger_check():
     import json
-    with open('user_data/user_danger.json', 'r') as d:
+    with open('/home/mju/mjbot_2023/user_data/user_danger.json', 'r') as d:
             data__ = json.load(d)
             if data__["danger"] == "on":
                 return 1
