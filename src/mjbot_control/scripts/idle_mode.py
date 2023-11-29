@@ -143,10 +143,9 @@ class ArmCommander(Node):
             self.arm_move_alert()
 
     def arm_mode_callback(self, msg):
-        if not (self.current_mode == "idle" or self.current_mode == "tracking" or self.current_mode == None): 
+        if not (self.current_mode == "idle" or self.current_mode == "tracking"): 
             return
         self.new_arm_mode_received = True
-        self.position_key = 'default'  # Default position key
 
         if msg.data == "holding_hand":
             self.position_key = 'holding_hand'
@@ -159,6 +158,7 @@ class ArmCommander(Node):
             return
         elif msg.data == "give_right_hand":
             self.position_key = 'give_right_hand'
+            self.get_logger().info('Giving right hand')
         elif msg.data == "give_left_hand":
             self.position_key = 'give_left_hand'
         elif msg.data == "hug":
@@ -175,12 +175,12 @@ class ArmCommander(Node):
 
     def post_action_check(self):
         # Exclude the 'walk' position from the joint effort check
-        time.sleep(2)
+        time.sleep(3)
         if self.position_key != "holding_hand" or self.position_key != "alert" and self.current_mode == "idle":
 
             while True:
                 if self.position_key != "default" and self.arm_controller.action_state == ActionState.SUCCEEDED:
-
+                    time.sleep(1)
                     r_shoulder_pitch_effort = self.get_joint_effort(
                         'r_shoulder_pitch')
                     l_shoulder_pitch_effort = self.get_joint_effort(
@@ -209,8 +209,7 @@ class ArmCommander(Node):
             self.position_key = 'angry'
         elif msg.data == "default":
             self.position_key = 'default'
-        elif msg.data == "daily":
-            self.position_key = 'default'
+        
 
         if self.position_key:
             self.set_and_send_arm_position(self.poses[self.position_key])
