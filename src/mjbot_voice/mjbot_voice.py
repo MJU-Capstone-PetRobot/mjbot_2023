@@ -268,23 +268,16 @@ def conversation_loop(talking_node):
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
                         talking_node.publish_arm_motions("default")
-                        talking_node.publish_arm_motions("default")
                         use_sound("./mp3/yes.wav")
                     elif response == "오른손":  # 오른손
-                        talking_node.publish_mode("idle")
-                        talking_node.publish_arm_motions("give_right_hand")
                         talking_node.publish_arm_motions("give_right_hand")
                         use_sound("./mp3/yes.wav")
                         speaking("오른손")
                     elif response == "왼손":
-                        talking_node.publish_mode("idle")
-                        talking_node.publish_arm_motions("give_left_hand")
                         talking_node.publish_arm_motions("give_left_hand")
                         use_sound("./mp3/yes.wav")
                         speaking("왼손")
                     elif response == "안아줘":
-                        talking_node.publish_mode("idle")
-                        talking_node.publish_arm_motions("hug")
                         talking_node.publish_arm_motions("hug")
                         use_sound("./mp3/yes.wav")
                         speaking("안아드릴께요")

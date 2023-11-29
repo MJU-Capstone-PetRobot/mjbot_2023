@@ -39,6 +39,10 @@ def generate_launch_description():
         diff_drive_controller_spawner, load_trajectory_controller)
     idle_mode_timer = TimerAction(
         period=6.0, actions=[arm_control_node])
+    holding_hand_mode_timer = TimerAction(
+        period=6.0, actions=[holding_hand_mode])
+    tracking_mode_timer = TimerAction(
+        period=6.0, actions=[tracking_mode])
 
     # Return the merged launch description
     return LaunchDescription([
@@ -47,8 +51,8 @@ def generate_launch_description():
         delay_diff_drive_after_joint_state,
         delay_trajectory_after_diff_drive,
         idle_mode_timer,
-        holding_hand_mode,
-        tracking_mode,
+        holding_hand_mode_timer,
+        tracking_mode_timer,
         neck_control_node,
 
     ])
