@@ -34,41 +34,23 @@ class ListeningNode(Node):
     def subscribe_callback_fire(self, msg):
         import json
 
-        write_data = {
-            "danger": "on"
-        }
-
         self.get_logger().info('Received: %s' % msg.data)
 
-        with open('user_data/user_danger.json', 'w') as f:
-            if msg.data >= 200:
-                json.dump(write_data, f)
-
         if msg.data >= 200:
+            danger_write(1)
             send_message(2)  # 화재 사고 발생 문자 발송
             time.sleep(100)
+            danger_write(2)
 
 
     def subscribe_callback_fall(self, msg):
-        import json
-
-        write_data = {
-            "danger": "on"
-        }
-        write_nodata = {
-            "danger": "off"
-        }
-
-        with open('user_data/user_danger.json', 'w') as f:
-            if msg.data == 1:
-                json.dump(write_data, f)
 
         self.get_logger().info('Received: %s' % msg.data)
 
         if msg.data == 1:
+            danger_write(1)
             time.sleep(100)
-            with open('user_data/user_danger.json', 'w') as f:
-                json.dump(write_nodata, f)
+            danger_write(0)
 
     def subscribe_callback_gps(self, msg):
         import json
@@ -103,16 +85,6 @@ class ListeningNode(Node):
         with open('user_data/user_gps.json', 'w') as d:
             json.dump(write_data, d)
 
-
-def danger_check():
-    import json
-    with open('/home/mju/mjbot_2023/user_data/user_danger.json', 'r') as d:
-            data__ = json.load(d)
-            if data__["danger"] == "on":
-                return 1
-            else:
-                return 0 
-
 def main(args=None):
     import json
     rclpy.init(args=args)
@@ -129,6 +101,8 @@ def main(args=None):
     while(1):
         if danger_check() == 1:
             publish_node.publish_danger(True)
+            time.sleep(10)
+            danger_write(2)
             break
 
     executor_thread.join()

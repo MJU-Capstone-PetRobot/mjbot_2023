@@ -55,3 +55,24 @@ def send_message(problem):
     with open('user_data/user_danger.json', 'w') as f:
             json.dump(write_data, f)
     
+def danger_check():
+    import json
+    with open('user_data/user_danger.json', 'r') as d:
+            data= json.load(d)
+            if data["danger"] == "on":
+                return 1
+            else:
+                return 0 
+            
+def danger_write(str):
+    import json
+    if str == 1:
+        write_data = {
+            "danger": "on"
+        }
+    else:
+        write_data = {
+            "danger": "off"
+          }
+    with open('user_data/user_danger.json', 'w') as f:
+            json.dump(write_data, f)
