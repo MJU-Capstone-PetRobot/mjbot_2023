@@ -136,11 +136,11 @@ class VoiceSubscriber(Node):
         with open('user_data/bat_percent.json', 'w') as d:
             json.dump(write_data, d)
 
-        lang = language_check()
-        if bat_state <= 40.0 and lang == 1:
+        # lang = language_check()
+        if bat_state <= 40.0:
             speaking("배고파요")
-        elif bat_state <= 40.0 and lang == 0:
-            speaking_en("I'm hungry")
+        # elif bat_state <= 40.0 and lang == 0:
+        #     speaking_en("I'm hungry")
 
     def subscribe_callback_bat_time(self, msg):
         import json
@@ -270,21 +270,26 @@ def conversation_loop(talking_node):
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
                         talking_node.publish_arm_motions("default")
+                        talking_node.publish_arm_motions("default")
                         use_sound("./mp3/yes.wav")
                     elif response == "오른손":  # 오른손
-                        # talking_node.publish_arm_motions("give_right_hand")
+                        talking_node.publish_mode("idle")
+                        talking_node.publish_arm_motions("give_right_hand")
+                        talking_node.publish_arm_motions("give_right_hand")
                         use_sound("./mp3/yes.wav")
                         speaking("오른손")
-                        talking_node.publish_arm_motions("give_right_hand")
                     elif response == "왼손":
-                        # talking_node.publish_arm_motions("give_left_hand")
+                        talking_node.publish_mode("idle")
+                        talking_node.publish_arm_motions("give_left_hand")
+                        talking_node.publish_arm_motions("give_left_hand")
                         use_sound("./mp3/yes.wav")
                         speaking("왼손")
-                        talking_node.publish_arm_motions("give_left_hand")
                     elif response == "안아줘":
+                        talking_node.publish_mode("idle")
+                        talking_node.publish_arm_motions("hug")
+                        talking_node.publish_arm_motions("hug")
                         use_sound("./mp3/yes.wav")
                         speaking("안아드릴께요")
-                        talking_node.publish_arm_motions("hug")
                     elif response == "조용":
                         break
                     else:
