@@ -76,6 +76,3 @@ def danger_write(str):
           }
     with open('user_data/user_danger.json', 'w') as f:
             json.dump(write_data, f)
-
-a = googlemap_api()
-print(a)
