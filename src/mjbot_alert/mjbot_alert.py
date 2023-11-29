@@ -97,7 +97,7 @@ def main(args=None):
 
     executor_thread = threading.Thread(target=executor.spin)
     executor_thread.start()
-
+    danger_write(2)
     while(1):
         if danger_check() == 1:
             publish_node.publish_danger(True)
