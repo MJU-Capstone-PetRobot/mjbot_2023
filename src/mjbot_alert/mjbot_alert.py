@@ -104,6 +104,15 @@ class ListeningNode(Node):
             json.dump(write_data, d)
 
 
+def danger_check():
+    import json
+    with open('user_data/user_danger.json', 'r') as d:
+            data__ = json.load(d)
+            if data__["danger"] == "on":
+                return 1
+            else:
+                return 0 
+
 def main(args=None):
     import json
     rclpy.init(args=args)
@@ -118,11 +127,9 @@ def main(args=None):
     executor_thread.start()
 
     while(1):
-        with open('user_data/user_danger.json', 'r') as d:
-            data__ = json.load(d)
-            if data__["danger"] == "on":
-                publish_node.publish_danger(True)
-                break
+        if danger_check() == 1:
+            publish_node.publish_danger(True)
+            break
 
     executor_thread.join()
     publish_node.destroy_node()
