@@ -3,6 +3,7 @@
 <b>Companion robot Myoung-ja for elderly individuals living alone</b>
 
 ## Table of Contents
+[0. Language Change](#0-language-change)   
 [1. Robot](#1-robot)  
 [2. Battery](#2-battery)   
 [3. Patting](#3-patting)   
@@ -16,6 +17,13 @@
 [11. Shutdown](#11-shutdown)
 
 ## Main Text
+### 0. Language Change
+Myoung-ja has two language modes: Korean mode and English mode.
+
+In the "**Korean mode**" you can switch to the "**English mode**" by using the command "**외국어**"
+In "**English mode**" you can switch to "**Korean mode**" using the command "**change**"
+
+
 ### 1. Robot
 Myoung-ja is always in ***standby mode*** and activates when the user calls out ***Hi*** Additionally, while active,    
 Myoung-ja will randomly ***initiate a conversation with the user***
