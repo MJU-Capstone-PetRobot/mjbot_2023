@@ -267,7 +267,8 @@ def conversation_loop(talking_node):
                         speaking("따라가기 모드 시작합니다")
                     elif response == "멈춰":  # 멈춰
                         talking_node.publish_mode("idle")
-                        talking_node.publish_arm_motions("default")
+                        talking_node.publish_emotions("default")
+                        speaking("대기 모드로 전환합니다")
                         use_sound("./mp3/yes.wav")
                     elif response == "오른손":  # 오른손
                         talking_node.publish_arm_motions("give_right_hand")
