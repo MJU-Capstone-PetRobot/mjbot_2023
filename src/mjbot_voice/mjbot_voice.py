@@ -109,7 +109,6 @@ class VoiceSubscriber(Node):
         msg.data = str(message)
         publisher.publish(msg)
         self.get_logger().info(f'Published: {msg.data}')
-        
 
     def subscribe_callback_fall_down(self, msg):
         '''
@@ -122,7 +121,6 @@ class VoiceSubscriber(Node):
             time.sleep(20)
         elif msg.data == True and lang == 0:
             speaking_en("Are you ok??")
-
 
     def subscribe_callback_bat_state(self, msg):
         import json
@@ -173,7 +171,7 @@ class VoiceSubscriber(Node):
 def conversation_loop(talking_node):
     print("conversation_loop() korean 시작")
     mj = MYOUNGJA()
-    
+
     # Clean up before starting the loop
     file_cleanup()
 
@@ -186,7 +184,7 @@ def conversation_loop(talking_node):
     stream.start()
 
     owwModel = Model(
-        wakeword_models=["./src/mjbot_voice/models/hi.tflite"], inference_framework="tflite")
+        wakeword_models=["./src/mjbot_voice/models/ha__E.tflite"], inference_framework="tflite")
 
     n_models = len(owwModel.models.keys())
 
@@ -315,7 +313,7 @@ def conversation_loop(talking_node):
                         talking_node.publish_emotions("daily")
                 elif response == "":
                     return 1
-            
+
 
 def conversation_loop_en(talking_node):
     print("conversation_loop() english 시작")
