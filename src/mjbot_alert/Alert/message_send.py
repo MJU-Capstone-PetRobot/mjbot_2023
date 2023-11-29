@@ -20,8 +20,11 @@ def googlemap_api():
     
     reverse_geocode_result = \
         gmaps.reverse_geocode((latitude, longitude), language='ko')
-    gps = reverse_geocode_result[0]["formatted_address"]
-    return gps
+    test_gps1 = list(str(reverse_geocode_result[1]["formatted_address"]))[0]
+    if test_gps1 == "0" or "1" or "2" or "3" or "4" or "5" or "6" or "7" or "8" or "9":
+         return reverse_geocode_result[1]["formatted_address"]
+    else:
+        return reverse_geocode_result[0]["formatted_address"]
 
 
 def send_message(problem):
