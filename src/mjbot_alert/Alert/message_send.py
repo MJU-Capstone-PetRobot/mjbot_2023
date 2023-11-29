@@ -11,8 +11,12 @@ def googlemap_api():
     gmaps = googlemaps.Client(key=API)  # api key
     with open('user_data/user_gps.json', 'r') as f:
         data = json.load(f)
-        latitude = data["lat"]
-        longitude = data["lon"]
+        if data["lat"] == "0.000000" or data["lon"] == "0.000000":
+            latitude = "37.2227"
+            longitude = "127.1902"
+        else:
+            latitude = data["lat"]
+            longitude = data["lon"]
     
     reverse_geocode_result = \
         gmaps.reverse_geocode((latitude, longitude), language='ko')
