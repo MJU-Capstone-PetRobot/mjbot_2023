@@ -398,16 +398,18 @@ def conversation_loop_en(talking_node):
                         f"The battery level is {bat_state} percent. The remaining usage time is {use_hour} hours and {use_min} minutes.")
 
                 elif response != "":
-                    if response == "Let's take a walk":  # 산책 가자
+                    if response == "let's take a walk":  # 산책 가자
                         talking_node.publish_arm_motions("holding_hand")
                         speaking_en("Yes sir!!")
+                        speaking_en("Let's take a walk")
                         time.sleep(1)
                     elif response == "follow me":  # 따라와
                         talking_node.publish_mode("tracking")
                         speaking_en("Yes sir!!")
-                        speaking_en("change to tracking mode")
+                        speaking_en("okay I'll follow you")
                     elif response == "stop":  # 멈춰
                         talking_node.publish_mode("idle")
+                        talking_node.publish_emotions("default")
                         speaking_en("Yes sir!!")
                         speaking_en("change to idle mode")
                     elif response == "right hand":  # 오른손
@@ -445,7 +447,7 @@ def conversation_loop_en(talking_node):
                         speaking_en(ans)
                         talking_node.publish_emotions("daily")
                 elif response == "":
-                    return 1
+                    return 2
 
 
 def start_executor_thread(executor):
@@ -488,7 +490,8 @@ def main():
                     file_cleanup()
                     if EN == 1:
                         mode = 1
-                        break
+                    elif EN == 2:
+                        mode = 2  # Stay in English mode
                 else:
                     break
 
