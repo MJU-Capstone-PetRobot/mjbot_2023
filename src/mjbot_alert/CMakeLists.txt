@@ -27,6 +27,7 @@ install(
 install(
   PROGRAMS
     mjbot_alert.py
+    .env
   DESTINATION lib/${PROJECT_NAME}
 )
 
