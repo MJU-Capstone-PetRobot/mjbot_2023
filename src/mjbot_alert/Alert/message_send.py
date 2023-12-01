@@ -9,7 +9,7 @@ def googlemap_api():
     API = os.getenv("GOOGLE_API") # API 값
     # 위도 경도 -> 지번 주소로 변경 // 역지오코드
     gmaps = googlemaps.Client(key=API)  # api key
-    with open('user_data/user_gps.json', 'r') as f:
+    with open('/home/mju/mjbot_2023/user_data/user_gps.json', 'r') as f:
         data = json.load(f)
         if data["lat"] == "0.000000" or data["lon"] == "0.000000":
             latitude = "37.2227"
@@ -52,12 +52,12 @@ def send_message(problem):
             "danger": "off"
         }
     
-    with open('user_data/user_danger.json', 'w') as f:
+    with open('/home/mju/mjbot_2023/user_data/user_danger.json', 'w') as f:
             json.dump(write_data, f)
     
 def danger_check():
     import json
-    with open('user_data/user_danger.json', 'r') as d:
+    with open('/home/mju/mjbot_2023/user_data/user_danger.json', 'r') as d:
             data= json.load(d)
             if data["danger"] == "on":
                 return 1
@@ -74,5 +74,5 @@ def danger_write(str):
         write_data = {
             "danger": "off"
           }
-    with open('user_data/user_danger.json', 'w') as f:
+    with open('/home/mju/mjbot_2023/user_data/user_danger.json', 'w') as f:
             json.dump(write_data, f)

@@ -82,7 +82,7 @@ class ListeningNode(Node):
             "lat": f"{latitude_str}",
             "lon": f"{longitude_str}"
         }
-        with open('user_data/user_gps.json', 'w') as d:
+        with open('/home/mju/mjbot_2023/user_data/user_gps.json', 'w') as d:
             json.dump(write_data, d)
 
 def main(args=None):

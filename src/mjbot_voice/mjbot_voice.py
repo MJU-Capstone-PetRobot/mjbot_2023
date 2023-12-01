@@ -162,8 +162,10 @@ class VoiceSubscriber(Node):
     def subscribe_callback_co(self, msg):
         # lang = language_check()
         if msg.data >= 200:
-            speaking("불이 났어요!!")
             self.publish_emotions("danger")
+            speaking("불이 났어요!!")
+            time.sleep(2)
+            self.publish_emotions("daily")
         # elif msg.data >= 200 and lang == 0:
         #     speaking_en("Fire!!!")
 
@@ -403,18 +405,23 @@ def conversation_loop_en(talking_node):
                     elif response == "follow me":  # 따라와
                         talking_node.publish_mode("tracking")
                         speaking_en("Yes sir!!")
+                        speaking_en("change to tracking mode")
                     elif response == "stop":  # 멈춰
                         talking_node.publish_mode("idle")
                         speaking_en("Yes sir!!")
+                        speaking_en("change to idle mode")
                     elif response == "right hand":  # 오른손
                         talking_node.publish_arm_motions("give_right_hand")
                         speaking_en("Yes sir!!")
+                        speaking_en("right hand")
                     elif response == "left hand":
                         talking_node.publish_arm_motions("give_left_hand")
                         speaking_en("Yes sir!!")
+                        speaking_en("left hand")
                     elif response == "hug me":
                         talking_node.publish_arm_motions("hug")
                         speaking_en("Yes sir!!")
+                        speaking_en("I'll hug you")
                     elif response == "silent":
                         break
                     else:

@@ -75,16 +75,22 @@ class VisionNode(Node):
 
         self.get_logger().info("Vision Node has been started")
 
-    def publish_owner_size_and_xyz(self):  # 100hz
+    def publish_owner_size_and_xyz(self):
         msg = Int16MultiArray()
-        msg.data = [self.owner_w, self.owner_h]
+
+        # Clamp values to the int16 range and ensure they are integers
+        clamped_w = max(-32768, min(32767, int(self.owner_w)))
+        clamped_h = max(-32768, min(32767, int(self.owner_h)))
+        msg.data = [clamped_w, clamped_h]
         self.publisher_owner_size_.publish(msg)
-        # self.get_logger().info("PUB: /owner_size: {}".format(msg.data))
 
         msg = Int16MultiArray()
-        msg.data = [self.owner_x, self.owner_y, self.owner_z]
+        clamped_x = max(-32768, min(32767, int(self.owner_x)))
+        clamped_y = max(-32768, min(32767, int(self.owner_y)))
+        clamped_z = max(-32768, min(32767, int(self.owner_z)))
+        msg.data = [clamped_x, clamped_y, clamped_z]
         self.publisher_owner_xyz_.publish(msg)
-        # self.get_logger().info("PUB: /owner_xyz: {}".format(msg.data))
+
 
     def publish_owner_fall(self):  # event
         msg = Bool()
