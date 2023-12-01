@@ -86,19 +86,25 @@ class TrackingDriver(Node):
 
         # Calculate linear_speed based on the person's distance
         if person_distance <= 500:
-            linear_speed = -0.02
+            # Go backward with a fixed speed when too close
+            linear_speed = 0.02  # Positive value for backward movement
         elif 500 < person_distance < 800:
+            # Stop if the person is within a moderate range
             linear_speed = 0.0
             angular_speed = 0.0
-        elif person_distance >= 1200:
-            # Max speed is 0.1 when person_distance is greater than or equal to 1200
-            linear_speed = 0.05
+        elif person_distance >= 800:
+            # Linearly interpolate speed for distances greater than 800
+            # Speed increases with distance, capped at -0.2
+            linear_speed = -(person_distance - 800) * 0.2 / 400
+            linear_speed = max(-0.2, linear_speed)  # Negative value for forward movement
         else:
-            # Linear interpolation between 0 and 0.1 based on the range of person_distance
-            linear_speed = (person_distance - 800) * 0.1 / 400
+            # Fallback case (should not be reached)
+            linear_speed = 0.0
 
-        # Make sure the linear_speed doesn't exceed 0.1
-        linear_speed = min(0.1, linear_speed)
+        # Ensure the linear speed is within [0.02, -0.2] range
+        linear_speed = min(0.02, max(-0.2, linear_speed))
+
+
 
         self.update(-linear_speed, angular_speed*0.5)
 
