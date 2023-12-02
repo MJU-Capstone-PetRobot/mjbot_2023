@@ -5,11 +5,13 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16MultiArray, String
 from collections import deque
 from sensor_msgs.msg import Range
-
+import time
 class TrackingDriver(Node):
     def __init__(self):
         super().__init__('tracking_driver_node')
         self.obstacle_detected = False
+        self.previous_theta = 0.0
+       
         self.publisher = self.create_publisher(Twist, 'cmd_vel_tracker', 10)
         self.publisher_arm_mode = self.create_publisher(String, 'arm_mode', 10)
         self.ultrasonic_front = self.create_subscription(
@@ -41,17 +43,17 @@ class TrackingDriver(Node):
         self.image_height = 360
 
         # Moving average filter properties
-        self.filter_length = 5
+        self.filter_length = 15
         self.data_queue = deque(maxlen=self.filter_length)
         self.current_mode = None
-        
+
     def ultrasonic_front_callback(self, msg):
         if self.current_mode != "tracking":
             return
-        if 0 < msg.range < 0.7:
+        if 0 < msg.range < 0.6:
             self.obstacle_detected = True
             # Gradually increase speed as the obstacle gets closer
-            linear_speed = 0.04 * (0.7 - msg.range) / 0.7
+            linear_speed = 0.12 * (0.6 - msg.range) / 0.6
             self.update(linear_speed, 0.0)
             self.get_logger().info("Obstacle detected in front, adjusting speed!")
         else:
@@ -60,10 +62,10 @@ class TrackingDriver(Node):
     def ultrasonic_back_callback(self, msg):
         if self.current_mode != "tracking":
             return
-        if 0 < msg.range < 0.7:
+        if 0 < msg.range < 0.6:
             self.obstacle_detected = True
             # Gradually increase speed as the obstacle gets closer
-            linear_speed = -0.04 * (0.7 - msg.range) / 0.7
+            linear_speed = -0.12 * (0.6 - msg.range) / 0.6
             self.update(linear_speed, 0.0)
             self.get_logger().info("Obstacle detected in back, adjusting speed!")
         else:
@@ -95,11 +97,19 @@ class TrackingDriver(Node):
         self.get_logger().info("Published: /cmd_vel_tracker: {}".format(self.base_cmd))
 
     def apply_moving_average(self, data):
-        self.data_queue.append(data)
+        # Check if the third element (index 2) in data is 0
+        if data[2] != 0:
+            # Replace only the third element with 600
+            self.data_queue.append(data)
+
+        
+
         if len(self.data_queue) < self.filter_length:
             return data
+
         average_data = [sum(col) / len(col) for col in zip(*self.data_queue)]
         return average_data
+
 
     def callback(self, msg):
         if self.current_mode != "tracking" or self.obstacle_detected:
@@ -113,6 +123,7 @@ class TrackingDriver(Node):
         person_y = filtered_data[1]
         person_distance = filtered_data[2]
 
+
         offset_x = person_x - self.image_width / 2
         theta = offset_x / self.image_width
         # angular_speed
@@ -121,20 +132,21 @@ class TrackingDriver(Node):
         # Calculate linear_speed based on the person's distance
         if person_distance < 700:
             # Stop if the person is within a moderate range
+            time.sleep(0.1)
             linear_speed = 0.0
             angular_speed = 0.0
         elif person_distance >= 700:
             # Linearly interpolate speed for distances between 800 and 3000
             # Speed increases with distance, capped at -0.2
             if person_distance < 3000:
-                linear_speed = -(person_distance - 700) * 0.2 / (3000 - 700)
+                linear_speed = -(person_distance - 700) * 0.1 / (3000 - 700)
             else:
-                linear_speed = -0.2  # Max speed for distances of 3000 and beyond
+                linear_speed = -0.1  # Max speed for distances of 3000 and beyond
         else:
             # Fallback case (should not be reached)
             linear_speed = 0.0
-        # Ensure the linear speed is within [-0.2, 0.02] range
-        linear_speed = max(-0.2, min(0.02, linear_speed))
+        # Ensure the linear speed is within [-0.1, 0.02] range
+        linear_speed = max(-0.1, min(0.02, linear_speed))
 
         self.update(linear_speed, angular_speed*0.5)
 

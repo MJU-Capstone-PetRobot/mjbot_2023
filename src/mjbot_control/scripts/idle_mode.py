@@ -67,6 +67,7 @@ class ArmCommander(Node):
         self.mode_publisher = self.create_publisher(String, 'mode', 10)
         self.mode_subscription = self.create_subscription(
             String, 'mode', self.mode_callback, 10)
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
         self.fall_down_subscription = self.create_subscription(
             Bool, 'owner_fall', self.fall_down_callback, 10)
         self.co_ppm_subscription = self.create_subscription(
@@ -108,9 +109,19 @@ class ArmCommander(Node):
     def mode_callback(self, msg: String):
         self.current_mode = msg.data
         self.get_logger().info(f"Mode switched to: {self.current_mode}")
-        if self.current_mode == None:
-            self.current_mode = "idle"
+
+        if self.current_mode == "idle":
+            self.publish_zero_velocity()
+
+        # ... rest of your existing code ...
+
   
+    def publish_zero_velocity(self):
+        zero_velocity = Twist()
+        zero_velocity.linear.x = 0.0
+        zero_velocity.angular.z = 0.0
+        self.cmd_vel_publisher.publish(zero_velocity)
+        self.get_logger().info('Published zero velocity command.')
 
     def joint_states_callback(self, msg: JointState):
         """Callback to handle incoming JointState messages."""
