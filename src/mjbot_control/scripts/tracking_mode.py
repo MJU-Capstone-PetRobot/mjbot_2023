@@ -148,7 +148,7 @@ class TrackingDriver(Node):
         # Ensure the linear speed is within [-0.1, 0.02] range
         linear_speed = max(-0.1, min(0.02, linear_speed))
 
-        self.update(linear_speed, angular_speed*0.5)
+        self.update(linear_speed, angular_speed*0.3)
 
 
 

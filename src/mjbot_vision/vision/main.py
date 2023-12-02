@@ -207,31 +207,45 @@ class VisionNode(Node):
                     cv2.putText(
                         self.img,  "ID:"+str(trk[4]), (trk[0], trk[1] + 12), 1, 1, (255, 255, 255), 2)
 
-                    self.owner_exists = True
+                    center_x = (int)((trk[0] + trk[2]) // 2)
+                    center_y = (int)((trk[1] + trk[3]) // 2)
+                    
 
-                    self.owner_x = (int)((trk[0] + trk[2]) // 2)
-                    self.owner_y = (int)((trk[1] + trk[3]) // 2)
+                    points = [
+                        (center_x, center_y),
+                        (max(center_x - 30, 0), center_y),
+                        (min(center_x + 30, 640 - 1), center_y),
+                        (center_x, max(center_y - 30, 0)),
+                        (center_x, min(center_y + 30, 360 - 1))
+                    ]
 
+                    # Get depth values and find the minimum
+                    depths = sorted([self.dep[y, x] for x, y in points])
+
+                    # Find the smallest non-zero depth
+                    self.owner_z = next((d for d in depths if d != 0), 0)
+
+               
+
+                    # Update owner_x, owner_y, owner_w, owner_h
+                    self.owner_x = center_x
+                    self.owner_y = center_y
                     self.owner_w = (int)(trk[2] - trk[0])
                     self.owner_h = (int)(trk[3] - trk[1])
 
-                    # Get depth distance
-                    depth_x = self.owner_x
-                    depth_y = self.owner_y - 80
-                    self.owner_z = (int)(
-                        self.dep[depth_y, depth_x])  # ordered y, x
+                    self.owner_exists = True
 
-                    cv2.putText(self.img, "X {}".format(
-                        self.owner_x), (570, 30), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "Y {}".format(
-                        self.owner_y), (570, 50), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "Z {}".format(
-                        self.owner_z), (570, 70), 1, 1, (0, 255, 0), 2)
+                    # cv2.putText(self.img, "X {}".format(
+                    #     self.owner_x), (570, 30), 1, 1, (0, 255, 0), 2)
+                    # cv2.putText(self.img, "Y {}".format(
+                    #     self.owner_y), (570, 50), 1, 1, (0, 255, 0), 2)
+                    # cv2.putText(self.img, "Z {}".format(
+                    #     self.owner_z), (570, 70), 1, 1, (0, 255, 0), 2)
 
-                    cv2.putText(self.img, "W {}".format(
-                        self.owner_w), (500, 30), 1, 1, (0, 255, 0), 2)
-                    cv2.putText(self.img, "H {}".format(
-                        self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
+                    # cv2.putText(self.img, "W {}".format(
+                    #     self.owner_w), (500, 30), 1, 1, (0, 255, 0), 2)
+                    # cv2.putText(self.img, "H {}".format(
+                    #     self.owner_h), (500, 50), 1, 1, (0, 255, 0), 2)
                 else:
                     cv2.rectangle(
                         self.img, (trk[0], trk[1]), (trk[2], trk[3]), (255, 0, 0), 2)
